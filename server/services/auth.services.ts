@@ -34,12 +34,12 @@ export const authenticateUser = async (data: UserLogin) => {
   });
 
   if (!user) {
-    return { success: false, message: "Invalid email or password" };
+    return { success: false, message: "Email incorrect" };
   }
 
   const isMatch = await bcrypt.compare(data.password, user.password);
   if (!isMatch) {
-    return { success: false, message: "Invalid email or password" };
+    return { success: false, message: "Password incorrect" };
   }
 
   return { success: true, user };
