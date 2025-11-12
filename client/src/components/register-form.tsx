@@ -3,8 +3,6 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { useUser } from '../UserContext.tsx';
-
 const ACCENT_COLOR = '#8D0000';
 
 const strongPasswordRegex =
@@ -30,7 +28,6 @@ const validationSchema = Yup.object().shape({
 });
 
 export default function RegisterForm() {
-  const { setUser } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -69,11 +66,7 @@ export default function RegisterForm() {
         }
 
         setSuccess(true);
-        setUser({
-          name: data.data.name,
-          email: data.data.email,
-        });
-
+       
         console.log('[v0] Registration successful:', data);
         formik.resetForm();
         navigate('/signin');
