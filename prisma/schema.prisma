@@ -1,19 +1,237 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 datasource db {
-    provider = "postgresql"
-    url = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
-    provider = "prisma-client-js"
-    previewFeatures = ["postgresqlExtensions"]
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
-model User {
-    id Int @id @default(autoincrement())
-    name String
-    email String @unique
-    password String
-    createAt DateTime @default(now())
+// -------------------------------------------------
+// Enums based on your SQL CREATE TYPE statements
+// -------------------------------------------------
 
-    //RelationShip
+enum UserRole {
+  bidder
+  seller
+  admin
+}
+
+enum ProductStatus {
+  open
+  sold
+  expired
+  removed
+}
+
+enum OrderStatus {
+  pending_payment
+  payment_confirmed
+  shipped
+  completed
+  cancelled
+}
+
+// -------------------------------------------------
+// Models based on your SQL CREATE TABLE statements
+// -------------------------------------------------
+
+model User {
+  user_id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                  String   @unique @db.Text
+  password_hash          String   @db.Text
+  full_name              String   @db.Text
+  address                String?  @db.Text
+  birthdate              DateTime? @db.Date
+  role                   UserRole @default(bidder)
+  seller_upgrade_request Boolean  @default(false)
+  created_at             DateTime @default(now()) @db.Timestamptz
+  updated_at             DateTime @updatedAt @db.Timestamptz
+  plus_review            Int      @default(0)
+  minus_review           Int      @default(0)
+  is_email_verified      Boolean  @default(false)
+
+  // Relationships
+  products_sold       Product[]      @relation("SellerProducts")
+  current_high_bids   Product[]      @relation("HighestBidder")
+  bids                BidHistory[]   @relation("BidderHistory")
+  watchlist           Watchlist[]
+  questions_asked     ProductQandA[] @relation("Questioner")
+  reviews_given       Reviews[]      @relation("Reviewer")
+  reviews_received    Reviews[]      @relation("Reviewee")
+  denied_bids         DeniedBidders[]
+  orders_bought       Order[]        @relation("BuyerOrders")
+  orders_sold         Order[]        @relation("SellerOrders")
+  chat_messages_sent  OrderChat[]
+}
+
+model Category {
+  category_id  Int    @id @default(autoincrement())
+  name_level_1 String @db.Text
+  name_level_2 String @db.Text
+
+  // Relationships
+  products Product[]
+
+  @@unique([name_level_1, name_level_2])
+}
+
+model Product {
+  product_id                  BigInt    @id @default(autoincrement())
+  seller_id                   String    @db.Uuid
+  category_id                 Int
+  name                        String    @db.Text
+  status                      ProductStatus @default(open)
+  start_price                 Decimal   @db.Decimal(12, 2)
+  buy_now_price               Decimal?  @db.Decimal(12, 2)
+  step_price                  Decimal   @db.Decimal(10, 2)
+  current_price               Decimal   @default(0.00) @db.Decimal(12, 2)
+  current_highest_bidder_id   String?   @db.Uuid
+  bid_count                   Int       @default(0)
+  created_at                  DateTime  @default(now()) @db.Timestamptz
+  end_time                    DateTime  @db.Timestamptz
+  auto_extend                 Boolean   @default(false)
+  review_needed               Boolean   @default(false)
+
+  // Relationships
+  seller                   User         @relation("SellerProducts", fields: [seller_id], references: [user_id], onDelete: Restrict)
+  category                 Category     @relation(fields: [category_id], references: [category_id], onDelete: Restrict)
+  current_highest_bidder   User?        @relation("HighestBidder", fields: [current_highest_bidder_id], references: [user_id])
+  images                   ProductImages[]
+  description_history      ProductDescriptionHistory[]
+  bids                     BidHistory[]
+  watchlist_entries        Watchlist[]
+  q_and_a                  ProductQandA[]
+  reviews                  Reviews[]
+  denied_bidders           DeniedBidders[]
+  order                    Order?
+}
+
+model ProductImages {
+  image_id   BigInt @id @default(autoincrement())
+  product_id BigInt
+  image_url  String @db.Text
+
+  // Relationships
+  product Product @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+}
+
+model ProductDescriptionHistory {
+  desc_id     BigInt   @id @default(autoincrement())
+  product_id  BigInt
+  description String   @db.Text
+  added_at    DateTime @default(now()) @db.Timestamptz
+
+  // Relationships
+  product Product @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+}
+
+model BidHistory {
+  bid_id     BigInt   @id @default(autoincrement())
+  product_id BigInt
+  bidder_id  String   @db.Uuid
+  bid_amount Decimal  @db.Decimal(12, 2)
+  bid_time   DateTime @default(now()) @db.Timestamptz
+
+  // Relationships
+  product Product @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+  bidder  User    @relation("BidderHistory", fields: [bidder_id], references: [user_id], onDelete: Cascade)
+
+  @@unique([product_id, bidder_id])
+}
+
+model Watchlist {
+  user_id    String @db.Uuid
+  product_id BigInt
+
+  // Relationships
+  user    User    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  product Product @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+
+  @@id([user_id, product_id])
+}
+
+model ProductQandA {
+  qa_id         BigInt   @id @default(autoincrement())
+  product_id    BigInt
+  questioner_id String   @db.Uuid
+  question_text String   @db.Text
+  question_time DateTime @default(now()) @db.Timestamptz
+  answer_text   String?  @db.Text
+  answer_time   DateTime? @db.Timestamptz
+
+  // Relationships
+  product    Product @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+  questioner User    @relation("Questioner", fields: [questioner_id], references: [user_id], onDelete: Cascade)
+}
+
+model Reviews {
+  review_id   BigInt   @id @default(autoincrement())
+  product_id  BigInt
+  reviewer_id String   @db.Uuid
+  reviewee_id String   @db.Uuid
+  is_positive Boolean  // <-- ĐÃ THAY ĐỔI
+  comment     String?  @db.Text
+  created_at  DateTime @default(now()) @db.Timestamptz
+
+  // Relationships
+  product                Product @relation(fields: [product_id], references: [product_id])
+  reviewer               User    @relation("Reviewer", fields: [reviewer_id], references: [user_id])
+  reviewee               User    @relation("Reviewee", fields: [reviewee_id], references: [user_id])
+  order_as_seller_review Order?  @relation("SellerReview")
+  order_as_buyer_review  Order?  @relation("BuyerReview")
+
+  // Dòng @@db.CheckConstraint đã bị xóa để fix lỗi
+}
+
+model DeniedBidders {
+  product_id BigInt
+  bidder_id  String @db.Uuid
+
+  // Relationships
+  product Product @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+  bidder  User    @relation(fields: [bidder_id], references: [user_id], onDelete: Cascade)
+
+  @@id([product_id, bidder_id])
+}
+
+model Order {
+  order_id                BigInt      @id @default(autoincrement())
+  product_id              BigInt      @unique
+  buyer_id                String      @db.Uuid
+  seller_id               String      @db.Uuid
+  final_price             Decimal     @db.Decimal(12, 2)
+  status                  OrderStatus @default(pending_payment)
+  payment_proof_url       String?     @db.Text
+  shipping_address        String?     @db.Text
+  shipping_proof_url      String?     @db.Text
+  buyer_confirmed_receipt Boolean     @default(false)
+  seller_review_id        BigInt?     @unique
+  buyer_review_id         BigInt?     @unique
+  created_at              DateTime    @default(now()) @db.Timestamptz
+  updated_at              DateTime    @updatedAt @db.Timestamptz
+
+  // Relationships
+  product         Product     @relation(fields: [product_id], references: [product_id])
+  buyer           User        @relation("BuyerOrders", fields: [buyer_id], references: [user_id])
+  seller          User        @relation("SellerOrders", fields: [seller_id], references: [user_id])
+  seller_review   Reviews?    @relation("SellerReview", fields: [seller_review_id], references: [review_id], onDelete: SetNull)
+  buyer_review    Reviews?    @relation("BuyerReview", fields: [buyer_review_id], references: [review_id], onDelete: SetNull)
+  chat_messages   OrderChat[]
+}
+
+model OrderChat {
+  chat_message_id BigInt   @id @default(autoincrement())
+  order_id        BigInt
+  sender_id       String   @db.Uuid
+  message_text    String   @db.Text
+  sent_at         DateTime @default(now()) @db.Timestamptz
+
+  // Relationships
+  order  Order @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
+  sender User  @relation(fields: [sender_id], references: [user_id])
 }
