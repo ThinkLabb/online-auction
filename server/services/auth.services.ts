@@ -14,8 +14,8 @@ export const create = async (data: UserRegister) => {
     return { success: false, message: "Email exist" };
   }
 
-  const hashPassword = await bcrypt.hash(data.password, 12);
-  data.password = hashPassword;
+  const hashPassword = await bcrypt.hash(data.password_hash, 12);
+  data.password_hash = hashPassword;
 
   const user = await db.prisma.user.create({ data });
   
@@ -37,7 +37,7 @@ export const authenticateUser = async (data: UserLogin) => {
     return { success: false, message: "Email incorrect" };
   }
 
-  const isMatch = await bcrypt.compare(data.password, user.password);
+  const isMatch = await bcrypt.compare(data.password, user.password_hash);
   if (!isMatch) {
     return { success: false, message: "Password incorrect" };
   }

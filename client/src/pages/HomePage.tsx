@@ -1,14 +1,15 @@
+import Products from '../components/list-product-about-to-end';
 import MatrixRain from './MatrixRain';
 
 function HomePage() {
   const handleScroll = () => {
     console.log("click button")
     window.scrollTo({
-      top:  window.innerHeight,
-      behavior: "smooth"     
+      top: window.innerHeight,
+      behavior: "smooth"
     });
   }
-  return (
+  return (<>
     <div className=''>
       <div className="flex-1 flex flex-col justify-center items-center bg-black relative text-white h-[85vh]" id="intro">
         <div className="absolute top-0 left-0 w-full h-full bg-[url('./assets/background.png')] bg-no-repeat bg-center bg-contain opacity-40 z-1" />
@@ -29,14 +30,17 @@ function HomePage() {
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
-            strokeWidth={2} 
+            strokeWidth={2}
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 13l-7 7-7-7" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 8l-7 7-7-7" />
           </svg>
         </div>
       </div>
+
+      <Products />
     </div>
+  </>
   );
 }
 
