@@ -3,26 +3,30 @@ import * as authController from "../controllers/auth.controllers.ts";
 import { celebrate, Joi, Segments } from "celebrate";
 import * as emailController from "../controllers/email.controller.ts";
 import path from "path";
+import { getProducts, uploadProducts } from "../controllers/product.controllers.ts";
 
 const router = express.Router();
 
-const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,30}$/;
+const strongPasswordRegex =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,30}$/;
 
 const createUserSchema = {
-    [Segments.BODY]: Joi.object({
-        name: Joi.string().required().min(3).max(8),
-        email: Joi.string().email().required(),
-        password: Joi.string().required().min(8).max(30).regex(strongPasswordRegex),
-    })
-}
+  [Segments.BODY]: Joi.object({
+    name: Joi.string().required().min(3).max(8),
+    email: Joi.string().email().required(),
+    password: Joi.string().required().min(8).max(30).regex(strongPasswordRegex),
+  }),
+};
 
-router.post("/auth/register", celebrate(createUserSchema), authController.register);
+router.post('/auth/register', celebrate(createUserSchema), authController.register);
 
-router.post("/auth/signin", authController.login);
+router.post('/auth/signin', authController.login);
 
-router.get("/home/products", authController.getProducts)
+router.get('/home/products', getProducts);
 
-const publicDirectoryPath = path.join('./server',  'assets', 'products');
+router.post('/upload', authController.getAuthentication, uploadProducts);
+
+const publicDirectoryPath = path.join('./server', 'assets', 'products');
 
 router.use('/assets', express.static(publicDirectoryPath));
 

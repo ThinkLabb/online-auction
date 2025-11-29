@@ -40,8 +40,8 @@ enum OrderStatus {
 model User {
   user_id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email                  String   @unique @db.Text
-  password               String   @db.Text
-  name                   String   @db.Text
+  password          String   @db.Text
+  name              String   @db.Text
   address                String?  @db.Text
   birthdate              DateTime? @db.Date
   role                   UserRole @default(bidder)

@@ -16,7 +16,6 @@ export const create = async (data: UserRegister) => {
   }
 
   const hashPassword = await bcrypt.hash(data.password, 12);
-
   data.password = hashPassword;
 
   const user = await db.prisma.user.create({ data });

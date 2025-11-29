@@ -1,8 +1,7 @@
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import * as authService from "../services/auth.services.ts";
 import { errorResponse, successResponse } from "../utils/response.ts";
-import jwt from "jsonwebtoken";
-import db from "../services/database.ts"
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -22,9 +21,9 @@ export const register = async (req: Request, res: Response) => {
       { expiresIn: "1h" }
     );
 
-    res.cookie("token", token, {
+    res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 1000 * 60 * 60,
     });
 
@@ -37,7 +36,6 @@ export const register = async (req: Request, res: Response) => {
     return res.status(500).json(errorResponse(String(e)));
   }
 };
-
 
 export const login = async (req: Request, res: Response) => {
   try {
@@ -52,7 +50,7 @@ export const login = async (req: Request, res: Response) => {
     const user = data.user;
 
     const secret = process.env.JWT_SECRET;
-    if (!secret) throw new Error("JWT_SECRET is not set");
+    if (!secret) throw new Error('JWT_SECRET is not set');
 
 
     const token = jwt.sign(
@@ -78,39 +76,22 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-export const getProducts = async (req: Request, res: Response) => {
+export const getAuthentication = function (req: Request, res: Response, next: NextFunction) {
   try {
-    const nearestEndingProducts = await db.prisma.product.findMany({
-      take: 5,
-      orderBy: {
-        end_time: 'asc',
-      },
-      include: {
-        current_highest_bidder: true,
-        images: {
-          take: 1,
-          orderBy: {
-            image_id: 'asc',
-          },
-        },
-      },
-    });
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET is not defined');
+    }
+    interface UserPayload extends JwtPayload {
+      id: string;
+      name: string;
+      email: string;
+    }
+    const payload: UserPayload = jwt.verify(req.cookies.token, secret) as UserPayload;
+    res.locals.user = payload;
+    res.locals.authenticated = true;
 
-    const formattedProducts = nearestEndingProducts.map(product => {
-      return {
-        name: product.name,
-        bid_count: product.bid_count,
-        current_price: product.current_price,
-        buy_now_price: product.buy_now_price,
-        end_time: product.end_time,
-        created_at: product.created_at,
-        highest_bidder_name: product.current_highest_bidder?.name || null,
-        image_url: product.images[0]?.image_url || null,
-      };
-    });
-
-    return res.json(formattedProducts);
-
+    next()
   } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
   }
