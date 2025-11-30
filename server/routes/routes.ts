@@ -1,9 +1,9 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import * as authController from "../controllers/auth.controllers.ts";
 import { celebrate, Joi, Segments } from "celebrate";
 import * as emailController from "../controllers/email.controller.ts";
 import path from "path";
-import { getProducts, uploadProducts } from "../controllers/product.controllers.ts";
+import { getProduct, getProducts, uploadProducts } from "../controllers/product.controllers.ts";
 
 const router = express.Router();
 
@@ -24,7 +24,11 @@ router.post('/auth/signin', authController.login);
 
 router.get('/home/products', getProducts);
 
-router.post('/upload', authController.getAuthentication, uploadProducts);
+router.get('/product/:id', getProduct);
+
+router.post('/upload', authController.getSellerAuthentication, uploadProducts);
+
+router.get('/upload', authController.getSellerAuthentication, (_: Request, res: Response) => res.sendStatus(200));
 
 const publicDirectoryPath = path.join('./server', 'assets', 'products');
 
@@ -33,7 +37,6 @@ router.use('/assets', express.static(publicDirectoryPath));
 router.use('/sendmail', emailController.sendMail)
 
 router.use('/verify', emailController.verifyCode)
-
 
 router.use('/changepassword', authController.changePassword)
 

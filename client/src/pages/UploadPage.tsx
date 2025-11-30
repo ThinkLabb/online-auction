@@ -1,8 +1,9 @@
 import type React from 'react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Resolver, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { Link, useNavigate } from 'react-router-dom';
 
 const productUploadSchema = z
   .object({
@@ -50,6 +51,8 @@ export default function ProductUploadForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Image carousel state for horizontal scrolling
   const [imageScrollIndex, setImageScrollIndex] = useState(0);
+
+  const navigate = useNavigate();
 
   const {
     register,
@@ -178,6 +181,18 @@ export default function ProductUploadForm() {
       alert('Error uploading product');
     }
   };
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetch('/api/upload', {
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        return navigate('/');
+      }
+      return;
+    })();
+  });
 
   return (
     <div className="flex-1 bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -542,7 +557,7 @@ export default function ProductUploadForm() {
                   }}
                   className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition cursor-pointer"
                 >
-                  Back
+                  <Link to="/">Back</Link>
                 </button>
 
                 {/* Submit Button - Primary action (Red for emphasis) */}

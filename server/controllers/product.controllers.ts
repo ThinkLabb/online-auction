@@ -89,3 +89,150 @@ export const getProducts = async (req: Request, res: Response) => {
     return res.status(500).json(errorResponse(String(e)));
   }
 };
+
+// Helper to serialize BigInt (Prisma returns BigInt, JSON.stringify fails on it)
+const bigIntReplacer = (key: string, value: any) => {
+  if (typeof value === 'bigint') {
+    return value.toString();
+  }
+  return value;
+};
+
+// Helper to calculate rating (0-5 stars) based on plus/minus reviews
+const calculateRating = (plus: number, minus: number) => {
+  const total = plus + minus;
+  if (total === 0) return 0;
+  // Simple calculation: percentage of positive reviews * 5
+  return Number(((plus / total) * 5).toFixed(1));
+};
+
+// ... imports and helper functions (bigIntReplacer, calculateRating) remain the same
+
+export const getProduct = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const productData = await db.prisma.product.findUnique({
+      where: {
+        product_id: BigInt(id),
+      },
+      include: {
+        // ... keep other includes (seller, category, etc.) ...
+        seller: {
+          select: { user_id: true, name: true, plus_review: true, minus_review: true },
+        },
+        category: true,
+        current_highest_bidder: {
+          select: { name: true, plus_review: true, minus_review: true },
+        },
+        images: true,
+        
+        // --- CHANGED: Fetch ALL description history, ordered by time ---
+        description_history: {
+          orderBy: { added_at: 'asc' }, // 'asc' to show original first, then updates
+        },
+        
+        q_and_a: {
+          include: {
+            questioner: { select: { name: true, plus_review: true, minus_review: true } },
+          },
+          orderBy: { question_time: 'desc' },
+        },
+        _count: { select: { bids: true } },
+      },
+    });
+
+    if (!productData) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // ... time calculation logic remains the same ...
+    const now = new Date();
+    const endTime = new Date(productData.end_time);
+    const timeLeftMs = endTime.getTime() - now.getTime();
+    const daysLeft = Math.floor(timeLeftMs / (1000 * 60 * 60 * 24));
+    const hoursLeft = Math.floor((timeLeftMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const endsInString = timeLeftMs > 0 ? `${daysLeft} days ${hoursLeft} hours` : 'Ended';
+
+    // --- CHANGED: Transform description history into an array of objects ---
+    const descriptionList = productData.description_history.map((hist) => ({
+      text: hist.description,
+      date: new Date(hist.added_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+    }));
+
+    // If no description exists, provide a fallback
+    if (descriptionList.length === 0) {
+      descriptionList.push({ 
+        text: "No description provided.", 
+        date: new Date(productData.created_at).toLocaleDateString() 
+      });
+    }
+
+    const responseData = {
+      // ... keep other fields ...
+      id: productData.product_id,
+      title: productData.name,
+      postedDate: new Date(productData.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      endsIn: endsInString,
+      currentBid: Number(productData.current_price),
+      bidsPlaced: productData.bid_count,
+      buyNowPrice: productData.buy_now_price ? Number(productData.buy_now_price) : 0,
+      minBidStep: Number(productData.step_price),
+      
+      images: productData.images.length > 0 
+        ? productData.images.map(img => img.image_url) 
+        : ['https://via.placeholder.com/600x400?text=No+Image'],
+
+      details: {
+        brand: productData.category.name_level_1,
+        year: "N/A",
+        condition: "Used", 
+        engine: productData.category.name_level_2,
+        frameMaterial: 'See description',
+        color: 'See description',
+        performance: 'See description',
+        exhaust: 'See description',
+      },
+
+      // --- NEW DESCRIPTION STRUCTURE ---
+      description: descriptionList, 
+
+      conditionText: "Please refer to images and description for full condition details.",
+      
+      seller: {
+        name: productData.seller.name,
+        rating: calculateRating(productData.seller.plus_review, productData.seller.minus_review),
+        reviews: productData.seller.plus_review + productData.seller.minus_review,
+      },
+      topBidder: productData.current_highest_bidder ? {
+        name: productData.current_highest_bidder.name,
+        rating: calculateRating(productData.current_highest_bidder.plus_review, productData.current_highest_bidder.minus_review),
+        reviews: productData.current_highest_bidder.plus_review + productData.current_highest_bidder.minus_review,
+      } : {
+        name: "No Bids Yet",
+        rating: 0,
+        reviews: 0
+      },
+      qa: productData.q_and_a.map(qa => ({
+        question: qa.question_text,
+        asker: qa.questioner.name,
+        answer: qa.answer_text || "Waiting for response...",
+        responder: qa.answer_text ? `${productData.seller.name} (Seller)` : null,
+        time: new Date(qa.question_time).toLocaleDateString(),
+      })),
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    return res.send(JSON.stringify(responseData, bigIntReplacer));
+
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: String(e) });
+  }
+};

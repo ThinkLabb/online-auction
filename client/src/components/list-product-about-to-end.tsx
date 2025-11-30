@@ -81,7 +81,7 @@ const Tabs = React.memo(({ activeTab, setActiveTab }: TabsProps) => {
         <div key={tab.id} className={`pb-1 ${activeTab === tab.id ? 'border-b-2 border-[#8D0000]' : ''}`}>
           <button
             onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap rounded font-semibold cursor-pointer
+            className={`px-5 py-2.5 text-sm whitespace-nowrap rounded font-semibold cursor-pointer
             ${activeTab === tab.id
                 ? 'bg-[#8D0000] text-white'
                 : 'shadow-slate-500/30 shadow-[0_0_20px_var(--tw-shadow-color)]'

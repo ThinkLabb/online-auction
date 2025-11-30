@@ -1,7 +1,7 @@
-import type { NextFunction, Request, Response } from "express";
-import * as authService from "../services/auth.services.ts";
-import { errorResponse, successResponse } from "../utils/response.ts";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import type { NextFunction, Request, Response } from 'express';
+import * as authService from '../services/auth.services.ts';
+import { errorResponse, successResponse } from '../utils/response.ts';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -14,11 +14,11 @@ export const register = async (req: Request, res: Response) => {
     const user = result.user;
 
     const secret = process.env.JWT_SECRET;
-    if (!secret) throw new Error("JWT_SECRET is not set");
+    if (!secret) throw new Error('JWT_SECRET is not set');
     const token = jwt.sign(
-      { id: user.user_id, name: user.name, email: user.email },
+      { id: user.user_id, name: user.name, email: user.email, role: user.role },
       secret,
-      { expiresIn: "1h" }
+      { expiresIn: '1h' }
     );
 
     res.cookie('token', token, {
@@ -27,11 +27,9 @@ export const register = async (req: Request, res: Response) => {
       maxAge: 1000 * 60 * 60,
     });
 
-    return res.status(201).json(successResponse(
-      { name: user.name, email: user.email },
-      result.message
-    ));
-
+    return res
+      .status(201)
+      .json(successResponse({ name: user.name, email: user.email }, result.message));
   } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
   }
@@ -52,25 +50,21 @@ export const login = async (req: Request, res: Response) => {
     const secret = process.env.JWT_SECRET;
     if (!secret) throw new Error('JWT_SECRET is not set');
 
-
     const token = jwt.sign(
-      { id: user.user_id, name: user.name, email: user.email },
+      { id: user.user_id, name: user.name, email: user.email, role: user.role },
       secret,
-      { expiresIn: "1h" }
+      { expiresIn: '1h' }
     );
 
-
-    res.cookie("token", token, {
+    res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 1000 * 60 * 60,
     });
 
-    return res.status(200).json(successResponse(
-      { name: user.name, email: user.email },
-      data.message
-    ));
-
+    return res
+      .status(200)
+      .json(successResponse({ name: user.name, email: user.email }, data.message));
   } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
   }
@@ -86,33 +80,57 @@ export const getAuthentication = function (req: Request, res: Response, next: Ne
       id: string;
       name: string;
       email: string;
+      role: string;
     }
     const payload: UserPayload = jwt.verify(req.cookies.token, secret) as UserPayload;
     res.locals.user = payload;
     res.locals.authenticated = true;
 
-    next()
+    next();
   } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
   }
 };
 
+export const getSellerAuthentication = function (req: Request, res: Response, next: NextFunction) {
+  try {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET is not defined');
+    }
+    interface UserPayload extends JwtPayload {
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+    }
+    const payload: UserPayload = jwt.verify(req.cookies.token, secret) as UserPayload;
+    if (payload.role !== 'seller') {
+      return res.sendStatus(403);
+    }
+    res.locals.user = payload;
+    res.locals.authenticated = true;
 
+    next();
+  } catch (e) {
+    return res.status(500).json(errorResponse(String(e)));
+  }
+};
 
 export const changePassword = async (req: Request, res: Response) => {
   try {
     if (!req.cookies.reset_token) {
-      return res.status(401).json({ message: "Token missing" });
+      return res.status(401).json({ message: 'Token missing' });
     }
 
-    const result = await authService.changePassword(req.body)
+    const result = await authService.changePassword(req.body);
 
     if (!result.success) {
-      return res.status(500).json(errorResponse(result.message))
+      return res.status(500).json(errorResponse(result.message));
     }
 
-    return res.status(200).json(successResponse(result.updateUser, result.message))
+    return res.status(200).json(successResponse(result.updateUser, result.message));
   } catch (e) {
-    return res.status(500).json(errorResponse(e))
+    return res.status(500).json(errorResponse(e));
   }
-}
+};
