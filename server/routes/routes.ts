@@ -4,6 +4,7 @@ import { celebrate, Joi, Segments } from "celebrate";
 import * as emailController from "../controllers/email.controller.ts";
 import path from "path";
 import { getProducts, uploadProducts } from "../controllers/product.controllers.ts";
+import { getUserProfile } from "../controllers/user.controllers.ts";
 
 const router = express.Router();
 
@@ -23,6 +24,8 @@ router.post('/auth/register', celebrate(createUserSchema), authController.regist
 router.post('/auth/signin', authController.login);
 
 router.get('/home/products', getProducts);
+
+router.get('/profile/:id', getUserProfile);
 
 router.post('/upload', authController.getAuthentication, uploadProducts);
 
