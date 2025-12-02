@@ -18,7 +18,7 @@ function Layout() {
       <header className="shadow-md px-4 py-4">
         <div className="max-w-5xl flex flex-row justify-between items-center mx-auto">
           {/* Logo */}
-          <nav className="flex flex-row font-bold text-2xl gap-1">
+          <nav onClick={() => navigate("/")} className="cursor-pointer flex flex-row font-bold text-2xl gap-1">
             <h1 className="text-black">Think</h1>
             <h1 className="text-[#8D0000]">LAB</h1>
           </nav>

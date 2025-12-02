@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { ProfileData } from "./types";
-
-type SetTab = (tab: "bidding" | "won-products" | "watchlist" | "ratings") => void;
+import { SetTab } from "./types";
 
 function BiddingTab({ profile, setTab }: { profile: ProfileData; setTab: SetTab }) {  
   return(<></>)
@@ -9,7 +8,6 @@ function BiddingTab({ profile, setTab }: { profile: ProfileData; setTab: SetTab 
 
 function WonTab({ profile, setTab }: { profile: ProfileData; setTab: SetTab }) {  
   return(<></>)
-
 }
 
 function WatchlistTab({ profile, setTab }: { profile: ProfileData; setTab: SetTab }) {  
@@ -37,7 +35,7 @@ export default function UserTab( {profile} : {profile: ProfileData} ) {
       case "ratings":
         return <RatingsTab profile={profile} setTab={setActiveTab} />;
       default:
-        return <h1 className="text-3xl text-red-500">Tab không hợp lệ!</h1>;
+        return <h1 className="text-3xl text-red-500">Invalid Tab!</h1>;
     }
   };
 

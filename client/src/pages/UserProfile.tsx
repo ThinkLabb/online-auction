@@ -4,12 +4,12 @@ import userIcon from '../assets/user.png'
 import { useUser } from '../UserContext'
 import { ProfileData } from "../components/user-profile/types"
 import UserTab from "../components/user-profile/user-profile-tabs"
+import UserAction from "../components/user-profile/user-profile"
 
 export default function UserProfile() {
   const user = useUser();
   const navigate = useNavigate();
-  const tabs = ["Bidding", "Won Products", "Watchlist", "Ratings"];
-  const [ activeTab, setActiveTab ] = useState(tabs[0].toLowerCase().replace(" ", "-"));
+  const [action, setAction] = useState("view-tabs")
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<ProfileData | null>(null);
 
@@ -96,13 +96,16 @@ export default function UserProfile() {
           </div>
 
           <div className="flex flex-col gap-3 my-10">
-            <button className="
-              cursor-pointer bg-[#8D0000] 
-              hover:bg-[#760000] hover:scale-101
-              active:scale-95 
-              transition-all duration-200 shadow-md hover:shadow-md
-              text-white rounded-sm shadow-sm shadow-stone-300 font-medium p-2
-            ">
+            <button 
+              onClick={() => setAction("edit-profile")}
+              className="
+                cursor-pointer bg-[#8D0000] 
+                hover:bg-[#760000] hover:scale-101
+                active:scale-95 
+                transition-all duration-200 shadow-md hover:shadow-md
+                text-white rounded-sm shadow-sm shadow-stone-300 font-medium p-2
+              "
+            >
               My Profile
             </button>
 
@@ -144,47 +147,7 @@ export default function UserProfile() {
           </div>
         </div>
 
-        <div className="flex-3 min-w-0">
- 
-          {/* <div>
-            <div className="flex flex-row">
-              {
-                tabs.map((tab) => {
-                  const tabID = tab.toLowerCase().replace(" ", "-");
-                  const isActive = activeTab === tabID;
-
-                  return(
-                    <h2
-                      key={tab}
-                      onClick={() => setActiveTab(tabID)}
-                      className={`
-                        cursor-pointer text-xl pb-1 px-3 border-b truncate
-                        ${
-                          isActive ?
-                          "border-[#8D0000] text-[#8D0000] font-medium border-b-2" :
-                          "border-gray-300 hover:font-medium hover:border-b-2 hover:border-gray-500"
-                        }
-                      `}
-                    >
-                      {tab}
-                    </h2>
-                  )
-                })
-              }
-            </div>
-
-            <div className="mt-5 p-5 rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 font-medium p-2">
-              <div>TKin cần dataaaa</div>
-            </div>
-          </div> */}
-
-          <UserTab profile={profile} />
-
-          {/* useState đang là xem profile */}
-          <div></div>
-          {/* useState đang là sửa password */}
-          <div></div>
-        </div>
+        <UserAction profile={profile} action={action} setAction={setAction}/>
       </div>
     </div>
   )

@@ -1,6 +1,8 @@
-export interface ProfileData {
+export type ProfileData = {
   name: string;
   email: string;
+  address: string;
+  birthdate: Date;
   role: string;
   created_at: string;
   total_bids: number;
@@ -15,3 +17,6 @@ export interface ProfileData {
   watchlist: any,
   ratings: any
 }
+
+export type SetTab = (tab: "bidding" | "won-products" | "watchlist" | "ratings") => void;
+export type SetAction = (action: "view-tabs" | "edit-profile" | "change-password") => void;
