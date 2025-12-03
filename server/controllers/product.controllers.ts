@@ -1,9 +1,11 @@
 import db from '../services/database.ts';
 import type { Request, Response } from 'express';
-import { errorResponse } from '../utils/response.ts';
+import { errorResponse, successResponse } from '../utils/response.ts';
 import path from 'path';
 import { writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
+import * as productService from '../services/product.services.ts'
+import { timeEnd } from 'console';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -234,5 +236,90 @@ export const getProduct = async (req: Request, res: Response) => {
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: String(e) });
+  }
+};
+
+export const getCategories = async (req: Request, res: Response) => {
+  const result = await productService.getCategories();
+
+  if (!result.success) {
+    return res.status(400).json(errorResponse(result.message));
+  }
+
+  return res.status(200).json(successResponse(result.categories, result.message));
+}
+
+type SortField = 'end_time' | 'current_price';
+type SortOrder = 'asc' | 'desc';
+
+export const getProductsLV = async (req: Request, res: Response) => {
+  try {
+     const { level1, level2 } = req.params;
+
+    const sortQuery = req.query.sort as SortField | undefined;
+    const orderQuery = req.query.order as SortOrder | undefined;
+    
+    const pageQuery = req.query.page ? parseInt(req.query.page as string) : 1;
+    const limitQuery = req.query.limit ? parseInt(req.query.limit as string) : 10; // Mặc định 10
+
+    const page = Math.max(1, pageQuery);
+    const limit = Math.max(1, limitQuery);
+    const skip = (page - 1) * limit;
+
+    const whereClause: any = {
+      category: {
+        name_level_1: String(level1),
+      },
+    };
+
+    if (level2 && level2 !== "*") {
+      whereClause.category.name_level_2 = String(level2);
+    }
+
+    let orderByClause: any = {};
+    const sortField: SortField = sortQuery && ['end_time', 'current_price'].includes(sortQuery) ? sortQuery : 'end_time';                                    
+    const sortOrder: SortOrder = orderQuery && ['asc', 'desc'].includes(orderQuery) ? orderQuery : 'asc';
+
+    if (sortField === 'current_price') {
+      orderByClause.current_price = sortOrder; 
+    } else {
+      orderByClause.end_time = sortOrder;
+    }
+
+    const totalItems = await db.prisma.product.count({
+      where: whereClause,
+    });
+
+    const products = await db.prisma.product.findMany({
+      where: whereClause,
+      orderBy: orderByClause,
+      skip: skip,
+      take: limit,
+      include: {
+        current_highest_bidder: true,
+        images: {
+          take: 1,
+          orderBy: {
+            image_id: 'asc',
+          },
+        },
+      },
+    });
+    const formattedProducts = products.map((product) => {
+      return {
+        name: product.name,
+        bid_count: product.bid_count,
+        current_price: product.current_price,
+        buy_now_price: product.buy_now_price,
+        end_time: product.end_time,
+        created_at: product.created_at,
+        highest_bidder_name: product.current_highest_bidder?.name || null,
+        image_url: product.images[0]?.image_url || null,
+      };
+    });
+
+    return res.json({products: formattedProducts, totalItems: totalItems});
+  } catch (e) {
+    return res.status(500).json(errorResponse(String(e)));
   }
 };

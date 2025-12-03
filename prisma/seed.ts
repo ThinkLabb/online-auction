@@ -33,7 +33,7 @@ async function main() {
 
   // --- 2. Tạo Users (Sellers) ---
   console.log('Seeding users...');
-  const hashedPassword = await hashPassword('password123'); // Mật khẩu chung cho tất cả user mẫu
+  const hashedPassword = await hashPassword('Demo@123'); // Mật khẩu chung cho tất cả user mẫu
 
   const seller1 = await prisma.user.upsert({
     where: { email: 'seller1@example.com' },

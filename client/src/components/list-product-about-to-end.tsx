@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { ClipLoader } from "react-spinners"
 
 // --- Types ---
 
@@ -192,7 +193,9 @@ export default function Products() {
       <Tabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Loading products...</div>
+        <div className="min-h-[50vh] w-full flex flex-col justify-center items-center"> 
+          <ClipLoader size={50} color="#8D0000"/>
+        </div>
       ) : products.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
           {products.map((product, index) => (

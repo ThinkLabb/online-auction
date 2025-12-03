@@ -6,6 +6,7 @@ import LogIn from './pages/LogIn.tsx';
 import ForgotPassword from './pages/ForgotPassword.tsx';
 import UploadPage from './pages/UploadPage.tsx';
 import ProductDetail from './pages/ProductPage.tsx';
+import Products from './pages/Products.tsx';
 
 function Router() {
   return (
@@ -14,6 +15,8 @@ function Router() {
         <Route path="/" element={<HomePage />}></Route>
         <Route path="/upload" element={<UploadPage />}></Route>
         <Route path="/product/:id" element={<ProductDetail />}></Route>
+
+        <Route path="/products/:level1/:level2" element={<Products />}></Route>
       </Route>
 
       <Route path="/register" element={<Register />}></Route>
