@@ -1,16 +1,50 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import { useUser } from './UserContext.tsx';
+import { CategoryContext, useUser } from './UserContext.tsx';
 import CategoryDetail from './CategoryMenu.tsx';
+import { useEffect, useMemo, useState } from 'react';
+
 
 function Layout() {
   const { user, setUser } = useUser();
-  const navigate = useNavigate();
 
-  const handleLogout = () => {
-    setUser(null);
-    navigate('/signin');
+  const handleLogout = async() => {
+    try {
+      const res = await fetch('api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      const result = await res.json();
+      if (res.ok && result.isSuccess) {
+        setUser(null);
+      }
+    } catch(e) {
+    }
   };
+
+  useEffect(() => {
+    (async() => {
+      try {
+        const res = await fetch('/api/auth/me', {
+          method: 'POST',
+          credentials: 'include',
+        });
+
+        const result = await res.json()
+        if (res.ok && result.isSuccess) {
+          setUser({
+            name: result.data.name,
+            email: result.data.email,
+          });
+        }
+      } catch(e) {
+        console.error(e)
+      }
+    })()
+  }, [])
+
+  const [activeLevel1, setActiveLevel1] = useState("")
 
   return (
     <div className="h-screen flex flex-col">
@@ -18,10 +52,10 @@ function Layout() {
       <header className="shadow-md px-4 py-4">
         <div className="max-w-5xl flex flex-row justify-between items-center mx-auto">
           {/* Logo */}
-          <nav onClick={() => navigate("/")} className="cursor-pointer flex flex-row font-bold text-2xl gap-1">
+          <Link to="/" className="flex flex-row font-bold text-2xl gap-1" onClick={() => setActiveLevel1("")} >
             <h1 className="text-black">Think</h1>
             <h1 className="text-[#8D0000]">LAB</h1>
-          </nav>
+          </Link>
           {/* Search */}
           <nav className="flex-1 max-w-md mx-4">
             <input
@@ -57,9 +91,14 @@ function Layout() {
             </ul>
           </nav>
         </div>
+        <CategoryContext.Provider value={{ activeLevel1, setActiveLevel1 }}>
+          <div className='pt-4'>
+            <CategoryDetail />
+          </div>
+        </CategoryContext.Provider>
       </header>
 
-      <CategoryDetail />
+      {/* <CategoryDetail /> */}
       <Outlet />
 
       {/*Footer*/}

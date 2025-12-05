@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import * as authController from "../controllers/auth.controllers.ts";
 import { celebrate, Joi, Segments } from "celebrate";
 import * as emailController from "../controllers/email.controller.ts";
+import * as productController from "../controllers/product.controllers.ts";
 import path from "path";
 import { getProduct, getProducts, uploadProducts } from "../controllers/product.controllers.ts";
 import { getUserProfile, getMyProfile } from "../controllers/user.controllers.ts";
@@ -24,9 +25,15 @@ router.post('/auth/register', celebrate(createUserSchema), authController.regist
 
 router.post('/auth/signin', authController.login);
 
+router.post('/auth/me', authController.getAuthentication, authController.getAccount);
+
+router.post('/auth/logout', authController.logout);
+
 router.get('/home/products', getProducts);
 
 router.get('/product/:id', getProduct);
+
+router.get('/products/:level1/:level2', productController.getProductsLV);
 
 router.post('/upload', authController.getSellerAuthentication, uploadProducts);
 
@@ -41,6 +48,8 @@ router.use('/sendmail', emailController.sendMail)
 router.use('/verify', emailController.verifyCode)
 
 router.use('/changepassword', authController.changePassword)
+
+router.use('/categories', productController.getCategories)
 
 // ===== PROFILE PAGE'S API =====
 
