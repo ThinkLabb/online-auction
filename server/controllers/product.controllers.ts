@@ -56,12 +56,17 @@ export const uploadProducts = async (req: Request, res: Response) => {
   }
 };
 
-export const getProducts = async (req: Request, res: Response) => {
+export const getProductsEndest = async (req: Request, res: Response) => {
   try {
     const nearestEndingProducts = await db.prisma.product.findMany({
+      where: {
+        end_time: {
+          gt: new Date(), // Chỉ lấy các sản phẩm có thời gian kết thúc > hiện tại
+        },
+      },
       take: 5,
       orderBy: {
-        end_time: 'asc',
+        end_time: 'asc', // Sắp xếp tăng dần: Cái nào gần hiện tại nhất (nhỏ nhất trong tương lai) sẽ lên đầu
       },
       include: {
         current_highest_bidder: true,
@@ -73,12 +78,102 @@ export const getProducts = async (req: Request, res: Response) => {
         },
       },
     });
+
     const formattedProducts = nearestEndingProducts.map((product) => {
       return {
+        // Cần đảm bảo convert BigInt sang string/number để tránh lỗi res.json
+        id: product.product_id.toString(), 
         name: product.name,
         bid_count: product.bid_count,
-        current_price: product.current_price,
-        buy_now_price: product.buy_now_price,
+        current_price: product.current_price.toString(),
+        buy_now_price: product.buy_now_price ? product.buy_now_price.toString() : null,
+        end_time: product.end_time,
+        created_at: product.created_at,
+        highest_bidder_name: product.current_highest_bidder?.name || null,
+        image_url: product.images[0]?.image_url || null,
+      };
+    });
+
+    return res.json(formattedProducts);
+  } catch (e) {
+    return res.status(500).json(errorResponse(String(e)));
+  }
+};
+
+// 1. Get 5 products with the most bids (Hot items)
+export const getTopBiddedProducts = async (req: Request, res: Response) => {
+  try {
+    const topBiddedProducts = await db.prisma.product.findMany({
+      where: {
+        end_time: {
+          gt: new Date(), // Only get active products
+        },
+      },
+      take: 5,
+      orderBy: {
+        bid_count: 'desc', // Sort by bid count from High to Low
+      },
+      include: {
+        current_highest_bidder: true,
+        images: {
+          take: 1,
+          orderBy: {
+            image_id: 'asc',
+          },
+        },
+      },
+    });
+
+    const formattedProducts = topBiddedProducts.map((product) => {
+      return {
+        id: product.product_id.toString(),
+        name: product.name,
+        bid_count: product.bid_count,
+        current_price: product.current_price.toString(),
+        buy_now_price: product.buy_now_price ? product.buy_now_price.toString() : null,
+        end_time: product.end_time,
+        created_at: product.created_at,
+        highest_bidder_name: product.current_highest_bidder?.name || null,
+        image_url: product.images[0]?.image_url || null,
+      };
+    });
+
+    return res.json(formattedProducts);
+  } catch (e) {
+    return res.status(500).json(errorResponse(String(e)));
+  }
+};
+
+export const getHighPriceProducts = async (req: Request, res: Response) => {
+  try {
+    const highPriceProducts = await db.prisma.product.findMany({
+      where: {
+        end_time: {
+          gt: new Date(), // Only get active products
+        },
+      },
+      take: 5,
+      orderBy: {
+        current_price: 'desc', // Sort by price from High to Low
+      },
+      include: {
+        current_highest_bidder: true,
+        images: {
+          take: 1,
+          orderBy: {
+            image_id: 'asc',
+          },
+        },
+      },
+    });
+
+    const formattedProducts = highPriceProducts.map((product) => {
+      return {
+        id: product.product_id.toString(),
+        name: product.name,
+        bid_count: product.bid_count,
+        current_price: product.current_price.toString(),
+        buy_now_price: product.buy_now_price ? product.buy_now_price.toString() : null,
         end_time: product.end_time,
         created_at: product.created_at,
         highest_bidder_name: product.current_highest_bidder?.name || null,
@@ -119,7 +214,6 @@ export const getProduct = async (req: Request, res: Response) => {
         product_id: BigInt(id),
       },
       include: {
-        // ... keep other includes (seller, category, etc.) ...
         seller: {
           select: { user_id: true, name: true, plus_review: true, minus_review: true },
         },
@@ -129,9 +223,8 @@ export const getProduct = async (req: Request, res: Response) => {
         },
         images: true,
         
-        // --- CHANGED: Fetch ALL description history, ordered by time ---
         description_history: {
-          orderBy: { added_at: 'asc' }, // 'asc' to show original first, then updates
+          orderBy: { added_at: 'asc' },
         },
         
         q_and_a: {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, JSX } from "react";
 import { ClipLoader } from "react-spinners";
 import { useParams } from "react-router-dom";
+import { MemoProductCard } from "../components/product";
 
 type Product = {
     id?: string | number;
@@ -44,33 +45,6 @@ const SORT_TABS_DATA: SortTabItem[] = [
 ];
 
 
-const formatCurrency = (priceStr: string | null | undefined): string => {
-    if (!priceStr) return '';
-    const price = Number(priceStr);
-    return new Intl.NumberFormat('de-DE').format(price) + ' $';
-};
-const formatDate = (dateStr: string | null | undefined): string => {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-    });
-};
-const calculateTimeRemaining = (endTimeStr: string | null | undefined): string => {
-    if (!endTimeStr) return 'N/A';
-    const diffMs = new Date(endTimeStr).getTime() - new Date().getTime();
-    if (diffMs <= 0) return 'Auction ended';
-    const d = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const h = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    if (d > 0) return `${d}d ${h}h remaining`;
-    if (h > 0) return `${h}h ${m}m remaining`;
-    if (m > 0) return `${m}m remaining`;
-    return 'Ending soon';
-};
-
-
 const SortTabs = React.memo(({ activeTab, setActiveTab }: SortTabsProps): JSX.Element => {
     return (
         <nav className="flex space-x-4">
@@ -86,47 +60,6 @@ const SortTabs = React.memo(({ activeTab, setActiveTab }: SortTabsProps): JSX.El
                 </div>
             ))}
         </nav>
-    );
-});
-
-const ProductCard = React.memo(({ product }: ProductCardProps): JSX.Element => {
-    const {name,bid_count,current_price,buy_now_price,end_time,created_at,highest_bidder_name,image_url,} = product;
-    const handleBuyNowClick = (e: React.MouseEvent) => {e.stopPropagation();console.log(`Buy now clicked for product ${product.id}`);};
-    const handleCardClick = () => {console.log(`Navigating to product ${product.id}`);};
-    return (
-        <div 
-            className="border border-gray-200 rounded-md overflow-hidden shadow-sm flex flex-col transition-shadow hover:shadow-md cursor-pointer"
-            onClick={handleCardClick}
-        >
-            <div className="aspect-4/3 bg-gray-100 relative">
-                <img
-                    src={`/api/assets/` + image_url || 'https://placehold.co/600x400?text=No+Image'}
-                    alt={name}
-                    className="w-full h-full object-cover"
-                />
-                <p className="text-gray-500 text-xs absolute bottom-[5%] left-[5%] bg-white rounded-2xl p-1.5">Bids count: {bid_count}</p>
-            </div>
-            <div className="p-3 grow flex flex-col text-sm">
-                <h3 className="font-semibold text-gray-800 truncate" title={name}>{name}</h3>
-                <div className="mt-2">
-                    <span className="text-black font-medium">Current price</span>
-                    <p className="font-bold text-[#8D0000] text-lg">{formatCurrency(current_price)}</p>
-                </div>
-                <p className="text-gray-400 text-xs">Posted date {formatDate(created_at)}</p>
-                <div className="mt-2">
-                    <span className="text-black font-semibold">Highest bidder</span>
-                    <p className="font-semibold text-red-600 truncate">{highest_bidder_name || 'No bids yet'}</p>
-                </div>
-                <p className="text-red-600 font-semibold text-xs mt-2 text-end">{calculateTimeRemaining(end_time)}</p>
-            </div>
-            <button
-                className="w-full bg-[#8D0000] text-white font-bold py-2 text-sm hover:bg-red-900 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                disabled={!buy_now_price}
-                onClick={handleBuyNowClick}
-            >
-                {buy_now_price ? `Buy now: ${formatCurrency(buy_now_price)}` : 'Auction Only'}
-            </button>
-        </div>
     );
 });
 
@@ -294,7 +227,7 @@ export default function ProductsPage(): JSX.Element {
                 <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
                         {products.map((product, index) => (
-                            <ProductCard key={product.id || index} product={product} />
+                            <MemoProductCard key={product.id || index} product={product} />
                         ))}
                     </div>
                     
