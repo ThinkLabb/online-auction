@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, JSX } from "react";
 import { ClipLoader } from "react-spinners";
 import { useParams } from "react-router-dom";
+import { MemoProductCard } from "../components/product";
 
 type Product = {
     id?: string | number;
@@ -77,6 +78,7 @@ const calculateTimeRemaining = (endTimeStr: string | null | undefined): string =
 };
 
 // **Responsive Change for SortTabs**: Uses flex-wrap and reduced spacing on mobile
+
 const SortTabs = React.memo(({ activeTab, setActiveTab }: SortTabsProps): JSX.Element => {
     return (
         <nav className="flex flex-wrap justify-center sm:justify-start space-x-2 sm:space-x-4">
@@ -316,7 +318,7 @@ export default function ProductsPage(): JSX.Element {
                 <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-6">
                         {products.map((product, index) => (
-                            <ProductCard key={product.id || index} product={product} />
+                            <MemoProductCard key={product.id || index} product={product} />
                         ))}
                     </div>
                     <Pagination

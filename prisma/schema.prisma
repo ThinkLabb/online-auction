@@ -157,8 +157,6 @@ model BidHistory {
   // Relationships
   product Product @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
   bidder  User    @relation("BidderHistory", fields: [bidder_id], references: [user_id], onDelete: Cascade)
-
-  @@unique([product_id, bidder_id])
 }
 
 model Watchlist {

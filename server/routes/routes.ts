@@ -4,8 +4,8 @@ import { celebrate, Joi, Segments } from "celebrate";
 import * as emailController from "../controllers/email.controller.ts";
 import * as productController from "../controllers/product.controllers.ts";
 import path from "path";
-import { getProduct, getProducts, uploadProducts } from "../controllers/product.controllers.ts";
 import { getAdCatergories, getAdProducts, getAdUsers } from "../controllers/admin.controler.ts";
+import { getProduct, getProductsEndest, uploadProducts } from "../controllers/product.controllers.ts";
 
 const router = express.Router();
 
@@ -37,9 +37,17 @@ router.post('/auth/me', authController.getAuthentication, authController.getAcco
 
 router.post('/auth/logout', authController.logout);
 
-router.get('/home/products', getProducts);
+router.get('/home/products/endest', getProductsEndest);
+router.get('/home/products/highestprice', productController.getHighPriceProducts);
+router.get('/home/products/topbid', productController.getTopBiddedProducts);
 
-router.get('/product/:id', getProduct);
+router.get('/product/:id', authController.getPublicAuthentication, getProduct);
+
+router.get('/product/:id/bids', authController.getSellerAuthentication, productController.getBidHistory);
+
+router.delete('/ban/:productId/:bidderId', authController.getSellerAuthentication, productController.banBidder);
+
+router.post('/bid/:productId', authController.getAuthentication, productController.placeBid);
 
 router.get('/products/:level1/:level2', productController.getProductsLV);
 
