@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 const formatCurrency = (priceStr: string | null | undefined): string => {
   if (!priceStr) return '';
   const price = Number(priceStr);
-  return new Intl.NumberFormat('de-DE').format(price) + ' $';
+  return new Intl.NumberFormat('de-DE').format(price) + ' VND';
 };
 
 const formatDate = (dateStr: string | null | undefined): string => {

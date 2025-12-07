@@ -110,6 +110,31 @@ export const getSellerAuthentication = function (req: Request, res: Response, ne
     }
     res.locals.user = payload;
     res.locals.authenticated = true;
+    next();
+  } catch (e) {
+    return res.status(500).json(errorResponse(String(e)));
+  }
+};
+
+export const getPublicAuthentication = function (req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.cookies.token) {
+      next();
+      return;
+    }
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET is not defined');
+    }
+    interface UserPayload extends JwtPayload {
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+    }
+    const payload: UserPayload = jwt.verify(req.cookies.token, secret) as UserPayload;
+    res.locals.user = payload;
+    res.locals.authenticated = true;
 
     next();
   } catch (e) {
@@ -136,10 +161,11 @@ export const changePassword = async (req: Request, res: Response) => {
 };
 
 export const getAccount = async (req: Request, res: Response) => {
-   try {
+  try {
     const user = res.locals.user;
-    return res.status(200).json(successResponse({name: user.name, email: user.email}, "Get account successfully!" ))
-
+    return res
+      .status(200)
+      .json(successResponse({ name: user.name, email: user.email }, 'Get account successfully!'));
   } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
   }
@@ -147,17 +173,17 @@ export const getAccount = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
   try {
-    const cookies = req.cookies
+    const cookies = req.cookies;
     for (let cookie in cookies) {
       res.cookie(cookie, '', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         expires: new Date(0),
-        path: '/'
+        path: '/',
       });
     }
-    res.status(200).json(successResponse(null, 'Logged out, all cookies cleared' ));
-  } catch(e) {
+    res.status(200).json(successResponse(null, 'Logged out, all cookies cleared'));
+  } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
   }
-}
+};
