@@ -28,7 +28,6 @@ pids/
 .vscode/
 
 # Prisma
-prisma/migrations/
 prisma/dev.db
 
 # Others
