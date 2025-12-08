@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { CategoryContext, useUser } from './UserContext.tsx';
 import CategoryDetail from './CategoryMenu.tsx';
@@ -7,10 +7,11 @@ import { useEffect, useMemo, useState } from 'react';
 
 function Layout() {
   const { user, setUser } = useUser();
+  const navigate = useNavigate()
 
   const handleLogout = async() => {
     try {
-      const res = await fetch('api/auth/logout', {
+      const res = await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include'
       });
@@ -26,7 +27,7 @@ function Layout() {
   useEffect(() => {
     (async() => {
       try {
-        const res = await fetch('/api/auth/me', {
+        const res = await fetch('api/auth/me', {
           method: 'POST',
           credentials: 'include',
         });
@@ -82,7 +83,10 @@ function Layout() {
                   <li className="bg-[#8D0000] text-white px-3 py-1 rounded">Welcome, {user.name}</li>
                   <li
                     className="bg-black text-white px-3 py-1 rounded cursor-pointer"
-                    onClick={handleLogout}
+                    onClick={(e) => {
+                      handleLogout();
+                      navigate("/")
+                    }}
                   >
                     Logout
                   </li>

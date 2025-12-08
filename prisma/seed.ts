@@ -184,266 +184,200 @@
 //     await prisma.$disconnect();
 //   });
 
-import { PrismaClient, ProductStatus, OrderStatus, UserRole } from '@prisma/client';
+
+import { PrismaClient, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-// Helper để băm mật khẩu
-async function hashPassword(password: string) {
-  return bcrypt.hash(password, 10);
-}
+// --- Cấu hình dữ liệu mẫu ---
+const PASSWORD_RAW = 'Password@123'; // Thỏa mãn regex: Hoa, thường, số, ký tự đặc biệt
+const NAMES_POOL = [
+  'Alex', 'John', 'Dung', 'Hung', 'Lisa', 'Kate', 'Bao', 'Tuan',
+  'Minh', 'Vy', 'Dat', 'Son', 'Nhi', 'Khoa', 'Lam', 'Ha'
+]; // Tên 3-8 ký tự
+
+// Danh mục mẫu
+const CATEGORIES = [
+  { l1: 'Electronics', l2: 'Laptops' },
+  { l1: 'Electronics', l2: 'Smartphones' },
+  { l1: 'Fashion', l2: 'Watches' },
+  { l1: 'Fashion', l2: 'Sneakers' },
+  { l1: 'Collectibles', l2: 'Coins' },
+];
+
+// Helper: Random số trong khoảng
+const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+// Helper: Lấy phần tử ngẫu nhiên từ mảng
+const randomElem = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
 async function main() {
-  console.log(`Start seeding ...`);
+  console.log('🚀 Start seeding...');
 
-  // --- 1. Tạo Categories ---
-  console.log('Seeding categories...');
-  const catElectronics = await prisma.category.upsert({
-    where: { name_level_1_name_level_2: { name_level_1: 'Electronics', name_level_2: 'Phones' } },
-    update: {},
-    create: { name_level_1: 'Electronics', name_level_2: 'Phones' },
-  });
+  // 1. Dọn dẹp dữ liệu cũ (Xóa theo thứ tự để tránh lỗi khóa ngoại)
+  console.log('🗑️ Cleaning old data...');
+  await prisma.orderChat.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.deniedBidders.deleteMany();
+  await prisma.reviews.deleteMany();
+  await prisma.productQandA.deleteMany();
+  await prisma.watchlist.deleteMany();
+  await prisma.bidHistory.deleteMany();
+  await prisma.productDescriptionHistory.deleteMany();
+  await prisma.productImages.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.category.deleteMany();
+  await prisma.user.deleteMany();
 
-  const catLaptops = await prisma.category.upsert({
-    where: { name_level_1_name_level_2: { name_level_1: 'Electronics', name_level_2: 'Laptops' } },
-    update: {},
-    create: { name_level_1: 'Electronics', name_level_2: 'Laptops' },
-  });
+  // 2. Tạo Categories
+  console.log('📦 Seeding Categories...');
+  const createdCategories = [];
+  for (const cat of CATEGORIES) {
+    const c = await prisma.category.create({
+      data: { name_level_1: cat.l1, name_level_2: cat.l2 },
+    });
+    createdCategories.push(c);
+  }
 
-  const catFashion = await prisma.category.upsert({
-    where: { name_level_1_name_level_2: { name_level_1: 'Fashion', name_level_2: 'Watches' } },
-    update: {},
-    create: { name_level_1: 'Fashion', name_level_2: 'Watches' },
-  });
-
-  const catCameras = await prisma.category.upsert({
-    where: { name_level_1_name_level_2: { name_level_1: 'Electronics', name_level_2: 'Cameras' } },
-    update: {},
-    create: { name_level_1: 'Electronics', name_level_2: 'Cameras' },
-  });
-
-  // --- 2. Tạo Users (Sellers & Bidders) ---
-  console.log('Seeding users...');
-  const hashedPassword = await hashPassword('password123');
-
-  // Sellers
-  const seller1 = await prisma.user.upsert({
-    where: { email: 'seller1@example.com' },
-    update: {},
-    create: { email: 'seller1@example.com', name: 'John Seller', password: hashedPassword, role: UserRole.seller, is_email_verified: true, address: '123 Seller St, NY' },
-  });
-
-  const seller2 = await prisma.user.upsert({
-    where: { email: 'seller2@example.com' },
-    update: {},
-    create: { email: 'seller2@example.com', name: 'Jane Seller', password: hashedPassword, role: UserRole.seller, is_email_verified: true, address: '456 Market Ave, CA' },
-  });
-
-  // Bidders
-  const bidder1 = await prisma.user.upsert({
-    where: { email: 'bidder1@example.com' },
-    update: {},
-    create: { email: 'bidder1@example.com', name: 'Alice Bidder', password: hashedPassword, role: UserRole.bidder, is_email_verified: true, address: '789 Buyer Ln, TX' },
-  });
-
-  const bidder2 = await prisma.user.upsert({
-    where: { email: 'bidder2@example.com' },
-    update: {},
-    create: { email: 'bidder2@example.com', name: 'Bob Bidder', password: hashedPassword, role: UserRole.bidder, is_email_verified: true, address: '321 Ocean Dr, FL' },
-  });
-
-  const bidder3 = await prisma.user.upsert({
-    where: { email: 'bidder3@example.com' },
-    update: {},
-    create: { email: 'bidder3@example.com', name: 'Charlie Bidder', password: hashedPassword, role: UserRole.bidder, is_email_verified: true, address: '654 Mountain Rd, CO' },
-  });
-
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@example.com' },
-    update: {},
-    create: { email: 'admin@example.com', name: 'Super Admin', password: hashedPassword, role: UserRole.admin, is_email_verified: true },
-  });
-
-  // --- 3. Tạo Products & Bid History ---
-  console.log('Seeding products & bids...');
-
-  // PRODUCT 1: Đang đấu giá sôi nổi (Rolex Watch)
-  // Seller: seller1
-  // Bidders: bidder1, bidder2, bidder3
-  const product1 = await prisma.product.create({
-    data: {
-      name: 'Vintage Rolex Watch',
-      seller_id: seller1.user_id,
-      category_id: catFashion.category_id,
-      start_price: 1500.00,
-      buy_now_price: 3000.00,
-      step_price: 50.00,
-      // Giá hiện tại là giá cao nhất
-      current_price: 1650.00,
-      // Người giữ giá cao nhất hiện tại là bidder3
-      current_highest_bidder_id: bidder3.user_id,
-      bid_count: 3,
-      status: ProductStatus.open,
-      end_time: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 ngày nữa
-      description_history: { create: { description: 'A beautiful vintage Rolex from the 1980s. Good condition.' } },
-      images: { create: { image_url: 'thinkpad.webp' } },
-      // Tạo luôn Bid History
-      bids: {
-        create: [
-          { bidder_id: bidder1.user_id, bid_amount: 1550.00, bid_time: new Date(Date.now() - 2 * 60 * 60 * 1000) }, // 2 tiếng trước
-          { bidder_id: bidder2.user_id, bid_amount: 1600.00, bid_time: new Date(Date.now() - 1 * 60 * 60 * 1000) }, // 1 tiếng trước
-          { bidder_id: bidder3.user_id, bid_amount: 1650.00, bid_time: new Date(Date.now() - 30 * 60 * 1000) },    // 30 phút trước
-        ]
-      }
-    },
-  });
-
-  // PRODUCT 2: Chưa ai bid (MacBook Pro)
-  await prisma.product.create({
-    data: {
-      name: 'Used MacBook Pro 14"',
-      seller_id: seller2.user_id,
-      category_id: catLaptops.category_id,
-      start_price: 800.00,
-      buy_now_price: 1200.00,
-      step_price: 25.00,
-      current_price: 800.00,
-      end_time: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-      description_history: { create: { description: 'MacBook Pro 14-inch, M1 Pro chip. Minor scratches on the bottom.' } },
-      images: { create: { image_url: 'thinkpad.webp' } },
-    },
-  });
-
-  // PRODUCT 3: Sắp hết hạn (iPhone 13)
-  await prisma.product.create({
-    data: {
-      name: 'iPhone 13 Pro - 256GB',
-      seller_id: seller1.user_id,
-      category_id: catElectronics.category_id,
-      start_price: 450.00,
-      step_price: 10.00,
-      current_price: 450.00,
-      end_time: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 tiếng nữa hết hạn
-      description_history: { create: { description: 'iPhone 13 Pro, 256GB, Sierra Blue. Battery health 90%.' } },
-      images: { create: { image_url: 'thinkpad.webp' } },
-    },
-  });
-
-  // PRODUCT 4: Có Watchlist và Q&A (Dell XPS)
-  const product4 = await prisma.product.create({
-    data: {
-      name: 'Dell XPS 15 Laptop',
-      seller_id: seller2.user_id,
-      category_id: catLaptops.category_id,
-      start_price: 700.00,
-      buy_now_price: 1000.00,
-      step_price: 20.00,
-      current_price: 700.00,
-      end_time: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
-      description_history: { create: { description: 'Dell XPS 15 (9510), Core i7, 16GB RAM, 1TB SSD. Excellent condition.' } },
-      images: { create: { image_url: 'thinkpad.webp' } },
-      // Tạo Q&A
-      q_and_a: {
-        create: [
-          {
-            questioner_id: bidder1.user_id,
-            question_text: 'Does it come with original charger?',
-            question_time: new Date(Date.now() - 24 * 60 * 60 * 1000),
-            answer_text: 'Yes, original 130W charger included.',
-            answer_time: new Date(Date.now() - 20 * 60 * 60 * 1000),
-          },
-          {
-            questioner_id: bidder2.user_id,
-            question_text: 'Is the battery replaceable?',
-            question_time: new Date(Date.now() - 5 * 60 * 60 * 1000),
-            // Chưa trả lời
-          }
-        ]
-      }
-    },
-  });
-
-  // --- 4. Tạo Watchlist ---
-  console.log('Seeding watchlist...');
-  await prisma.watchlist.createMany({
-    data: [
-      { user_id: bidder1.user_id, product_id: product1.product_id }, // Bidder 1 thích Rolex
-      { user_id: bidder2.user_id, product_id: product4.product_id }, // Bidder 2 thích Dell
-      { user_id: bidder3.user_id, product_id: product4.product_id }, // Bidder 3 thích Dell
-    ],
-    skipDuplicates: true
-  });
-
-  // --- 5. Tạo Order & Reviews (Đã bán thành công) ---
-  console.log('Seeding completed orders & reviews...');
-
-  // Tạo một sản phẩm đã bán (Sony Camera)
-  // Seller: seller1
-  // Winner: bidder2
-  const productSold = await prisma.product.create({
-    data: {
-      name: 'Sony A7III Camera Body',
-      seller_id: seller1.user_id,
-      category_id: catCameras.category_id,
-      start_price: 1000.00,
-      step_price: 50.00,
-      current_price: 1200.00, // Giá thắng
-      current_highest_bidder_id: bidder2.user_id,
-      bid_count: 1,
-      status: ProductStatus.sold, // Trạng thái đã bán
-      end_time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // Đã kết thúc 2 ngày trước
-      description_history: { create: { description: 'Sony Alpha A7III mirrorless camera body only. Low shutter count.' } },
-      images: { create: { image_url: 'thinkpad.webp' } },
-      bids: {
-        create: { bidder_id: bidder2.user_id, bid_amount: 1200.00, bid_time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) }
-      }
-    },
-  });
-
-  // Tạo Order cho sản phẩm trên
-  const order = await prisma.order.create({
-    data: {
-      product_id: productSold.product_id,
-      seller_id: seller1.user_id,
-      buyer_id: bidder2.user_id,
-      final_price: 1200.00,
-      status: OrderStatus.shipped, // Đã vận chuyển
-      shipping_address: '321 Ocean Dr, Miami, FL',
-      created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      // Tạo tin nhắn chat trong đơn hàng
-      chat_messages: {
-        create: [
-          { sender_id: bidder2.user_id, message_text: 'Hi, when will you ship this?', sent_at: new Date(Date.now() - 20 * 60 * 60 * 1000) },
-          { sender_id: seller1.user_id, message_text: 'I shipped it this morning. Tracking number is XYZ123.', sent_at: new Date(Date.now() - 10 * 60 * 60 * 1000) },
-        ]
-      }
-    }
-  });
-
-  // Tạo Reviews cho Order này
-  // 1. Buyer (bidder2) review Seller (seller1)
-  await prisma.reviews.create({
-    data: {
-      product_id: productSold.product_id,
-      reviewer_id: bidder2.user_id,
-      reviewee_id: seller1.user_id,
-      is_positive: true,
-      comment: 'Great camera, fast shipping!',
-      // Link review này vào Order
-      order_as_buyer_review: {
-        connect: { order_id: order.order_id }
-      }
-    }
-  });
+  // 3. Tạo Users (Admin, Seller, Bidder)
+  console.log('bust👥 Seeding Users...');
+  const hashedPassword = await bcrypt.hash(PASSWORD_RAW, 10);
   
-  // Cập nhật điểm review cho Seller
-  await prisma.user.update({
-    where: { user_id: seller1.user_id },
-    data: { plus_review: { increment: 1 } }
+  // Tạo 1 Admin
+  await prisma.user.create({
+    data: {
+      email: 'admin@fpt.edu.vn',
+      password: hashedPassword,
+      name: 'Admin',
+      role: 'admin',
+      is_email_verified: true,
+      address: 'Hanoi, Vietnam',
+    },
   });
 
-  console.log('Finished seeding.');
+  // Tạo 5 Sellers
+  const sellers = [];
+  for (let i = 1; i <= 5; i++) {
+    const s = await prisma.user.create({
+      data: {
+        email: `seller${i}@example.com`,
+        password: hashedPassword,
+        name: `Sell${i}`, // 5 chars
+        role: 'seller', // Enum UserRole
+        is_email_verified: true,
+        address: 'Ho Chi Minh City',
+      },
+    });
+    sellers.push(s);
+  }
+
+  // Tạo 15 Bidders (Để đảm bảo đủ người bid cho products)
+  const bidders = [];
+  for (let i = 0; i < 15; i++) {
+    const name = NAMES_POOL[i] || `User${i}`;
+    const b = await prisma.user.create({
+      data: {
+        email: `bidder${i}@example.com`,
+        password: hashedPassword,
+        name: name,
+        role: 'bidder',
+        is_email_verified: true,
+        address: 'Danang, Vietnam',
+      },
+    });
+    bidders.push(b);
+  }
+
+  // 4. Tạo Products & Bids
+  console.log('🛍️ Seeding Products & Bids...');
+  
+  // Danh sách tên sản phẩm mẫu theo index để loop
+  const productNames = [
+    'MacBook Pro M1', 'iPhone 15 Pro', 'Rolex Submariner', 'Nike Air Jordan', 'Ancient Gold Coin',
+    'Dell XPS 15', 'Samsung S24 Ultra', 'Omega Seamaster', 'Adidas Yeezy', 'Silver Dollar 1900',
+    'ThinkPad X1 Carbon', 'Google Pixel 8', 'Casio G-Shock', 'Puma Running', 'Bronze Statue',
+    'Asus ROG Strix', 'Xiaomi 14', 'Seiko 5 Sport', 'New Balance 550', 'Vintage Stamp'
+  ];
+
+  for (let i = 0; i < 20; i++) {
+    const seller = randomElem(sellers);
+    const category = randomElem(createdCategories);
+    const startPrice = randomInt(100, 2000); // Giá khởi điểm ngẫu nhiên
+    const stepPrice = randomInt(10, 50);     // Bước giá
+    const buyNowPrice = startPrice * 2;
+    
+    // Tạo Product trước (Status: Open)
+    const product = await prisma.product.create({
+      data: {
+        name: productNames[i],
+        seller_id: seller.user_id,
+        category_id: category.category_id,
+        start_price: startPrice,
+        buy_now_price: buyNowPrice,
+        step_price: stepPrice,
+        current_price: startPrice, // Sẽ update sau khi bid
+        status: 'open', // Enum ProductStatus
+        end_time: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Kết thúc sau 7 ngày
+        description_history: {
+          create: {
+            description: `This is a generic description for ${productNames[i]}. High quality, authentic item.`,
+          },
+        },
+        images: {
+          create: [
+            { image_url: 'https://1.bp.blogspot.com/-eg0ABkVxizM/YFw9RNI_vTI/AAAAAAAAAZc/SnRChGiPbWskUrB29jYpfULnR_F8opc1wCLcBGAsYHQ/w1600/71tCSEJgUgL._SL1500_.jpg' },
+            { image_url: 'https://ds393qgzrxwzn.cloudfront.net/resize/m720x480/cat1/img/images/0/Vt2qxDlUyE.jpg' },
+          ],
+        },
+      },
+    });
+
+    // --- Giả lập lịch sử đấu giá (5 lượt) ---
+    // Chọn ngẫu nhiên 5 bidder khác nhau từ danh sách bidder
+    const shuffledBidders = [...bidders].sort(() => 0.5 - Math.random());
+    const selectedBidders = shuffledBidders.slice(0, 5);
+    
+    let currentBidPrice = startPrice;
+    let lastBidderId = null;
+
+    // Tạo bid từ thấp đến cao
+    for (let j = 0; j < 5; j++) {
+      // Mỗi lần bid tăng giá lên 1 khoảng ngẫu nhiên (ít nhất là bằng step_price)
+      const jump = stepPrice + randomInt(0, 50); 
+      currentBidPrice += jump;
+      lastBidderId = selectedBidders[j].user_id;
+
+      // Thời gian bid cách nhau vài tiếng
+      const bidTime = new Date();
+      bidTime.setHours(bidTime.getHours() - (5 - j)); // Lùi lại vài giờ
+
+      await prisma.bidHistory.create({
+        data: {
+          product_id: product.product_id,
+          bidder_id: selectedBidders[j].user_id,
+          bid_amount: currentBidPrice,
+          bid_time: bidTime,
+        },
+      });
+    }
+
+    // Cập nhật lại thông tin Product sau khi có người bid
+    // Phải update: current_price, current_highest_bidder_id, bid_count
+    if (lastBidderId) {
+      await prisma.product.update({
+        where: { product_id: product.product_id },
+        data: {
+          current_price: currentBidPrice,
+          current_highest_bidder_id: lastBidderId,
+          bid_count: 5,
+        },
+      });
+    }
+    
+    console.log(`   -> Created product: ${product.name} with 5 bids (Final Price: ${currentBidPrice})`);
+  }
+
+  console.log('✅ Seeding finished successfully!');
 }
 
 main()
@@ -452,6 +386,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    console.log(`Seeding finished.`);
     await prisma.$disconnect();
   });

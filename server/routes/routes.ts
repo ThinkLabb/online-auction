@@ -6,7 +6,6 @@ import * as productController from "../controllers/product.controllers.ts";
 import path from "path";
 import { getProduct, getProducts, uploadProducts } from "../controllers/product.controllers.ts";
 import { getUserProfile, getMyProfile } from "../controllers/user.controllers.ts";
-import { authMiddleware } from "../middleware/auth.ts";
 
 const router = express.Router();
 
@@ -55,7 +54,7 @@ router.use('/categories', productController.getCategories)
 
 router.get('/bidder/:id', getUserProfile);
 
-router.get('/profile/me', authMiddleware, getMyProfile);
+router.get('/profile/me', authController.getAuthentication, getMyProfile);
 
 router.use('/profile/verifyuser', authController.verifyUser)
 

@@ -172,3 +172,30 @@ export const verifyUser = async (req: Request, res: Response) => {
     return res.status(500).json(errorResponse(String(e)));
   }
 }
+
+export const getAccount = async (req: Request, res: Response) => {
+  try {
+    const user = res.locals.user;
+    return res.status(200).json(successResponse({name: user.name, email: user.email}, "Get account successfully!" ))
+
+  } catch (e) {
+    return res.status(500).json(errorResponse(String(e)));
+  }
+};
+
+export const logout = async (req: Request, res: Response) => {
+  try {
+    const cookies = req.cookies
+    for (let cookie in cookies) {
+      res.cookie(cookie, '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        expires: new Date(0),
+        path: '/'
+      });
+    }
+    res.status(200).json(successResponse(null, 'Logged out, all cookies cleared' ));
+  } catch(e) {
+    return res.status(500).json(errorResponse(String(e)));
+  }
+}

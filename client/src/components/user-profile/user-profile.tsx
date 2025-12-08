@@ -251,12 +251,14 @@ function ChangePassword( {profile, setAction} : {profile: ProfileData, setAction
     switch(step) {
       case "verify":
         return(
-          <div className="flex flex-col gap-4">
-            <div className="text-lg font-semibold text-gray-700">
-              Verify your self!
-            </div>
+          <div className='p-8 border border-gray-200 shadow-lg rounded-lg bg-white flex flex-col gap-4'>
+            <h1 className="text-3xl font-bold text-foreground">
+                Verify your self!
+            </h1>
+            
+            <hr/>
 
-            {error && <div className="text-red-600 bg-red-50 p-2 rounded">{error}</div>}
+            {error && <div className="text-[#8D0000]">{error}</div>}
 
             <form
               onSubmit={(e) => {
@@ -267,7 +269,7 @@ function ChangePassword( {profile, setAction} : {profile: ProfileData, setAction
             >
               <label 
                 htmlFor="password"
-                className=""
+                className="text-muted-foreground"
               >
                 Old password
               </label>
@@ -276,7 +278,7 @@ function ChangePassword( {profile, setAction} : {profile: ProfileData, setAction
                 id="password" type="password"
                 onChange={(e) => setOldPassword(e.target.value)}
                 placeholder="********"
-                className=""
+                className='w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]'
               />
 
               <div className="mt-10 flex flex-col md:flex-row md:mx-auto gap-5">

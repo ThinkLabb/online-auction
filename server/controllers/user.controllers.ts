@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { PrismaClient } from '@prisma/client';
 import { ProductStatus, OrderStatus } from "@prisma/client";
-import { authMiddleware } from "../middleware/auth";
 import bcrypt from "bcryptjs";
 import { authenticateUser, changePassword } from "../services/auth.services";
 import { errorResponse } from "../utils/response";
@@ -61,7 +60,8 @@ type ReviewReceived = {
 
 export const getMyProfile = async (req: Request, res: Response<any>) => {
   try {
-    const userID = req.user?.id;
+    const userID = res.locals.user.id;
+    console.log(userID);
     if (!userID) return res.status(401).json({ message: "Unauthorized" });
 
     const user = await prisma.user.findUnique({

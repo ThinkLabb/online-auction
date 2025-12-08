@@ -6,19 +6,31 @@ import { ProfileData } from "../components/user-profile/types"
 import UserTab from "../components/user-profile/user-profile-tabs"
 import UserAction from "../components/user-profile/user-profile"
 
+
+
 export default function UserProfile() {
-  const user = useUser();
   const navigate = useNavigate();
   const [action, setAction] = useState("view-tabs")
   const [loading, setLoading] = useState(true);
+  const { user, setUser } = useUser();
   const [profile, setProfile] = useState<ProfileData | null>(null);
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/signin");
-      return;
-    }
+  const handleLogout = async() => {
+    try {
+      const res = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
 
+      const result = await res.json();
+      if (res.ok && result.isSuccess) {
+        setUser(null);
+      }
+    } catch(e) {
+    }
+  };
+
+  useEffect(() => {
     const fetchProfile = async () => {
       try {
         const res = await fetch("/api/profile/me", {
@@ -37,14 +49,9 @@ export default function UserProfile() {
     };
 
     fetchProfile();
-  }, [user.user, navigate])
+  }, [user, navigate])
 
   console.log(user)
-
-  const handleSignOut = () => {
-    user.setUser(null);
-    navigate("/");
-  };
 
   if (loading) return <div className="text-center py-32">Loading...</div>;
   if (!profile) return <div className="text-center py-32 text-red-500">Error</div>;
@@ -149,7 +156,7 @@ export default function UserProfile() {
                 rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 font-medium p-2
               "
               onClick={() => {
-                user.setUser(null);
+                handleLogout();
                 navigate("/");
               }}
             >
