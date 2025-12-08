@@ -34,7 +34,6 @@ export const getAdProducts = async (req: Request, res: Response) => {
 
       const products = productsFromDB.map((product) => {
         const isActive = product.end_time.getTime() > currentDate.getTime();
-				console.log(isActive);
             
         return {
           id: String(product.product_id),
@@ -53,7 +52,13 @@ export const getAdProducts = async (req: Request, res: Response) => {
 
 export const getAdUsers = async (req: Request, res: Response) => {
 	try {
-		const users = await db.prisma.user.findMany();
+		const users = await db.prisma.user.findMany({
+      where: {
+        role: {
+          not: "admin"
+        }
+      }
+    });
 
 		return res.status(200).json(successResponse(users, "Get users successfully"))
 
@@ -98,3 +103,8 @@ export const getUpgradeRequest = async (req: Request, res: Response) => {
     return res.status(500).json(errorResponse(String(e)));
 	}
 }
+
+export const getAdName = async (req: Request, res: Response) => {
+  const user = res.locals.user
+  return res.status(200).json(successResponse(user.name, "Get admin name successfully!"));
+} 

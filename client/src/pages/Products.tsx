@@ -191,15 +191,12 @@ export default function ProductsPage(): JSX.Element {
                 apiUrlWithParams = `/api/products/${level1}/${level2}?${params.toString()}`;
             }
 
-            console.log(`Fetching products from: ${apiUrlWithParams}`);
-
             try {
                 const res = await fetch(apiUrlWithParams);
                 if (!res.ok) {
                     throw new Error('Network response was not ok');
                 }
                 const data: PaginatedProductsResponse = await res.json();
-                console.log(data);
                 setProducts(data.products || []);
                 setTotalItems(data.totalItems || 0);
             } catch (error) {

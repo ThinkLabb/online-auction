@@ -4,7 +4,7 @@ import { celebrate, Joi, Segments } from "celebrate";
 import * as emailController from "../controllers/email.controller.ts";
 import * as productController from "../controllers/product.controllers.ts";
 import path from "path";
-import { getAdCatergories, getAdProducts, getAdUsers, getUpgradeRequest } from "../controllers/admin.controler.ts";
+import { getAdCatergories, getAdName, getAdProducts, getAdUsers, getUpgradeRequest } from "../controllers/admin.controler.ts";
 import { getProduct, getProductsEndest, uploadProducts } from "../controllers/product.controllers.ts";
 
 const router = express.Router();
@@ -67,7 +67,7 @@ router.use('/changepassword', authController.changePassword)
 
 router.get('/categories', productController.getCategories)
 
-router.get('/admin', authController.getAuthentication, authController.checkAdmin)
+router.get('/admin', authController.getAuthentication, authController.checkAdmin, getAdName)
 
 router.get('/admin/categories', getAdCatergories);
 
