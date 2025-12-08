@@ -33,12 +33,13 @@ export default function UserProfile() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("/api/profile/me", {
+        const res = await fetch("/api/profile", {
           credentials: "include",
         });
 
         if (res.ok) {
           const data = await res.json();
+          console.log(data)
           setProfile(data);
         }
       } catch (err) {
@@ -50,8 +51,6 @@ export default function UserProfile() {
 
     fetchProfile();
   }, [user, navigate])
-
-  console.log(user)
 
   if (loading) return <div className="text-center py-32">Loading...</div>;
   if (!profile) return <div className="text-center py-32 text-red-500">Error</div>;

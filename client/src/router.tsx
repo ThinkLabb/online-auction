@@ -18,7 +18,7 @@ function Router() {
         <Route path="/product/:id" element={<ProductDetail />}></Route>
 
         <Route path="/products/:level1/:level2" element={<Products />}></Route>
-        <Route path="/profile/me" element={<UserProfile/>}></Route>
+        <Route path="/profile" element={<UserProfile/>}></Route>
       </Route>
 
       <Route path="/register" element={<Register />}></Route>

@@ -27,7 +27,7 @@ function Layout() {
   useEffect(() => {
     (async() => {
       try {
-        const res = await fetch('api/auth/me', {
+        const res = await fetch('/api/auth/me', {
           method: 'POST',
           credentials: 'include',
         });

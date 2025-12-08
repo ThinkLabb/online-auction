@@ -11,7 +11,6 @@ datasource db {
 // -------------------------------------------------
 // Enums based on your SQL CREATE TYPE statements
 // -------------------------------------------------
-
 enum UserRole {
   bidder
   seller
@@ -36,76 +35,97 @@ enum OrderStatus {
 // -------------------------------------------------
 // Models based on your SQL CREATE TABLE statements
 // -------------------------------------------------
-
 model User {
-  user_id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                  String   @unique @db.Text
-  password          String   @db.Text
-  name              String   @db.Text
-  address                String?  @db.Text
-  birthdate              DateTime? @db.Date
-  role                   UserRole @default(bidder)
-  seller_upgrade_request Boolean  @default(false)
-  created_at             DateTime @default(now()) @db.Timestamptz
-  updated_at             DateTime @updatedAt @db.Timestamptz
-  plus_review            Int      @default(0)
-  minus_review           Int      @default(0)
-  is_email_verified      Boolean  @default(false)
+  user_id                   String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                     String                  @unique @db.Text
+  password                  String                  @db.Text
+  name                      String                  @db.Text
+  address                   String?                 @db.Text
+  birthdate                 DateTime?               @db.Date
+  role                      UserRole                @default(bidder)
+  // TRƯỜNG seller_upgrade_request ĐÃ ĐƯỢC CHUYỂN
+  created_at                DateTime                @default(now()) @db.Timestamptz
+  updated_at                DateTime                @updatedAt @db.Timestamptz
+  plus_review               Int                     @default(0)
+  minus_review              Int                     @default(0)
+  is_email_verified         Boolean                 @default(false)
 
   // Relationships
-  products_sold       Product[]      @relation("SellerProducts")
-  current_high_bids   Product[]      @relation("HighestBidder")
-  bids                BidHistory[]   @relation("BidderHistory")
-  watchlist           Watchlist[]
-  questions_asked     ProductQandA[] @relation("Questioner")
-  reviews_given       Reviews[]      @relation("Reviewer")
-  reviews_received    Reviews[]      @relation("Reviewee")
-  denied_bids         DeniedBidders[]
-  orders_bought       Order[]        @relation("BuyerOrders")
-  orders_sold         Order[]        @relation("SellerOrders")
-  chat_messages_sent  OrderChat[]
+  products_sold             Product[]               @relation("SellerProducts")
+  current_high_bids         Product[]               @relation("HighestBidder")
+  bids                      BidHistory[]            @relation("BidderHistory")
+  watchlist                 Watchlist[]
+  questions_asked           ProductQandA[]          @relation("Questioner")
+  reviews_given             Reviews[]               @relation("Reviewer")
+  reviews_received          Reviews[]               @relation("Reviewee")
+  denied_bids               DeniedBidders[]
+  orders_bought             Order[]                 @relation("BuyerOrders")
+  orders_sold               Order[]                 @relation("SellerOrders")
+  chat_messages_sent        OrderChat[]
+  // Mối quan hệ mới tới bảng yêu cầu nâng cấp
+  upgrade_requests          SellerUpgradeRequest[]
 }
 
+// -------------------------------------------------
+// MODEL MỚI: Yêu cầu nâng cấp thành Seller
+// -------------------------------------------------
+model SellerUpgradeRequest {
+  request_id          BigInt      @id @default(autoincrement())
+  user_id             String      @db.Uuid
+  // Trường thông báo (message) của người dùng
+  message             String?     @db.Text
+  is_approved         Boolean     @default(false)
+  is_denied           Boolean     @default(false)
+  requested_at        DateTime    @default(now()) @db.Timestamptz
+  processed_at        DateTime?   @db.Timestamptz
+  
+  // Relationship
+  user                User        @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  // Đảm bảo mỗi người dùng chỉ có MỘT yêu cầu đang chờ/chưa xử lý
+  @@unique([user_id])
+}
+
+// --- Các Models khác không đổi (Tôi chỉ hiển thị các model đã chỉnh sửa) ---
+
 model Category {
-  category_id  Int    @id @default(autoincrement())
+  category_id Int    @id @default(autoincrement())
   name_level_1 String @db.Text
   name_level_2 String @db.Text
-
-  // Relationships
-  products Product[]
-
+  // Relationship
+  products    Product[]
   @@unique([name_level_1, name_level_2])
 }
 
 model Product {
-  product_id                  BigInt    @id @default(autoincrement())
-  seller_id                   String    @db.Uuid
-  category_id                 Int
-  name                        String    @db.Text
-  status                      ProductStatus @default(open)
-  start_price                 Decimal   @db.Decimal(12, 2)
-  buy_now_price               Decimal?  @db.Decimal(12, 2)
-  step_price                  Decimal   @db.Decimal(10, 2)
-  current_price               Decimal   @default(0.00) @db.Decimal(12, 2)
-  current_highest_bidder_id   String?   @db.Uuid
-  bid_count                   Int       @default(0)
-  created_at                  DateTime  @default(now()) @db.Timestamptz
-  end_time                    DateTime  @db.Timestamptz
-  auto_extend                 Boolean   @default(false)
-  review_needed               Boolean   @default(false)
+  product_id                BigInt      @id @default(autoincrement())
+  seller_id                 String      @db.Uuid
+  category_id               Int
+  name                      String      @db.Text
+  status                    ProductStatus @default(open)
+  start_price               Decimal     @db.Decimal(12, 2)
+  buy_now_price             Decimal?    @db.Decimal(12, 2)
+  step_price                Decimal     @db.Decimal(10, 2)
+  current_price             Decimal     @default(0.00) @db.Decimal(12, 2)
+  current_highest_bidder_id String?     @db.Uuid
+  bid_count                 Int         @default(0)
+  created_at                DateTime    @default(now()) @db.Timestamptz
+  end_time                  DateTime    @db.Timestamptz
+  auto_extend               Boolean     @default(false)
+  review_needed             Boolean     @default(false)
 
   // Relationships
-  seller                   User         @relation("SellerProducts", fields: [seller_id], references: [user_id], onDelete: Restrict)
-  category                 Category     @relation(fields: [category_id], references: [category_id], onDelete: Restrict)
-  current_highest_bidder   User?        @relation("HighestBidder", fields: [current_highest_bidder_id], references: [user_id])
-  images                   ProductImages[]
-  description_history      ProductDescriptionHistory[]
-  bids                     BidHistory[]
-  watchlist_entries        Watchlist[]
-  q_and_a                  ProductQandA[]
-  reviews                  Reviews[]
-  denied_bidders           DeniedBidders[]
-  order                    Order?
+  seller                    User        @relation("SellerProducts", fields: [seller_id], references: [user_id], onDelete: Restrict)
+  category                  Category    @relation(fields: [category_id], references: [category_id], onDelete: Restrict)
+  current_highest_bidder    User?       @relation("HighestBidder", fields: [current_highest_bidder_id], references: [user_id])
+  images                    ProductImages[]
+  description_history       ProductDescriptionHistory[]
+  bids                      BidHistory[]
+  watchlist_entries         Watchlist[]
+  q_and_a                   ProductQandA[]
+  reviews                   Reviews[]
+  denied_bidders            DeniedBidders[]
+  order                     Order?
 }
 
 model ProductImages {
@@ -137,8 +157,6 @@ model BidHistory {
   // Relationships
   product Product @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
   bidder  User    @relation("BidderHistory", fields: [bidder_id], references: [user_id], onDelete: Cascade)
-
-  @@unique([product_id, bidder_id])
 }
 
 model Watchlist {
@@ -153,13 +171,13 @@ model Watchlist {
 }
 
 model ProductQandA {
-  qa_id         BigInt   @id @default(autoincrement())
-  product_id    BigInt
-  questioner_id String   @db.Uuid
-  question_text String   @db.Text
-  question_time DateTime @default(now()) @db.Timestamptz
-  answer_text   String?  @db.Text
-  answer_time   DateTime? @db.Timestamptz
+  qa_id           BigInt   @id @default(autoincrement())
+  product_id      BigInt
+  questioner_id   String   @db.Uuid
+  question_text   String   @db.Text
+  question_time   DateTime @default(now()) @db.Timestamptz
+  answer_text     String?  @db.Text
+  answer_time     DateTime? @db.Timestamptz
 
   // Relationships
   product    Product @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
@@ -167,22 +185,20 @@ model ProductQandA {
 }
 
 model Reviews {
-  review_id   BigInt   @id @default(autoincrement())
-  product_id  BigInt
-  reviewer_id String   @db.Uuid
-  reviewee_id String   @db.Uuid
-  is_positive Boolean  // <-- ĐÃ THAY ĐỔI
-  comment     String?  @db.Text
-  created_at  DateTime @default(now()) @db.Timestamptz
+  review_id            BigInt   @id @default(autoincrement())
+  product_id           BigInt
+  reviewer_id          String   @db.Uuid
+  reviewee_id          String   @db.Uuid
+  is_positive          Boolean  // True là review tốt, False là review xấu
+  comment              String?  @db.Text
+  created_at           DateTime @default(now()) @db.Timestamptz
 
   // Relationships
-  product                Product @relation(fields: [product_id], references: [product_id])
-  reviewer               User    @relation("Reviewer", fields: [reviewer_id], references: [user_id])
-  reviewee               User    @relation("Reviewee", fields: [reviewee_id], references: [user_id])
-  order_as_seller_review Order?  @relation("SellerReview")
-  order_as_buyer_review  Order?  @relation("BuyerReview")
-
-  // Dòng @@db.CheckConstraint đã bị xóa để fix lỗi
+  product                Product  @relation(fields: [product_id], references: [product_id])
+  reviewer               User     @relation("Reviewer", fields: [reviewer_id], references: [user_id])
+  reviewee               User     @relation("Reviewee", fields: [reviewee_id], references: [user_id])
+  order_as_seller_review Order?   @relation("SellerReview")
+  order_as_buyer_review  Order?   @relation("BuyerReview")
 }
 
 model DeniedBidders {
@@ -213,12 +229,12 @@ model Order {
   updated_at              DateTime    @updatedAt @db.Timestamptz
 
   // Relationships
-  product         Product     @relation(fields: [product_id], references: [product_id])
-  buyer           User        @relation("BuyerOrders", fields: [buyer_id], references: [user_id])
-  seller          User        @relation("SellerOrders", fields: [seller_id], references: [user_id])
-  seller_review   Reviews?    @relation("SellerReview", fields: [seller_review_id], references: [review_id], onDelete: SetNull)
-  buyer_review    Reviews?    @relation("BuyerReview", fields: [buyer_review_id], references: [review_id], onDelete: SetNull)
-  chat_messages   OrderChat[]
+  product        Product   @relation(fields: [product_id], references: [product_id])
+  buyer          User      @relation("BuyerOrders", fields: [buyer_id], references: [user_id])
+  seller         User      @relation("SellerOrders", fields: [seller_id], references: [user_id])
+  seller_review  Reviews?  @relation("SellerReview", fields: [seller_review_id], references: [review_id], onDelete: SetNull)
+  buyer_review   Reviews?  @relation("BuyerReview", fields: [buyer_review_id], references: [review_id], onDelete: SetNull)
+  chat_messages  OrderChat[]
 }
 
 model OrderChat {
@@ -229,6 +245,6 @@ model OrderChat {
   sent_at         DateTime @default(now()) @db.Timestamptz
 
   // Relationships
-  order  Order @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
-  sender User  @relation(fields: [sender_id], references: [user_id])
+  order Order @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
+  sender User @relation(fields: [sender_id], references: [user_id])
 }

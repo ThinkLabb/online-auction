@@ -58,10 +58,9 @@ type ReviewReceived = {
   product_id: number;
 };
 
-export const getMyProfile = async (req: Request, res: Response<any>) => {
+export const getMyProfile = async (req: Request, res: Response) => {
   try {
     const userID = res.locals.user.id;
-    console.log(userID);
     if (!userID) return res.status(401).json({ message: "Unauthorized" });
 
     const user = await prisma.user.findUnique({
