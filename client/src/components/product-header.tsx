@@ -1,6 +1,6 @@
-import { Star, User } from "lucide-react";
-import { Product } from "../lib/type";
-import { calculateTimeRemaining } from "./product";
+import { Star, User } from 'lucide-react';
+import { Product } from '../lib/type';
+import { calculateTimeRemaining, formatCurrency } from './product';
 
 export const ProductHeaderInfo = ({ product }: { product: Product }) => (
   <>
@@ -18,24 +18,25 @@ export const ProductHeaderInfo = ({ product }: { product: Product }) => (
 
     <div className="mb-6">
       <p className="text-sm text-gray-500">Current bid:</p>
-      <div className="flex items-baseline gap-2">
+      <div className="flex items-baseline gap-2 justify-between">
         <span className="text-3xl font-bold text-gray-900">
-          {product.currentBid.toLocaleString()} VND
+          {formatCurrency(product.currentBid.toString())}
         </span>
         <span className="text-sm text-gray-500">{product.bidsPlaced} bids placed</span>
       </div>
     </div>
-
-    <div className="bg-red-50 border border-red-100 p-3 rounded mb-6 flex justify-between items-center">
-      <span className="text-sm font-medium text-red-800">Buy it now!</span>
-      <span className="text-xl font-bold text-gray-900">
-        {product.buyNowPrice.toLocaleString()} VND
-      </span>
-    </div>
   </>
 );
 
-export const UserCard = ({ title, user, actionLabel }: { title: string; user: any; actionLabel?: string }) => (
+export const UserCard = ({
+  title,
+  user,
+  actionLabel,
+}: {
+  title: string;
+  user: any;
+  actionLabel?: string;
+}) => (
   <div className="mb-4 last:mb-0">
     <h3 className="text-sm font-bold text-gray-900 mb-3">{title}</h3>
     <div className="flex items-center gap-3 mb-3">
