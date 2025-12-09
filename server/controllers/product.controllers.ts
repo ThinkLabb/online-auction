@@ -225,14 +225,10 @@ const calculateRating = (plus: number, minus: number) => {
   return Number(((plus / total) * 5).toFixed(1));
 };
 
-// --- src/controllers/product.controllers.ts (Thay thế hàm getProduct cũ) ---
-
 export const getProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const user = res.locals.user;
-
-    // 1. Lấy thông tin sản phẩm chính
     const productData = await db.prisma.product.findUnique({
       where: { product_id: BigInt(id) },
       include: {
@@ -255,13 +251,13 @@ export const getProduct = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    // 2. Lấy 5 sản phẩm liên quan (Related Products)
+    // take 5 related products
     const relatedProductsRaw = await db.prisma.product.findMany({
       where: {
-        category_id: productData.category_id, // Cùng danh mục
-        product_id: { not: productData.product_id }, // Khác ID hiện tại
+        category_id: productData.category_id,
+        product_id: { not: productData.product_id },
         status: 'open', // Đang mở bán
-        end_time: { gt: new Date() }, // Chưa hết hạn
+        end_time: { gt: new Date() },
       },
       select: {
         product_id: true,
