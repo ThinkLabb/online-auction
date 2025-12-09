@@ -233,13 +233,6 @@ export const getProduct = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    const now = new Date();
-    const endTime = new Date(productData.end_time);
-    const timeLeftMs = endTime.getTime() - now.getTime();
-    const daysLeft = Math.floor(timeLeftMs / (1000 * 60 * 60 * 24));
-    const hoursLeft = Math.floor((timeLeftMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const endsInString = timeLeftMs > 0 ? `${daysLeft} days ${hoursLeft} hours` : 'Ended';
-
     const descriptionList = productData.description_history.map((hist) => ({
       text: hist.description,
       date: new Date(hist.added_at).toLocaleDateString('vi-VN', {
@@ -265,7 +258,7 @@ export const getProduct = async (req: Request, res: Response) => {
         day: 'numeric',
         year: 'numeric',
       }),
-      endsIn: endsInString,
+      endsIn: productData.end_time,
       currentBid: Number(productData.current_price),
       bidsPlaced: productData.bid_count,
       buyNowPrice: productData.buy_now_price ? Number(productData.buy_now_price) : 0,
@@ -416,158 +409,3 @@ export const getProductsLV = async (req: Request, res: Response) => {
   }
 };
 
-export const getBidHistory = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params; // This is the product_id
-    const user = res.locals.user; // Assumed authenticated user
-
-    // 1. Check Product Ownership
-    // We fetch the product to ensure it exists and the user is the seller
-    const product = await db.prisma.product.findUnique({
-      where: {
-        product_id: BigInt(id), // Convert string ID from params to BigInt
-      },
-      select: {
-        seller_id: true,
-      },
-    });
-
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    // Security Check: Compare user_id (String/UUID) with seller_id (String/UUID)
-    if (product.seller_id !== user.id) {
-      return res.status(403).json({ message: "Unauthorized. Only the seller can view bid history." });
-    }
-
-    // 2. Fetch Bids
-    const bids = await db.prisma.bidHistory.findMany({
-      where: {
-        product_id: BigInt(id),
-      },
-      // Join with the User model to get bidder details
-      include: {
-        bidder: {
-          select: {
-            user_id: true,
-            name: true,
-          },
-        },
-      },
-      // Order by highest bid first
-      orderBy: {
-        bid_amount: 'desc',
-      },
-    });
-
-    // 3. Map to Response Format
-    const historyData = bids.map((bid) => ({
-      id: bid.bid_id.toString(), // Convert BigInt ID to string
-      bidderId: bid.bidder.user_id,
-      bidderName: bid.bidder.name,
-      amount: Number(bid.bid_amount), // Convert Decimal to Number for frontend
-      time: bid.bid_time.toISOString(), // Send ISO string for frontend formatting
-    }));
-
-    return res.status(200).json(historyData);
-
-  } catch (e) {
-    console.error(e);
-    // Explicitly handle the BigInt serialization if returning raw error objects
-    return res.status(500).json({ message: String(e) });
-  }
-};
-
-export const banBidder = async (req: Request, res: Response) => {
-  try {
-    const { productId, bidderId } = req.params;
-    if (!productId || !bidderId) {
-      return res.status(400).json({ message: "Product ID and Bidder ID are required." });
-    }
-    const deniedBidder = await db.prisma.deniedBidders.create({
-      data: {
-        product_id: BigInt(productId), // Convert string to BigInt
-        bidder_id: bidderId
-      }
-    });
-
-    return res.status(200).json({ 
-      message: "User banned successfully.",
-      data: {
-        ...deniedBidder,
-        product_id: deniedBidder.product_id.toString() 
-      }
-    });
-
-  } catch (error) {
-    return res.status(500).json({ message: "Internal server error." });
-  }
-};
-
-export const placeBid = async (req: Request, res: Response) => {
-  try {
-    const { productId } = req.params;
-    const { amount } = req.body;
-    const user = res.locals.user;
-    const bidAmount = parseFloat(amount);
-    const prodIdBigInt = BigInt(productId);
-
-    const result = await db.prisma.$transaction(async (tx) => {
-      
-      const product = await tx.product.findUnique({
-        where: { product_id: prodIdBigInt },
-      });
-
-      if (!product) {
-        throw new Error("Product not found");
-      }
-
-      const now = new Date();
-      if (now > product.end_time || product.status !== 'open') {
-        throw new Error("Auction has ended");
-      }
-
-      const currentPrice = product.current_price || product.start_price;
-      const stepPrice = product.step_price;
-      const minRequired = Number(currentPrice) + Number(stepPrice);
-
-      if (bidAmount < minRequired) {
-        throw new Error(`Bid too low. Minimum allowed is ${minRequired}`);
-      }
-
-      const newBid = await tx.bidHistory.create({
-        data: {
-          product_id: prodIdBigInt,
-          bidder_id: user.id,
-          bid_amount: bidAmount
-        }
-      });
-
-      const updatedProduct = await tx.product.update({
-        where: { product_id: prodIdBigInt },
-        data: {
-          current_price: bidAmount,
-          current_highest_bidder_id: user.id,
-          bid_count: { increment: 1 } // Atomic increment
-        }
-      });
-
-      return { newBid, updatedProduct };
-    });
-
-    return res.status(200).json({
-      message: "Bid placed successfully!",
-      bid: {
-        ...result.newBid,
-        product_id: result.newBid.product_id.toString(),
-        bid_id: result.newBid.bid_id.toString()
-      },
-      currentPrice: result.updatedProduct.current_price
-    });
-
-  } catch (error) {
-    console.error("Bid Error:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-};

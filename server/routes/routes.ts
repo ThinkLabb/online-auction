@@ -6,6 +6,7 @@ import * as productController from "../controllers/product.controllers.ts";
 import path from "path";
 import { getAdCatergories, getAdProducts, getAdUsers, getUpgradeRequest } from "../controllers/admin.controler.ts";
 import { getProduct, getProductsEndest, uploadProducts } from "../controllers/product.controllers.ts";
+import { banBidder, getBidHistory, placeBid } from "../controllers/bid.controller.ts";
 
 const router = express.Router();
 
@@ -43,11 +44,11 @@ router.get('/home/products/topbid', productController.getTopBiddedProducts);
 
 router.get('/product/:id', authController.getPublicAuthentication, getProduct);
 
-router.get('/product/:id/bids', authController.getSellerAuthentication, productController.getBidHistory);
+router.get('/product/:id/bids', authController.getSellerAuthentication, getBidHistory);
 
-router.delete('/ban/:productId/:bidderId', authController.getSellerAuthentication, productController.banBidder);
+router.delete('/ban/:productId/:bidderId', authController.getSellerAuthentication, banBidder);
 
-router.post('/bid/:productId', authController.getAuthentication, productController.placeBid);
+router.post('/bid/:productId', authController.getAuthentication, placeBid);
 
 router.get('/products/:level1/:level2', productController.getProductsLV);
 
