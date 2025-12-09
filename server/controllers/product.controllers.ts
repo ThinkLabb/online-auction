@@ -1,30 +1,32 @@
 import db from '../services/database.ts';
 import type { Request, Response } from 'express';
 import { errorResponse, successResponse } from '../utils/response.ts';
-import path from 'path';
-import { writeFileSync } from 'fs';
-import { fileURLToPath } from 'url';
 import * as productService from '../services/product.services.ts';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import { BUCKET_NAME, s3Client } from '../config/s3.ts';
+import { Readable } from 'stream'; // <--- 1. Import cái này
 
 export const uploadProducts = async (req: Request, res: Response) => {
   try {
     const { images, ...productData } = req.body;
     const user = res.locals.user;
-
-    const imgName: string[] = [];
-
-    images.forEach((base64String: string, index: number) => {
+    if (!images || !Array.isArray(images)) {
+       return res.status(400).json({ error: 'Images must be an array' });
+    }
+    const uploadPromises = images.map(async (base64String: string, index: number) => {
       const base64Data = base64String.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
-
-      const filename = `${user.id}_${Date.now()}_${index}.png`;
-      imgName.push(filename);
-      writeFileSync(path.join(__dirname, '../assets/products', filename), buffer);
+      const filename = `productsImg/${user.id}_${Date.now()}_${index}.png`;
+      const command = new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: filename,
+        Body: buffer,
+        ContentType: 'image/png',
+      });
+      await s3Client.send(command);
+      return filename; 
     });
-
+    const uploadedImageKeys = await Promise.all(uploadPromises);
     await db.prisma.product.create({
       data: {
         name: productData.productName,
@@ -41,17 +43,44 @@ export const uploadProducts = async (req: Request, res: Response) => {
           },
         },
         images: {
-          create: imgName.map((url) => ({
-            image_url: url,
+          create: uploadedImageKeys.map((key) => ({
+            image_url: key,
           })),
         },
       },
     });
-
-    res.json({ message: 'JSON received successfully' });
+    res.json({ message: 'Product created and image keys saved successfully' });
   } catch (error) {
-    console.error(error);
+    console.error("Upload Error:", error);
     res.status(500).json({ error: 'Server Error' });
+  }
+};
+
+export const getProductImage = async (req: Request, res: Response) => {
+  try {
+    const key = req.params.key;
+    const fullKey = `productsImg/${key}`;
+
+    const command = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: fullKey,
+    });
+
+    const s3Response = await s3Client.send(command);
+
+    res.setHeader('Content-Type', s3Response.ContentType || 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+
+    if (s3Response.Body instanceof Readable) {
+        s3Response.Body.pipe(res);
+    } else {
+        console.error("S3 Body type:", typeof s3Response.Body);
+        throw new Error('S3 Body is not a Node.js Readable stream');
+    }
+
+  } catch (error) {
+    console.error("Stream Image Error:", error);
+    res.status(404).send('Image not found');
   }
 };
 

@@ -4,6 +4,7 @@ import { Resolver, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
+import { ClipLoader } from 'react-spinners'; // Only keeping the spinner
 
 const productUploadSchema = z
   .object({
@@ -13,7 +14,7 @@ const productUploadSchema = z
       .min(3, 'Product name must be at least 3 characters'),
     startingPrice: z.coerce.number().positive().min(1),
     stepPrice: z.coerce.number().positive().min(1),
-    buyNowPrice: z.coerce.number().positive().min(1),
+    buyNowPrice: z.coerce.number().min(0), 
     description: z
       .string()
       .min(1, 'Description is required')
@@ -32,6 +33,8 @@ const productUploadSchema = z
   })
   .refine(
     (data) => {
+      if (data.buyNowPrice === 0) return true;
+      
       return data.buyNowPrice > data.startingPrice;
     },
     {
@@ -43,13 +46,9 @@ const productUploadSchema = z
 type ProductUploadFormData = z.infer<typeof productUploadSchema>;
 
 export default function ProductUploadForm() {
-  // Managing uploaded image files (supports multiple images)
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
-  // Preview URLs for uploaded images
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  // File input reference for triggering click
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // Image carousel state for horizontal scrolling
   const [imageScrollIndex, setImageScrollIndex] = useState(0);
 
   const navigate = useNavigate();
@@ -67,19 +66,15 @@ export default function ProductUploadForm() {
   const handleImageSelect = (files: FileList | null) => {
     if (!files) return;
 
-    // Convert FileList to Array and filter for image types only
     const newFiles = Array.from(files).filter((file) => file.type.startsWith('image/'));
 
-    // Limit to max 10 images
     if (uploadedImages.length + newFiles.length > 10) {
       alert('Maximum 10 images allowed');
       return;
     }
 
-    // Add new files to the state
     setUploadedImages((prev) => [...prev, ...newFiles]);
 
-    // Generate preview URLs for each new image
     newFiles.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -91,7 +86,6 @@ export default function ProductUploadForm() {
     });
   };
 
-  // Drag img
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.currentTarget.classList.add('bg-blue-50', 'border-blue-400');
@@ -107,18 +101,15 @@ export default function ProductUploadForm() {
     handleImageSelect(e.dataTransfer.files);
   };
 
-  // Remove img
   const removeImage = (index: number) => {
     setUploadedImages((prev) => prev.filter((_, i) => i !== index));
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // add img by click
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
 
-  // scroll img
   const scrollLeft = () => {
     if (imageScrollIndex > 0) {
       setImageScrollIndex(imageScrollIndex - 1);
@@ -131,7 +122,6 @@ export default function ProductUploadForm() {
     }
   };
 
-  // Helper: Convert file to Base64 string
   const toBase64 = (file: File) =>
     new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -147,17 +137,13 @@ export default function ProductUploadForm() {
         return;
       }
 
-      // 1. Convert all images to Base64 strings
-      // This results in an array of strings: ["data:image/png;base64,iVBOR...", ...]
       const base64Images = await Promise.all(uploadedImages.map(toBase64));
 
-      // 2. Prepare the JSON payload
       const payload = {
         ...data,
-        images: base64Images, // Array of Base64 strings
+        images: base64Images,
       };
 
-      // 3. Send as application/json
       const response = await fetch('/api/upload', {
         method: 'POST',
         headers: {
@@ -171,11 +157,9 @@ export default function ProductUploadForm() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const result = await response.json();
-      reset();
-      setUploadedImages([]);
-      setImagePreviews([]);
-      setImageScrollIndex(0);
+      // Success -> Redirect Home
+      navigate('/');
+      
     } catch (error) {
       console.error('Upload error:', error);
       alert('Error uploading product');
@@ -197,21 +181,16 @@ export default function ProductUploadForm() {
   return (
     <div className="flex-1 bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        {/* Page Title */}
         <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8">Upload new product</h1>
 
-        {/* Main Form Container */}
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="bg-white rounded-lg border border-gray-200 p-6 sm:p-8"
         >
-          {/* Two-column layout: Form fields on left, Image upload on right */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* ================================================================
-                LEFT COLUMN - FORM FIELDS
-                ================================================================ */}
+            {/* LEFT COLUMN */}
             <div className="space-y-6">
-              {/* Product Name Field */}
+              {/* Product Name */}
               <div>
                 <label
                   htmlFor="productName"
@@ -231,15 +210,13 @@ export default function ProductUploadForm() {
                   }`}
                   aria-invalid={errors.productName ? 'true' : 'false'}
                 />
-                {/* Error message display */}
                 {errors.productName && (
                   <p className="mt-1 text-sm text-[#8D0000]">{errors.productName.message}</p>
                 )}
               </div>
 
-              {/* Price Fields Container - Responsive grid */}
+              {/* Price Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Starting Price */}
                 <div>
                   <label
                     htmlFor="startingPrice"
@@ -260,7 +237,6 @@ export default function ProductUploadForm() {
                       }`}
                       aria-invalid={errors.startingPrice ? 'true' : 'false'}
                     />
-                    {/* Currency indicator */}
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
                       VND
                     </span>
@@ -270,7 +246,6 @@ export default function ProductUploadForm() {
                   )}
                 </div>
 
-                {/* Step Price */}
                 <div>
                   <label
                     htmlFor="stepPrice"
@@ -280,18 +255,17 @@ export default function ProductUploadForm() {
                   </label>
                   <div className="relative">
                     <input
-                      id="startingPrice"
+                      id="stepPrice"
                       type="number"
                       placeholder="0"
                       {...register('stepPrice')}
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition ${
-                        errors.startingPrice
+                        errors.stepPrice
                           ? 'border-[#8D0000] focus:ring-[#8D0000]'
                           : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
                       }`}
-                      aria-invalid={errors.startingPrice ? 'true' : 'false'}
+                      aria-invalid={errors.stepPrice ? 'true' : 'false'}
                     />
-                    {/* Currency indicator */}
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
                       VND
                     </span>
@@ -301,7 +275,6 @@ export default function ProductUploadForm() {
                   )}
                 </div>
 
-                {/* Buy Now Price */}
                 <div>
                   <label
                     htmlFor="buyNowPrice"
@@ -311,18 +284,17 @@ export default function ProductUploadForm() {
                   </label>
                   <div className="relative">
                     <input
-                      id="startingPrice"
+                      id="buyNowPrice"
                       type="number"
                       placeholder="0"
                       {...register('buyNowPrice')}
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition ${
-                        errors.startingPrice
+                        errors.buyNowPrice
                           ? 'border-[#8D0000] focus:ring-[#8D0000]'
                           : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
                       }`}
-                      aria-invalid={errors.startingPrice ? 'true' : 'false'}
+                      aria-invalid={errors.buyNowPrice ? 'true' : 'false'}
                     />
-                    {/* Currency indicator */}
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
                       VND
                     </span>
@@ -333,7 +305,7 @@ export default function ProductUploadForm() {
                 </div>
               </div>
 
-              {/* Auction End Time Field - datetime-local input for selecting when auction ends */}
+              {/* Auction End Time */}
               <div>
                 <label
                   htmlFor="auctionEndTime"
@@ -352,13 +324,12 @@ export default function ProductUploadForm() {
                   }`}
                   aria-invalid={errors.auctionEndTime ? 'true' : 'false'}
                 />
-                {/* Error message display */}
                 {errors.auctionEndTime && (
                   <p className="mt-1 text-sm text-[#8D0000]">{errors.auctionEndTime.message}</p>
                 )}
               </div>
 
-              {/* Description Field - Textarea for longer content */}
+              {/* Description */}
               <div className="flex-1 flex flex-col">
                 <label
                   htmlFor="description"
@@ -384,14 +355,10 @@ export default function ProductUploadForm() {
               </div>
             </div>
 
-            {/* ================================================================
-                RIGHT COLUMN - IMAGE UPLOAD SECTION
-                ================================================================ */}
+            {/* RIGHT COLUMN - IMAGES */}
             <div className="flex flex-col space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">Upload image</label>
-
-                {/* Drag and drop area - rectangular shape */}
                 <div
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -399,7 +366,6 @@ export default function ProductUploadForm() {
                   onClick={triggerFileInput}
                   className="border-2 border-dashed border-gray-300 rounded-lg h-48 flex items-center justify-center text-center cursor-pointer transition hover:border-gray-400 hover:bg-gray-50"
                 >
-                  {/* Icon and text for drag-and-drop hint */}
                   <div className="flex flex-col items-center justify-center">
                     <svg
                       className="w-12 h-12 text-gray-400 mb-2"
@@ -418,8 +384,6 @@ export default function ProductUploadForm() {
                     <p className="text-gray-500 text-sm">The first one will be avatar</p>
                   </div>
                 </div>
-
-                {/* Hidden file input - triggered by click or drop */}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -438,9 +402,7 @@ export default function ProductUploadForm() {
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">Image</label>
                 <div className="relative">
-                  {/* Carousel container - shows exactly 3 images */}
                   <div className="grid grid-cols-3 gap-3">
-                    {/* Display 3 visible image slots based on scroll index */}
                     {Array.from({ length: 3 }).map((_, displayIndex) => {
                       const actualIndex = imageScrollIndex + displayIndex;
                       return (
@@ -450,24 +412,20 @@ export default function ProductUploadForm() {
                         >
                           {imagePreviews[actualIndex] ? (
                             <>
-                              {/* Display uploaded image preview */}
                               <img
                                 src={imagePreviews[actualIndex] || '/placeholder.svg'}
                                 alt={`Preview ${actualIndex + 1}`}
                                 className="w-full h-full object-cover"
                               />
-                              {/* Remove button overlaid on image */}
                               <button
                                 type="button"
                                 onClick={() => removeImage(actualIndex)}
                                 className="absolute top-1 right-1 bg-[#8D0000] text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-[#8D0000] transition text-lg leading-none"
-                                aria-label={`Remove image ${actualIndex + 1}`}
                               >
                                 ×
                               </button>
                             </>
                           ) : (
-                            // Empty placeholder slot
                             <div className="w-full h-full bg-gray-100" />
                           )}
                         </div>
@@ -477,13 +435,11 @@ export default function ProductUploadForm() {
 
                   {uploadedImages.length > 3 && (
                     <>
-                      {/* Left arrow */}
                       <button
                         type="button"
                         onClick={scrollLeft}
                         disabled={imageScrollIndex === 0}
                         className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 bg-white border-2 border-gray-300 rounded-full w-8 h-8 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition shadow-md"
-                        aria-label="Scroll left"
                       >
                         <svg
                           className="w-4 h-4 text-gray-600"
@@ -500,13 +456,11 @@ export default function ProductUploadForm() {
                         </svg>
                       </button>
 
-                      {/* Right arrow */}
                       <button
                         type="button"
                         onClick={scrollRight}
                         disabled={imageScrollIndex >= uploadedImages.length - 3}
                         className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 bg-white border-2 border-gray-300 rounded-full w-8 h-8 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition shadow-md"
-                        aria-label="Scroll right"
                       >
                         <svg
                           className="w-4 h-4 text-gray-600"
@@ -529,16 +483,13 @@ export default function ProductUploadForm() {
 
               <div className="flex items-center gap-3">
                 <label htmlFor="autoRenewal" className="flex items-center gap-3 cursor-pointer">
-                  {/* Toggle switch */}
                   <div className="relative">
                     <input
                       id="autoRenewal"
                       type="checkbox"
                       {...register('autoRenewal')}
                       className="sr-only peer"
-                      aria-label="Enable auto renewal"
                     />
-                    {/* Toggle background */}
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </div>
                   <span className="text-sm text-gray-700 font-medium">Auto renewal</span>
@@ -546,7 +497,6 @@ export default function ProductUploadForm() {
               </div>
 
               <div className="flex gap-8 justify-end mt-auto pt-4">
-                {/* Back Button - Secondary action */}
                 <button
                   type="button"
                   onClick={() => {
@@ -560,13 +510,22 @@ export default function ProductUploadForm() {
                   <Link to="/">Back</Link>
                 </button>
 
-                {/* Submit Button - Primary action (Red for emphasis) */}
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2 bg-[#8D0000] text-white font-medium rounded-lg hover:bg-[#8D0000] disabled:bg-[#8D0000] transition cursor-pointer"
+                  className="px-6 py-2 bg-[#8D0000] text-white font-medium rounded-lg hover:bg-[#8D0000] disabled:bg-[#8D0000] disabled:opacity-70 disabled:cursor-not-allowed transition cursor-pointer flex items-center justify-center min-w-[100px]"
                 >
-                  {isSubmitting ? 'Uploading...' : 'Submit'}
+                  {isSubmitting ? (
+                    <ClipLoader
+                      color="#ffffff"
+                      loading={true}
+                      size={20}
+                      aria-label="Loading Spinner"
+                      data-testid="loader"
+                    />
+                  ) : (
+                    'Submit'
+                  )}
                 </button>
               </div>
             </div>

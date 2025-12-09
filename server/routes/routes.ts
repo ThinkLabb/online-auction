@@ -3,7 +3,6 @@ import * as authController from "../controllers/auth.controllers.ts";
 import { celebrate, Joi, Segments } from "celebrate";
 import * as emailController from "../controllers/email.controller.ts";
 import * as productController from "../controllers/product.controllers.ts";
-import path from "path";
 import { getAdCatergories, getAdProducts, getAdUsers, getUpgradeRequest } from "../controllers/admin.controler.ts";
 import { getProduct, getProductsEndest, uploadProducts } from "../controllers/product.controllers.ts";
 import { banBidder, getBidHistory, placeBid } from "../controllers/bid.controller.ts";
@@ -56,9 +55,7 @@ router.post('/upload', authController.getSellerAuthentication, uploadProducts);
 
 router.get('/upload', authController.getSellerAuthentication, (_: Request, res: Response) => res.sendStatus(200));
 
-const publicDirectoryPath = path.join('./server', 'assets', 'products');
-
-router.use('/assets', express.static(publicDirectoryPath));
+router.get('/assets/productsImg/:key', productController.getProductImage);
 
 router.use('/sendmail', emailController.sendMail)
 

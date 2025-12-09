@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Share2, Heart, Loader2 } from 'lucide-react'; 
+import { Share2, Heart } from 'lucide-react';
+import { ClipLoader } from "react-spinners";
 import { useParams } from 'react-router-dom';
 import { SellerSidebar } from '../components/seller-sidebar';
 import { BidderSidebar } from '../components/bidder-sidebar';
@@ -37,16 +38,15 @@ const ProductDetail = () => {
   // 2. Updated Loading State
   if (!product) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-500">
-        <Loader2 className="animate-spin mb-4 text-blue-600" size={48} />
-        <p>Loading product details...</p>
+      <div className="min-h-[50vh] w-full flex flex-col justify-center items-center">
+        <ClipLoader size={50} color="#8D0000" />
+        <p className="mt-4 text-gray-600">Loading products...</p>
       </div>
     );
   }
 
   return (
     <div className="bg-gray-50 flex-1 py-8">
-      {/* ... rest of your component remains exactly the same ... */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-8 space-y-8">

@@ -1,6 +1,7 @@
 import { Ban, Clock, Trophy, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { BidHistoryItem } from '../lib/type';
+import { formatCurrency } from './product';
 
 const formatTimeAgo = (dateString: string) => {
   const date = new Date(dateString);
@@ -13,10 +14,6 @@ const formatTimeAgo = (dateString: string) => {
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
   return date.toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' });
-};
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 };
 
 export default function BidHistory({ id, onBidSuccess }: { id: string, onBidSuccess: () => void }) {
@@ -150,7 +147,7 @@ export default function BidHistory({ id, onBidSuccess }: { id: string, onBidSucc
                           isTopBid ? 'text-amber-600 text-base' : 'text-gray-900 text-sm'
                         }`}
                       >
-                        {formatCurrency(bid.amount)}
+                        {formatCurrency(bid.amount.toString())}
                       </p>
                     </div>
 

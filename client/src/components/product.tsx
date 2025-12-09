@@ -1,15 +1,15 @@
 import { memo, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-const formatCurrency = (priceStr: string | null | undefined): string => {
+export const formatCurrency = (priceStr: string | null | undefined): string => {
   if (!priceStr) return '';
   const price = Number(priceStr);
   return new Intl.NumberFormat('de-DE').format(price) + ' VND';
 };
 
-const formatDate = (dateStr: string | null | undefined): string => {
+export const formatDate = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '';
-  return new Date(dateStr).toLocaleDateString('en-GB', {
+  return new Date(dateStr).toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -59,6 +59,7 @@ export type Product = {
 
 export const MemoProductCard = memo(({ product }: { product: Product }) => {
   const {
+    id,
     name,
     bid_count,
     current_price,
@@ -70,6 +71,9 @@ export const MemoProductCard = memo(({ product }: { product: Product }) => {
   } = product;
 
   const [timeLeft, setTimeLeft] = useState(() => calculateTimeRemaining(end_time));
+
+  const buyNowPriceValue = Number(buy_now_price);
+  const canBuyNow = buyNowPriceValue > 0;
 
   useEffect(() => {
     const updateTimer = () => {
@@ -83,8 +87,17 @@ export const MemoProductCard = memo(({ product }: { product: Product }) => {
     return () => clearInterval(intervalId);
   }, [end_time]);
 
+  // Prevent button click from triggering the Link (if you want the button to do something specific later)
+  const handleBuyNowClick = (e: React.MouseEvent) => {
+    if (!canBuyNow) {
+      e.preventDefault();
+    }
+    // If you want "Buy Now" to do something different than just going to the product page, add logic here.
+    // Currently, it bubbles up to the Link.
+  };
+
   return (
-    <Link to={`/product/${product.id}`}>
+    <Link to={`/product/${id}`}>
       <div className="border border-gray-200 rounded-md overflow-hidden shadow-sm flex flex-col transition-shadow hover:shadow-md h-full bg-white">
         <div className="relative w-full aspect-4/3 bg-gray-100 shrink-0">
           <img
@@ -127,11 +140,16 @@ export const MemoProductCard = memo(({ product }: { product: Product }) => {
             <p className="text-red-600 font-semibold text-xs text-end mb-2 h-4">{timeLeft}</p>
 
             <button
-              className="w-full bg-[#8D0000] text-white font-bold py-2 rounded text-sm hover:bg-red-900 transition-colors
-                       disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed shadow-sm"
-              disabled={!buy_now_price}
+              onClick={handleBuyNowClick}
+              disabled={!canBuyNow}
+              className={`w-full font-bold py-2 rounded text-sm transition-colors shadow-sm 
+                ${
+                  canBuyNow
+                    ? 'bg-[#8D0000] hover:bg-red-900 text-white cursor-pointer'
+                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                }`}
             >
-              {buy_now_price ? `Buy Now: ${formatCurrency(buy_now_price)}` : 'Auction Only'}
+              {canBuyNow ? `Buy Now: ${formatCurrency(buy_now_price)}` : 'Auction Only'}
             </button>
           </div>
         </div>
