@@ -135,7 +135,6 @@ export default function Register() {
     function loadProvince() {
         fetchJsonData("/admin_new/province.json")
             .then((data) => {
-                console.log(data);
                 setProvince(data);
             })
             .catch((error) => {
@@ -157,8 +156,6 @@ export default function Register() {
                 console.error('Fetch ward error:', error);
             });
     }
-
-    console.log(watch("province"))
 
     useEffect(() => {
         loadProvince()

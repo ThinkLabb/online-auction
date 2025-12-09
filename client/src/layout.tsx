@@ -22,7 +22,7 @@ function Layout() {
             if (res.ok && result.isSuccess) {
                 setUser(null);
                 navigate("/");
-            }
+            } 
         } catch(e) {
             console.error(e);
         }
@@ -37,6 +37,9 @@ function Layout() {
                 });
                 const result = await res.json()
                 if (res.ok && result.isSuccess) {
+                    if (result.data.role === "admin") {
+                        navigate("/admin")
+                    } 
                     setUser({
                         name: result.data.name,
                         email: result.data.email,
