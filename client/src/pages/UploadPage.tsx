@@ -4,7 +4,7 @@ import { Resolver, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { ClipLoader } from 'react-spinners'; // Only keeping the spinner
+import { ClipLoader } from 'react-spinners';
 
 const productUploadSchema = z
   .object({
@@ -14,31 +14,25 @@ const productUploadSchema = z
       .min(3, 'Product name must be at least 3 characters'),
     startingPrice: z.coerce.number().positive().min(1),
     stepPrice: z.coerce.number().positive().min(1),
-    buyNowPrice: z.coerce.number().min(0), 
+    buyNowPrice: z.coerce.number().min(0).default(0),
     description: z
       .string()
       .min(1, 'Description is required')
       .min(10, 'Description must be at least 10 characters'),
     autoRenewal: z.boolean().default(false),
-    auctionEndTime: z.coerce.date().refine(
-      (val) => {
-        const selectedDate = new Date(val);
-        const now = new Date();
-        return selectedDate > now;
-      },
-      {
-        message: 'Auction end time must be in the future',
-      }
-    ),
+    auctionEndTime: z.coerce.date().refine((val) => val > new Date(), {
+      message: 'Auction end time must be in the future',
+    }),
   })
   .refine(
     (data) => {
-      if (data.buyNowPrice === 0) return true;
-      
-      return data.buyNowPrice > data.startingPrice;
+      if (!data.buyNowPrice || data.buyNowPrice === 0) return true;
+
+      const minRequired = data.startingPrice + data.stepPrice;
+      return data.buyNowPrice > minRequired;
     },
     {
-      message: 'Buy now price must be greater than starting price',
+      message: 'Buy Now price must be higher than Starting Price + Step Price',
       path: ['buyNowPrice'],
     }
   );
@@ -157,9 +151,7 @@ export default function ProductUploadForm() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Success -> Redirect Home
       navigate('/');
-      
     } catch (error) {
       console.error('Upload error:', error);
       alert('Error uploading product');
@@ -188,9 +180,7 @@ export default function ProductUploadForm() {
           className="bg-white rounded-lg border border-gray-200 p-6 sm:p-8"
         >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* LEFT COLUMN */}
             <div className="space-y-6">
-              {/* Product Name */}
               <div>
                 <label
                   htmlFor="productName"
@@ -215,7 +205,6 @@ export default function ProductUploadForm() {
                 )}
               </div>
 
-              {/* Price Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label
@@ -305,7 +294,6 @@ export default function ProductUploadForm() {
                 </div>
               </div>
 
-              {/* Auction End Time */}
               <div>
                 <label
                   htmlFor="auctionEndTime"
@@ -329,7 +317,6 @@ export default function ProductUploadForm() {
                 )}
               </div>
 
-              {/* Description */}
               <div className="flex-1 flex flex-col">
                 <label
                   htmlFor="description"
@@ -355,7 +342,6 @@ export default function ProductUploadForm() {
               </div>
             </div>
 
-            {/* RIGHT COLUMN - IMAGES */}
             <div className="flex flex-col space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">Upload image</label>

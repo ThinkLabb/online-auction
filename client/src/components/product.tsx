@@ -87,13 +87,10 @@ export const MemoProductCard = memo(({ product }: { product: Product }) => {
     return () => clearInterval(intervalId);
   }, [end_time]);
 
-  // Prevent button click from triggering the Link (if you want the button to do something specific later)
   const handleBuyNowClick = (e: React.MouseEvent) => {
     if (!canBuyNow) {
       e.preventDefault();
     }
-    // If you want "Buy Now" to do something different than just going to the product page, add logic here.
-    // Currently, it bubbles up to the Link.
   };
 
   return (
