@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import UserTab from "./user-profile-tabs";
 import { ProfileData } from "./types";
 import { SetAction } from "./types";
@@ -6,136 +6,260 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Navigate, useNavigate } from "react-router-dom";
-import { METHODS } from "http";
 import { ClipLoader } from "react-spinners";
+import { LocationOption } from "../register-form";
+import { formatDate } from "../product";
 
-
-const UserEditData = z.object({
-  name: z.string(),
-  email: z.string(),
-  birthdate: z.date(),
-  address: z.string()
+const schema = z.object({
+  name: z.string().min(3, { message: "Name must be 3–50 characters." }).max(50, { message: "Name must be 3–50 characters." }),
+  email: z.string().email({ message: "Invalid email format" }),
+  birthdate: z.string().nullable().optional(),
+  homenumber: z.string().min(1, { message: "House number is required" }).regex(/^\d+$/, { message: "Home number must contain only digits." }),
+  street: z.string().min(1, { message: "Street is required" }),
+  province: z.string().min(1, { message: "Province is required" }),
+  ward: z.string().min(1, { message: "Ward is required" }),
 });
 
-type UserFormData = z.infer<typeof UserEditData>
+type Inputs = z.infer<typeof schema>;
+
+export const getAddressParts = (fullAddress?: string | null) => {
+  if (!fullAddress) {
+    return { homenumber: "", street: "", ward: "", province: "" };
+  }
+  const parts = fullAddress.split(',').map(part => part.trim());
+  
+  return {
+    homenumber: parts[0] || "",
+    street: parts[1] || "",
+    ward: parts[2] || "",
+    province: parts[3] || ""
+  };
+};
 
 function EditProfile( {profile, setAction} : {profile: ProfileData, setAction: SetAction} ) {
-  const [name, setName] = useState(profile.name);
-  const [email, setEmail] = useState(profile.email);
-  const [birthdate, setBirthdate] = useState<Date | null>(profile.birthdate)
-  const [address, setAddress] = useState(profile.address)
+  const addressDefaults = getAddressParts(profile.address);
+
+  const {
+    register,
+    watch,
+    handleSubmit,
+    formState: { errors },
+    setError
+  } = useForm<Inputs>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      name: profile.name,
+      email: profile.email,
+      birthdate: formatDate(profile.birthdate?.toLocaleDateString()),
+      homenumber: addressDefaults.homenumber,
+      street: addressDefaults.street,
+      ward: addressDefaults.ward,
+      province: addressDefaults.province
+    }
+  })
+
+  // const navigate = useNavigate()
+
+  const [loading, setLoading] = useState(false)
   const [disable, setDisable] = useState(true)
+
+  const onSubmitProfile: SubmitHandler<Inputs> = async (data) => {
+    setLoading(true)    
+
+    try {
+      const address = `${data.homenumber}, ${data.street}, ${data.ward}, ${data.province}`;
+
+      const res = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          address: address,
+          birthdate: data.birthdate
+        }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        if (!result.success) {
+          if (result.message?.name)
+            setError('name', { message: result.message.name });
+          if (result.message?.email)
+            setError('email', { message: result.message.email });
+          if (result.message?.birthdate)
+            setError('birthdate', { message: result.message.birthdate });
+          // if (result.message?.address)
+          //   setError('address', { message: result.message.address });
+        }
+      }
+    } catch (err) {
+      console.error('[v0] Update error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const [province, setProvince] = useState<LocationOption[]>([])
+  const [ward, setWard] = useState<LocationOption[]>([])
+  const provinceCur = watch("province");
+
+  const fetchJsonData = async (url: string) => {
+    const res = await fetch(url);
+    if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status}`);
+    }
+    const data = await res.json();
+    return Object.values(data) as LocationOption[]; 
+  }
+
+  function loadProvince() {
+      fetchJsonData("../admin_new/province.json")
+          .then((data) => {
+              console.log(data);
+              setProvince(data);
+          })
+          .catch((error) => {
+              console.error('Fetch province error:', error);
+          });
+  }
+
+  function loadWard() {
+    if (!provinceCur) {
+      setWard([]);
+      return;
+    }
+
+    fetchJsonData("../admin_new/ward.json")
+      .then((data) => {
+        setWard(data);
+      })
+      .catch((error) => {
+        console.error('Fetch ward error:', error);
+      });
+  }
+
+  console.log(watch("province"))
+
+  useEffect(() => {
+    loadProvince()
+  }, [])
+
+  useEffect(() => {
+    loadWard()
+  }, [provinceCur]) 
+
+  const filterWard = useMemo(() => {
+    if (!ward || ward.length === 0 || !provinceCur) return [];
+    return ward.filter(w =>
+        w.path_with_type.includes(provinceCur)
+    );
+  }, [provinceCur, ward]);
 
   return(
     <div className="px-10 py-20 rounded-sm ring ring-gray-200 shadow-sm shadow-stone-300">
-      {/* <div className="flex flex-col md:flex-row md:flex-wrap gap-10"> */}
-      <form className="flex flex-col gap-5">
-        <div className="flex flex-col md:flex-row gap-5 md:items-center w-full">
-          <label htmlFor="username" className="flex-1 font-medium truncate">Username</label>
-          <input
-            id="username"
-            disabled={disable}
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="border-2 border-gray-300 rounded-sm p-2 flex-3 truncate"
+      <form onSubmit={handleSubmit(onSubmitProfile)} className='flex flex-col gap-4'>
+
+        {/* 1. Full Name */}
+        <div className='flex flex-col gap-2'>
+          <label htmlFor="name" className="font-semibold text-gray-900">Full Name</label>
+          <input 
+            type="text" 
+            id="name" 
+            placeholder='John Doe' 
+            {...register("name", { required: true })} 
+            className='w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]' 
           />
+          {errors.name && <span className='text-[#8D0000]'>{errors.name.message}</span>}
         </div>
 
-        <div className="flex flex-col md:flex-row gap-5 md:items-center w-full">
-          <label htmlFor="email" className="flex-1 font-medium truncate">Email</label>
-          <input
-            id="email"
-            disabled={disable}
-            type="text"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border-2 border-gray-300 rounded-sm p-2 flex-3 truncate"
-          />
+        {/* 2. Email and Send Code */}
+        <div className='flex flex-col gap-2'>
+          <label htmlFor="email" className="font-semibold text-gray-900">Email</label>
+          <div className='flex flex-col sm:flex-row gap-2'> {/* Thêm flex-col trên mobile, flex-row trên sm+ */}
+            <input 
+                type="text" 
+                id="email" 
+                placeholder='your@example.com' 
+                {...register("email", { required: true })} 
+                className='flex-grow px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]' 
+            />
+          </div>
+          {errors.email && <span className='text-[#8D0000]'>{errors.email.message}</span>}
         </div>
-
-        <div className="flex flex-col md:flex-row gap-5 md:items-center w-full">
-          <label htmlFor="birthdate" className="flex-1 font-medium truncate">Birthdate</label>
+        
+        <div className='flex flex-col gap-2'>
+          <label htmlFor="birthdate" className="font-semibold text-gray-900">Date of Birth</label>
           <input
-            id="birthdate"
-            disabled={disable}
             type="date"
-            value={birthdate ? birthdate.toISOString().split("T")[0] : ""}
-            onChange={(e) => setBirthdate(e.target.value ? new Date(e.target.value) : null)}
-            className="border-2 border-gray-300 rounded-sm p-2 flex-3"
+            id="birthdate"
+            {...register("birthdate")}
+            className='w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]'
           />
-        </div>
-        {/* </div> */}
-        <div className="flex flex-col md:flex-row gap-5 md:items-center w-full">
-          <label htmlFor="address" className="flex-1 font-medium truncate">Address</label>
-          <input
-            id="address"
-            disabled={disable}
-            type="text"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            className="border-2 border-gray-300 rounded-sm p-2 flex-3 truncate"
-          />
+          {errors.birthdate && <span className='text-[#8D0000]'>{errors.birthdate.message}</span>}
         </div>
 
-        <div className="mt-10 flex flex-col md:flex-row md:mx-auto gap-5">
-          {
-            disable
-            ? <button 
-                onClick={() => setDisable(false)}
-                className="
-                  md:order-2
-                  rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 py-3 px-10
-                  cursor-pointer bg-[#8D0000] text-white
-                  hover:scale-101 hover:bg-[#760000] hover:shadow-md
-                  transition-all duration-200 active:scale-95
-                "
-              >
-                Edit
-              </button>
+        {/* 4. Address Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"> {/* Grid 1 cột trên mobile, 2 cột trên sm+ */}
 
-            : <div className="flex flex-col md:flex-row gap-5">
-                <button
-                  type="submit"
-                  onClick={() => {setDisable(true)}}
-                  className="
-                    md:order-2
-                    rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 py-3 px-10
-                    cursor-pointer bg-[#8D0000] text-white
-                    hover:scale-101 hover:bg-[#760000] hover:shadow-md
-                    transition-all duration-200 active:scale-95
-                  "
-                >
-                  Save
-                </button>
+          {/* Province/City */}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="city" className="font-semibold text-gray-900" >Province/City</label>
+            <select id="city" value={provinceCur} {...register("province")}
+              className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]">
+              <option value="">Select city</option>
+              {province.map((option) => (
+                <option key={option.code} value={option.name}>{option.name}</option>
+              ))}
+            </select>
+            {errors.province && <span className="text-[#8D0000]">{errors.province.message}</span>}
+          </div>
 
-                <button
-                  onClick={() => setDisable(true)}
-                  className="
-                    md:order-2
-                    rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 py-3 px-10
-                    cursor-pointer bg-black text-white
-                    hover:scale-101 hover:bg-gray-700 hover:shadow-md
-                    transition-all duration-200 active:scale-95
-                  "
-                >
-                  Cancel
-                </button>
-              </div>
-          }
-          <button 
-            onClick={() => setAction("view-tabs")}
-            className="
-              md:order-1
-              rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 py-3 px-10
-              cursor-pointer bg-white
-              hover:scale-101 hover:bg-gray-100 hover:shadow-md
-              transition-all duration-200 active:scale-95
-            "
-          >
-            Back
-          </button>
+            {/* Ward */}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="ward" className="font-semibold text-gray-900" >Ward</label>
+            <select id="ward"
+              {...register("ward")} 
+              className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]" >
+              <option value="">Select ward</option>
+              {filterWard.map((option) => (
+                <option key={option.code} value={option.name}>{option.name}</option>
+              ))}
+            </select>
+            {errors.ward && <span className="text-[#8D0000]">{errors.ward.message}</span>}
+          </div>
+              
+              {/* Street */}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="street" className="font-semibold text-gray-900" >Street</label>
+            <input type="text" id="street" 
+              className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
+              {...register("street")}
+            />
+            {errors.street && <span className="text-[#8D0000]">{errors.street.message}</span>}
+          </div>
+
+              {/* House Number */}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="homenumber" className="font-semibold text-gray-900" >House Number</label>
+            <input type="text" id="homenumber" 
+              className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
+              {...register("homenumber")}
+            />
+            {errors.homenumber && <span className="text-[#8D0000]">{errors.homenumber.message}</span>}
+          </div>
         </div>
+
+        <button 
+            type="submit" 
+            disabled={loading}
+            className={`w-full bg-[#8D0000] font-bold text-white py-2.5 rounded-md transition-colors mt-2 flex justify-center items-center ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-red-800'}`}
+        >
+            {loading ? <ClipLoader loading={loading} size={20} color='white' /> : <p>Save</p>}
+        </button>
       </form>
 
     </div>
@@ -149,7 +273,6 @@ function ChangePassword( {profile, setAction} : {profile: ProfileData, setAction
   
   const [step, setStep] = useState("verify")
   
-  const navigate = useNavigate()
   const email = profile.email
 
   const onSubmitVerify = async () => {
@@ -373,7 +496,7 @@ export default function UserAction( {profile, action, setAction} : {profile:Prof
     }
   }
   return(
-    <div className="flex-3 min-w-0">
+    <div className="h-full flex-4 min-w-0">
       {renderAction()}
     </div>
   )

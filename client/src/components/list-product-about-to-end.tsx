@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ClipLoader } from "react-spinners"
-import { ProductCard, Product } from "./product";
+import { MemoProductCard, Product } from "./product";
 
 type TabId = 'about-to-end' | 'most-bid' | 'highest-priced';
 

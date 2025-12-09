@@ -4,7 +4,8 @@ import { celebrate, Joi, Segments } from "celebrate";
 import * as emailController from "../controllers/email.controller.ts";
 import * as productController from "../controllers/product.controllers.ts";
 import path from "path";
-import { getUserProfile, getMyProfile } from "../controllers/user.controllers.ts";
+import { getAdCatergories, getAdProducts, getAdUsers, getUpgradeRequest } from "../controllers/admin.controler.ts";
+import { editUserProfile, getMyProfile } from "../controllers/user.controllers.ts";
 import { getProduct, getProductsEndest, uploadProducts } from "../controllers/product.controllers.ts";
 
 const router = express.Router();
@@ -17,12 +18,21 @@ const createUserSchema = {
     name: Joi.string().required().min(3).max(8),
     email: Joi.string().email().required(),
     password: Joi.string().required().min(8).max(30).regex(strongPasswordRegex),
+    code: Joi.string().required(),
+    address: Joi.string().required().min(5).max(100),
+  }),
+};
+
+const userLogin = {
+  [Segments.BODY]: Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().required().min(8).max(30).regex(strongPasswordRegex),
   }),
 };
 
 router.post('/auth/register', celebrate(createUserSchema), authController.register);
 
-router.post('/auth/signin', authController.login);
+router.post('/auth/signin', celebrate(userLogin), authController.login);
 
 router.post('/auth/me', authController.getAuthentication, authController.getAccount);
 
@@ -56,14 +66,22 @@ router.use('/verify', emailController.verifyCode)
 
 router.use('/changepassword', authController.changePassword)
 
-router.use('/categories', productController.getCategories)
+router.get('/categories', productController.getCategories)
+
+router.get('/admin', authController.getAuthentication, authController.checkAdmin)
+
+router.get('/admin/categories', getAdCatergories);
+
+router.get('/admin/products', getAdProducts);
+
+router.get('/admin/users', getAdUsers);
+
+router.get('/admin/upgradeRequests', getUpgradeRequest);
+
 
 // ===== PROFILE PAGE'S API =====
-
-router.get('/bidder/:id', getUserProfile);
-
 router.get('/profile', authController.getAuthentication, getMyProfile);
-
+router.patch('/profile', authController.getAuthentication, editUserProfile);
 router.use('/profile/verifyuser', authController.verifyUser)
 
 // ===============================

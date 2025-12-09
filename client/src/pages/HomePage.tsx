@@ -1,5 +1,6 @@
 import Products from '../components/list-product-about-to-end';
 import MatrixRain from './MatrixRain';
+import { useNavigate } from 'react-router-dom';
 
 function HomePage() {
   const handleScroll = () => {
@@ -8,6 +9,12 @@ function HomePage() {
       behavior: "smooth"
     });
   }
+
+  const navigate = useNavigate();
+  const handleClick = () => {
+    navigate(`/products/*/*`);
+  }
+
   return (<>
     <div className=''>
       <div className="flex-1 flex flex-col justify-center items-center bg-black relative text-white h-[85vh]" id="intro">
@@ -18,7 +25,7 @@ function HomePage() {
           <h1 className="text-3xl md:text-5xl font-bold mb-4 leading-normal">
             EXPLORE WONDERFUL ITEMS <br /> WITH REASONABLE PRICES
           </h1>
-          <button className="bg-white text-[#8D0000] px-6 py-2 rounded font-semibold hover:bg-[#8D0000] hover:text-white hover:cursor-pointer">
+          <button onClick={(e) =>{e.preventDefault(); handleClick()}} className="bg-white text-[#8D0000] px-6 py-2 rounded font-semibold hover:bg-[#8D0000] hover:text-white hover:cursor-pointer">
             Auction now!
           </button>
         </div>

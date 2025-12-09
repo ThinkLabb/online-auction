@@ -21,17 +21,18 @@ function getUserSecret(email: string) {
 type Data = {
     email: string;
     code: string;
+    register: boolean;
 }
 
-export const send = async (data: Data) => {
-    const user = await db.prisma.user.findUnique({
-        where: {email: data.email }
-    })
-
-    if (!user) {
-        return {success: false, message: "No account found with this email."}
+export const send = async (data: Data) => { 
+    if (data.register === false) {
+        const user = await db.prisma.user.findUnique({
+            where: { email: data.email }
+        })
+        if (!user) {
+            return {success: false, message: "No account found with this email."}
+        }
     }
-
     const email = data.email
     let transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -64,7 +65,8 @@ export const verify = async (data: Data) => {
     const secret = getUserSecret(email)
 
     if (!totp.check(code, secret)) {
-        return { success: false, message: "Wrong code!" }
+        console.log(false)
+        return { success: false, message: "Invalid code." }
     }
 
     return { success: true, message: "Verification code successfully!" };

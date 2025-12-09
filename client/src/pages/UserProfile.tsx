@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom"
 import userIcon from '../assets/user.png'
 import { useUser } from '../UserContext'
 import { ProfileData } from "../components/user-profile/types"
-import UserTab from "../components/user-profile/user-profile-tabs"
 import UserAction from "../components/user-profile/user-profile"
 
 
@@ -34,6 +33,7 @@ export default function UserProfile() {
     const fetchProfile = async () => {
       try {
         const res = await fetch("/api/profile", {
+          method: "GET",
           credentials: "include",
         });
 
@@ -76,12 +76,12 @@ export default function UserProfile() {
           <p>Win rate: {profile.win_rate}%</p>
         </div>        
         <div className="flex-1 min-w-0 flex flex-col grow gap-2 px-6 py-3 ring ring-gray-200 rounded-sm shadow-sm shadow-stone-300">
-          <h2 className="text-xl font-bold">My watchlist</h2>
+          <h2 className="text-xl font-bold">Watchlist</h2>
           <p className="text-3xl font-bold text-[#8D0000]">{profile.watchlist_count}</p>
           <p>is following</p>
         </div>
         <div className="flex-1 min-w-0 flex flex-col grow gap-2 px-6 py-3 ring ring-gray-200 rounded-sm shadow-sm shadow-stone-300">
-          <h2 className="text-xl font-bold">My Rating</h2>
+          <h2 className="text-xl font-bold">Rating</h2>
           <p className="text-3xl font-bold text-[#8D0000]">{profile.rating}</p>
           <p>{profile.rating_label}</p>
         </div>

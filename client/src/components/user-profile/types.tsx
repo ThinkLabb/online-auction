@@ -1,26 +1,27 @@
 import { ProductStatus, OrderStatus } from "@prisma/client";
 
-export type BiddingProduct = {
+type BiddingProduct = {
   product_id: number,
   name: string,
   image_url: string,
   status: ProductStatus,
+  max_bid: number,
   buy_now_price?: number,
   current_price: number,
   bid_count: number,
-  end_time: number,
+  end_time: string,
 
   seller_name: string,
   category_name: string,
   current_highest_bidder_name?: string
 }
 
-export type WonProduct = {
+type WonProduct = {
   product_id: number;
   name: string;
   image_url: string;
   final_price: number;
-  won_at: number; // timestamp
+  won_at: string;
   order_status: OrderStatus;
   seller_name: string;
   category_name: string;
@@ -28,25 +29,25 @@ export type WonProduct = {
   order_id: number;
 };
 
-export type WatchlistItem = {
+type WatchlistItem = {
   product_id: number;
   name: string;
   image_url: string;
+  current_highest_bidder_name: string | null,
   current_price: number;
   buy_now_price?: number;
   bid_count: number;
-  end_time: number;
+  end_time: string;
   seller_name: string;
   category_name: string;
-  added_at: number;
 };
 
-export type ReviewReceived = {
+type ReviewReceived = {
   review_id: number;
   reviewer_name: string;
   is_positive: boolean;
   comment: string | null;
-  created_at: number;
+  created_at: string;
   product_name: string;
   product_id: number;
 };

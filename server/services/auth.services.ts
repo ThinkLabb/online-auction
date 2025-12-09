@@ -1,11 +1,23 @@
 import { Prisma } from "@prisma/client";
 import db from "./database.ts";
-
+import * as mailService from "../services/mail.service.ts";
 import bcrypt from "bcryptjs"
 
-type UserRegister = Prisma.UserCreateInput;
+type Data = {
+  email: string;
+  name: string;
+  code: string;
+  password: string;
+  address: string;
+};
+ 
+export const create = async (data: Data) => {
 
-export const create = async (data: UserRegister) => {
+  const result = await mailService.verify({email: data.email, code: data.code, register: true}); 
+
+  if (!result.success) {
+     return { success: false, message: {code: "Invalid code."}  };
+  }
 
   const existingUser = await db.prisma.user.findUnique({
     where: { email: data.email },
@@ -16,9 +28,15 @@ export const create = async (data: UserRegister) => {
   }
 
   const hashPassword = await bcrypt.hash(data.password, 12);
-  data.password = hashPassword;
 
-  const user = await db.prisma.user.create({ data });
+  const user = await db.prisma.user.create({ 
+    data: {
+      email: data.email,
+      password: hashPassword,
+      address: data.address,
+      name: data.name,
+    } 
+  });
   
   return { success: true, user, message: "Register successfully" };
 };

@@ -1,13 +1,13 @@
 import { memo, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-const formatCurrency = (priceStr: string | null | undefined): string => {
+export const formatCurrency = (priceStr: string | null | undefined): string => {
   if (!priceStr) return '';
   const price = Number(priceStr);
-  return new Intl.NumberFormat('de-DE').format(price) + ' VND';
+  return new Intl.NumberFormat('de-DE').format(price) + ' USD';
 };
 
-const formatDate = (dateStr: string | null | undefined): string => {
+export const formatDate = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '';
   return new Date(dateStr).toLocaleDateString('en-GB', {
     day: '2-digit',

@@ -356,17 +356,15 @@ export const getProductsLV = async (req: Request, res: Response) => {
     const page = Math.max(1, pageQuery);
     const limit = Math.max(1, limitQuery);
     const skip = (page - 1) * limit;
-
-    const whereClause: any = {
-      category: {
-        name_level_1: String(level1),
-      },
-    };
-
-    if (level2 && level2 !== '*') {
-      whereClause.category.name_level_2 = String(level2);
+    let whereClause: any = {};
+    if (level1 && level1 !== "*") {
+      whereClause.category = {};
+      whereClause.category.name_level_1 = String(level1);
+      if (level2 && level2 !== "*") {
+        whereClause.category.name_level_2 = String(level2);
+      }
     }
-
+   
     let orderByClause: any = {};
     const sortField: SortField =
       sortQuery && ['end_time', 'current_price'].includes(sortQuery) ? sortQuery : 'end_time';
@@ -400,6 +398,7 @@ export const getProductsLV = async (req: Request, res: Response) => {
     });
     const formattedProducts = products.map((product) => {
       return {
+        id: String(product.product_id),
         name: product.name,
         bid_count: product.bid_count,
         current_price: product.current_price,

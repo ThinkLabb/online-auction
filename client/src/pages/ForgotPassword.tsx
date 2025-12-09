@@ -25,6 +25,7 @@ export default function ForgotPassword() {
         },
         body: JSON.stringify({
           email: email,
+          register: false,
         }),
       });
 
