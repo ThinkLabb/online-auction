@@ -12,7 +12,7 @@ function HomePage() {
 
   const navigate = useNavigate();
   const handleClick = () => {
-    navigate(`/products/*/*`);
+    navigate(`/products`);
   }
 
   return (<>

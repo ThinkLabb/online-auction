@@ -83,14 +83,18 @@ export const getAdminCategories = async () => {
 
       level1Info.total_products += productCount;
 
-      result.push({
-        id: item.category_id, 
-        name: level2Name,
-        parent_id: level1Info.id,
-        parent_name: level1Name,
-        product_count: productCount,
-      });
+      if (level2Name !== null) {
+        result.push({
+          id: item.category_id, 
+          name: String(level2Name),
+          parent_id: level1Info.id,
+          parent_name: level1Name,
+          product_count: productCount,
+        });
+      }
     }
+
+    console.log(result)
 
     const categories = result.map(item => {
       if (item.parent_id === null) {

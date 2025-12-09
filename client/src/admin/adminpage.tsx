@@ -1,7 +1,8 @@
-import React, { useState, useEffect, JSX } from "react";
+import React, { useState, useEffect, JSX, use } from "react";
 import { Package, FolderTree, Users, UserCheck, Settings, LogOut, Menu, X, ChevronDown, Trash2, Eye, Shield, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../UserContext";
+import { includes } from "zod";
 
 // --- Helpers ---
 const cn = (...classes: (string | boolean | undefined)[]): string => classes.filter(Boolean).join(' ');
@@ -151,13 +152,11 @@ const AdminHeader: React.FC<{ title: string; setSidebarOpen: React.Dispatch<Reac
                     const res = await fetch('/api/admin', { credentials: 'include' });
                     const result = await res.json();
                     if (!res.ok || !result.isSuccess) {
-                        console.log(result.message);
                         navigate('/');
                     } else {
                         setName(result.data);
                     }
                 } catch (e) {
-                    console.log(e);
                     navigate('/');
                 }
             })()
@@ -192,14 +191,111 @@ const CategoryManagement: React.FC = () => {
     const iconGhostBlueClass = getButtonClasses('ghost', 'icon', "text-blue-600 hover:text-blue-800 mr-2");
     const iconDestructiveClass = getButtonClasses('destructive', 'icon', "");
 
+
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editCategory, setEditCategory] = useState<Category | null>(null);
+    const [editName, setEditName] = useState('');
+    const [editParentId, setEditParentId] = useState<number | null>(null);
+
+    const openEditModal = (category: Category) => {
+        setEditCategory(category);
+        setEditName(category.name);
+        setEditParentId(category.parent_id);
+        setIsEditModalOpen(true);
+    };
+
+
     useEffect(() => {
         fetchData<Category>(API_ENDPOINTS.categories, setCategories, setLoading, setError);
     }, []);
 
-    const handleDeleteCategory = (category: Category) => {
+    const handleDeleteCategory = async (category: Category) => {
         if (category.product_count > 0) return;
-        setCategories(prev => prev.filter(c => c.id !== category.id));
-    };
+        try {
+            setLoading(true);
+            const res = await fetch(API_ENDPOINTS.categories, {
+                method: "DELETE",
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: category.name,
+                }),
+            });
+
+            const result = await res.json();
+            setLoading(false);
+
+            if (!res.ok && result.isSuccess == false) {
+                setError(result.message);
+            } else {
+                setCategories(result.data);
+            }
+        } catch(e) {
+            setError(String(e))
+        }
+    }
+
+
+    const handleEditCategory = async (newCategory: Category) => {
+        try {
+            console.log(newCategory)
+            setLoading(true);
+            const res = await fetch(API_ENDPOINTS.categories, {
+                method: "PUT",
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    newCategory
+                }),
+            });
+
+            const result = await res.json();
+            setLoading(false);
+
+            if (!res.ok && result.isSuccess == false) {
+                setError(result.message);
+            } else {
+                setCategories(result.data);
+            }
+        } catch(e) {
+            setError(String(e))
+        }
+    }
+
+
+    const handleAddCategory = async (category: Category) => {
+        try {
+            setLoading(true);
+            const res = await fetch(API_ENDPOINTS.categories, {
+                method: "POST",
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    category
+                }),
+            });
+
+            const result = await res.json();
+            setNewCategoryName("");
+            setNewCategoryParent(null);
+            setIsAddModalOpen(false);
+            setLoading(false);
+
+            if (!res.ok && result.isSuccess == false) {
+                setError(result.message);
+            } else {
+                setCategories(result.data);
+            }
+        } catch(e) {
+            setError(String(e))
+        }
+    }
 
     if (loading) return <div className="text-center py-8">Loading Categories...</div>;
     if (error) return <div className="text-center py-8 text-red-600">Error: {error}</div>;
@@ -232,7 +328,15 @@ const CategoryManagement: React.FC = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.product_count}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                                         <button className={iconGhostBlueClass} title="View Details"><Eye className="h-4 w-4" /></button>
-                                        <button className={getButtonClasses('ghost', 'icon', "text-yellow-600 hover:text-yellow-800 mr-2")} title="Edit"><Edit className="h-4 w-4" /></button>
+                                        {/* <button className={getButtonClasses('ghost', 'icon', "text-yellow-600 hover:text-yellow-800 mr-2")} title="Edit"><Edit className="h-4 w-4" /></button> */}
+                                        <button
+                                            className={getButtonClasses('ghost', 'icon', "text-yellow-600 hover:text-yellow-800 mr-2")}
+                                            title="Edit"
+                                            onClick={() => openEditModal(category)}
+                                        >
+                                            <Edit className="h-4 w-4" />
+                                        </button>
+
                                         <button
                                             className={cn(iconDestructiveClass, !canDelete && 'cursor-not-allowed')}
                                             disabled={!canDelete}
@@ -270,8 +374,9 @@ const CategoryManagement: React.FC = () => {
                             onChange={(e) => setNewCategoryParent(Number(e.target.value) || null)}
                         >
                             <option value="">None (Level 1)</option>
-                            {categories.map(cat => (
-                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            {categories.filter(cat => cat.parent_id === null)
+                                .map((cat, index) => (
+                                <option key={index} value={cat.id}>{cat.name}</option>
                             ))}
                         </select>
 
@@ -289,14 +394,15 @@ const CategoryManagement: React.FC = () => {
                                     const newCategory: Category = {
                                         id: Date.now(), // tạm tạo id
                                         name: newCategoryName,
-                                        parent_id: newCategoryParent,
-                                        parent_name: categories.find(c => c.id === newCategoryParent)?.name || null,
+                                        parent_id: categories.find((c) => c.id === newCategoryParent)?.id || null,
+                                        parent_name: categories.find((c) => c.id === newCategoryParent)?.name || null,
                                         product_count: 0
                                     };
-                                    setCategories(prev => [...prev, newCategory]);
-                                    setNewCategoryName('');
-                                    setNewCategoryParent(null);
-                                    setIsAddModalOpen(false);
+                                    handleAddCategory(newCategory)
+                                    // setCategories(prev => [...prev, newCategory]);
+                                    // setNewCategoryName('');
+                                    // setNewCategoryParent(null);
+                                    // setIsAddModalOpen(false);
                                 }}
                             >
                                 Add
@@ -305,6 +411,62 @@ const CategoryManagement: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {isEditModalOpen && editCategory && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md transform transition-all">
+                        <h3 className="text-xl font-bold mb-4">Edit Category</h3>
+
+                        <label className="block mb-2 font-semibold">Category Name</label>
+                        <input
+                            type="text"
+                            className={getInputClasses()}
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                        />
+
+                        <label className="block mt-4 mb-2 font-semibold">Parent Category</label>
+                        <select
+                            className={getInputClasses()}
+                            value={editParentId ?? ''}
+                            onChange={(e) => setEditParentId(Number(e.target.value) || null)}
+                        >
+                            <option value="">None (Level 1)</option>
+                            {categories
+                                .filter(cat => cat.parent_id === null)
+                                .map((cat) => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                        </select>
+
+                        <div className="mt-6 flex justify-end gap-2">
+                            <button
+                                className={getButtonClasses('default')}
+                                onClick={() => setIsEditModalOpen(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className={getButtonClasses('primary')}
+                                onClick={() => {
+                                    const updatedCategory: Category = {
+                                        ...editCategory,
+                                        name: editName,
+                                        parent_id: editParentId,
+                                        parent_name: categories.find(c => c.id === editParentId)?.name || null,
+                                    };
+
+                                    handleEditCategory(updatedCategory);
+                                    setIsEditModalOpen(false);
+                                }}
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };
@@ -315,11 +477,6 @@ const ProductManagement: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    const [newProductName, setNewProductName] = useState('');
-    const [newProductPrice, setNewProductPrice] = useState<number>(0);
-    const [newProductStatus, setNewProductStatus] = useState<'Active Auction' | 'Ended' | 'Draft'>('Draft');
-
-    const primaryButtonClass = getButtonClasses('primary', 'default', "flex flex-row items-center");
     const iconGhostBlueClass = getButtonClasses('ghost', 'icon', "text-blue-600 hover:text-blue-800 mr-2");
     const iconDestructiveClass = getButtonClasses('destructive', 'icon', "mr-2");
 
@@ -327,8 +484,32 @@ const ProductManagement: React.FC = () => {
         fetchData<Product>(API_ENDPOINTS.products, setProducts, setLoading, setError);
     }, []);
 
-    const handleEditProduct = (product: Product) => console.log("Edit product", product.id);
-    const handleDeleteProduct = (product: Product) => setProducts(prev => prev.filter(p => p.id !== product.id));
+    const handleDeleteProduct = async (product: Product) => {
+        try {
+            setLoading(true);
+            const res = await fetch(API_ENDPOINTS.products, {
+                method: "DELETE",
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: product.id,
+                }),
+            });
+
+            const result = await res.json();
+            setLoading(false);
+
+            if (!res.ok && result.isSuccess == false) {
+                setError(result.message);
+            } else {
+                setProducts(result.data);
+            }
+        } catch(e) {
+            setError(String(e))
+        }
+    }
 
     if (loading) return <div className="text-center py-8">Loading Products...</div>;
     if (error) return <div className="text-center py-8 text-red-600">Error: {error}</div>;
@@ -358,7 +539,6 @@ const ProductManagement: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm"><span className={cn(product.status === 'Active Auction' ? 'text-green-600' : 'text-red-600', "font-semibold")}>{product.status}</span></td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                                     <button className={iconGhostBlueClass} title="View Details"><Eye className="h-4 w-4" /></button>
-                                    <button className={getButtonClasses('ghost', 'icon', "text-yellow-600 hover:text-yellow-800 mr-2")} title="Edit" onClick={() => handleEditProduct(product)}><Edit className="h-4 w-4" /></button>
                                     <button className={iconDestructiveClass} title="Remove Product" onClick={() => handleDeleteProduct(product)}><Trash2 className="h-4 w-4" /></button>
                                 </td>
                             </tr>
@@ -376,20 +556,37 @@ const UserManagement: React.FC<{ setActiveTab: React.Dispatch<React.SetStateActi
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    const [newUserName, setNewUserName] = useState('');
-    const [newUserEmail, setNewUserEmail] = useState('');
-    const [newUserRole, setNewUserRole] = useState<'user' | 'admin'>('user');
-
-    const primaryButtonClass = getButtonClasses('primary', 'default', "flex flex-row items-center");
     const iconGhostBlueClass = getButtonClasses('ghost', 'icon', "text-blue-600 hover:text-blue-800 mr-2");
     const iconDestructiveClass = getButtonClasses('destructive', 'icon', "");
 
     useEffect(() => { fetchData<User>(API_ENDPOINTS.users, setUsers, setLoading, setError); }, []);
 
-    const handleDeleteUser = (user: User) => {
-        if (user.role === 'admin') return;
-        setUsers(prev => prev.filter(u => u.id !== user.id));
-    };
+    const handleDeleteUser = async (user: User) => {
+        try {
+            setLoading(true);
+            const res = await fetch(API_ENDPOINTS.users, {
+                method: "DELETE",
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: user.email,
+                }),
+            });
+
+            const result = await res.json();
+            setLoading(false);
+
+            if (!res.ok && result.isSuccess == false) {
+                setError(result.message);
+            } else {
+                setUsers(result.data);
+            }
+        } catch(e) {
+            setError(String(e))
+        }
+    }
 
     if (loading) return <div className="text-center py-8">Loading Users...</div>;
     if (error) return <div className="text-center py-8 text-red-600">Error: {error}</div>;
@@ -412,19 +609,14 @@ const UserManagement: React.FC<{ setActiveTab: React.Dispatch<React.SetStateActi
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {users.map(user => (
-                            <tr key={user.id} className="hover:bg-gray-50">
+                        {users.map((user, index) => (
+                            <tr key={index} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.role}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                    <button className={iconGhostBlueClass} title="View" onClick={() => console.log("View user", user.id)}><Eye /></button>
-                                    <button
-                                        className={cn(iconDestructiveClass, user.role === 'admin' && 'cursor-not-allowed')}
-                                        disabled={user.role === 'admin'}
-                                        title={user.role === 'admin' ? "Cannot delete admin" : "Delete"}
-                                        onClick={() => handleDeleteUser(user)}
-                                    ><Trash2 /></button>
+                                    <button className={iconGhostBlueClass} title="View Details"><Eye className="h-4 w-4" /></button>
+                                    <button className={iconDestructiveClass} title="Remove Product" onClick={() => handleDeleteUser(user)}><Trash2 className="h-4 w-4" /></button>
                                 </td>
                             </tr>
                         ))}
@@ -444,8 +636,34 @@ const UpgradeRequestsManagement: React.FC = () => {
 
     useEffect(() => { fetchData<UpgradeRequest>(API_ENDPOINTS.upgradeRequests, setRequests, setLoading, setError); }, []);
 
-    const handleApproveRequest = (request: UpgradeRequest) => setRequests(prev => prev.filter(r => r.request_id !== request.request_id));
-    const handleRejectRequest = (request: UpgradeRequest) => setRequests(prev => prev.filter(r => r.request_id !== request.request_id));
+    const handleSubmitRequest = async (request: UpgradeRequest, answer: string) => {
+        try {
+            setLoading(true)
+            const res = await fetch(API_ENDPOINTS.upgradeRequests, { 
+                method: "PUT",
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: request.request_id,
+                    user_id: request.user_id,
+                    answer: answer,
+                }),
+            });
+
+            const result = await res.json()
+            setLoading(false);
+            if (!res.ok && !result.isSuccess) {
+                setError(result.message)
+            } else {    
+                setRequests(result.data)
+            }
+        } catch(e) {
+            setError(String(e))
+        }
+    }
+
     const handleViewRequest = (request: UpgradeRequest) => setSelectedRequest(request);
 
     if (loading) return <div className="text-center py-8">Loading Requests...</div>;
@@ -471,8 +689,8 @@ const UpgradeRequestsManagement: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(request.request_at).toLocaleString()}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 cursor-pointer font-medium hover:text-blue-700" onClick={() => handleViewRequest(request)}>View File</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                    <button className={getButtonClasses('primary', 'sm')} onClick={() => handleApproveRequest(request)}>Approve</button>
-                                    <button className={getButtonClasses('destructive', 'sm', "ml-2")} onClick={() => handleRejectRequest(request)}>Reject</button>
+                                    <button className={getButtonClasses('primary', 'sm')} onClick={() => handleSubmitRequest(request, "approve")}>Approve</button>
+                                    <button className={getButtonClasses('destructive', 'sm', "ml-2")} onClick={() => handleSubmitRequest(request, "deny")}>Reject</button>
                                 </td>
                             </tr>
                         ))}
