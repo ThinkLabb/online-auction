@@ -60,7 +60,6 @@ export const deleteCategory = async (req: Request, res: Response) => {
 
 
 export const updateCategory = async (req: Request, res: Response) => {
-  console.log("Vao")
   try {
     const newCategory = req.body.newCategory
 

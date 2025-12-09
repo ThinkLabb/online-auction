@@ -240,7 +240,6 @@ const CategoryManagement: React.FC = () => {
 
     const handleEditCategory = async (newCategory: Category) => {
         try {
-            console.log(newCategory)
             setLoading(true);
             const res = await fetch(API_ENDPOINTS.categories, {
                 method: "PUT",

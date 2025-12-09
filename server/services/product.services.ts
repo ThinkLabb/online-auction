@@ -94,8 +94,6 @@ export const getAdminCategories = async () => {
       }
     }
 
-    console.log(result)
-
     const categories = result.map(item => {
       if (item.parent_id === null) {
         const level1Data = level1Map.get(item.name);
