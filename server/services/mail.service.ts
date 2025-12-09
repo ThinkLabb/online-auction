@@ -65,7 +65,6 @@ export const verify = async (data: Data) => {
     const secret = getUserSecret(email)
 
     if (!totp.check(code, secret)) {
-        console.log(false)
         return { success: false, message: "Invalid code." }
     }
 

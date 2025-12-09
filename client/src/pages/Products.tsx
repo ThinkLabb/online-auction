@@ -191,15 +191,12 @@ export default function ProductsPage(): JSX.Element {
                 apiUrlWithParams = `/api/products/${level1}/${level2}?${params.toString()}`;
             }
 
-            console.log(`Fetching products from: ${apiUrlWithParams}`);
-
             try {
                 const res = await fetch(apiUrlWithParams);
                 if (!res.ok) {
                     throw new Error('Network response was not ok');
                 }
                 const data: PaginatedProductsResponse = await res.json();
-                console.log(data);
                 setProducts(data.products || []);
                 setTotalItems(data.totalItems || 0);
             } catch (error) {
@@ -219,7 +216,7 @@ export default function ProductsPage(): JSX.Element {
             
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4"> 
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
-                    Products in {level1} {level2 !== "*" ? `/ ${level2}` : ""}
+                    Products {level1 !== undefined ? ` in ${level1}` : ""} {level2 !== undefined ? `/ ${level2}` : ""}
                 </h2>
                 <SortTabs activeTab={activeSortTab} setActiveTab={setActiveSortTab} />
             </div>

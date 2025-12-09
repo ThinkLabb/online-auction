@@ -102,7 +102,7 @@ export default function ForgotPassword() {
       try { 
          setLoading(true);
          const res = await fetch('api/changepassword', {
-            method: 'POST',
+            method: 'PUT',
             headers: {
                'Content-Type': 'application/json',
             },

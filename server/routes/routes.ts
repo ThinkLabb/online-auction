@@ -3,10 +3,10 @@ import * as authController from "../controllers/auth.controllers.ts";
 import { celebrate, Joi, Segments } from "celebrate";
 import * as emailController from "../controllers/email.controller.ts";
 import * as productController from "../controllers/product.controllers.ts";
-import path from "path";
-import { getAdCatergories, getAdProducts, getAdUsers, getUpgradeRequest } from "../controllers/admin.controler.ts";
+import { addCategory, deleteCategory, deleteProducts, deleteUser, getAdCatergories, getAdName, getAdProducts, getAdUsers, getUpgradeRequest, responseUpgradeRequest, updateCategory } from "../controllers/admin.controler.ts";
 import { editUserProfile, getMyProfile } from "../controllers/user.controllers.ts";
 import { getProduct, getProductsEndest, uploadProducts } from "../controllers/product.controllers.ts";
+import { banBidder, getBidHistory, placeBid } from "../controllers/bid.controller.ts";
 
 const router = express.Router();
 
@@ -44,11 +44,11 @@ router.get('/home/products/topbid', productController.getTopBiddedProducts);
 
 router.get('/product/:id', authController.getPublicAuthentication, getProduct);
 
-router.get('/product/:id/bids', authController.getSellerAuthentication, productController.getBidHistory);
+router.get('/product/:id/bids', authController.getSellerAuthentication, getBidHistory);
 
-router.delete('/ban/:productId/:bidderId', authController.getSellerAuthentication, productController.banBidder);
+router.delete('/ban/:productId/:bidderId', authController.getSellerAuthentication, banBidder);
 
-router.post('/bid/:productId', authController.getAuthentication, productController.placeBid);
+router.post('/bid/:productId', authController.getAuthentication, placeBid);
 
 router.get('/products/:level1/:level2', productController.getProductsLV);
 
@@ -56,27 +56,30 @@ router.post('/upload', authController.getSellerAuthentication, uploadProducts);
 
 router.get('/upload', authController.getSellerAuthentication, (_: Request, res: Response) => res.sendStatus(200));
 
-const publicDirectoryPath = path.join('./server', 'assets', 'products');
+router.get('/assets/productsImg/:key', productController.getProductImage);
 
-router.use('/assets', express.static(publicDirectoryPath));
+router.post('/sendmail', emailController.sendMail)
+router.post('/verify', emailController.verifyCode)
 
-router.use('/sendmail', emailController.sendMail)
-
-router.use('/verify', emailController.verifyCode)
-
-router.use('/changepassword', authController.changePassword)
+router.put('/changepassword', authController.changePassword)
 
 router.get('/categories', productController.getCategories)
 
-router.get('/admin', authController.getAuthentication, authController.checkAdmin)
+router.get('/admin', authController.getAuthentication, authController.checkAdmin, getAdName)
 
-router.get('/admin/categories', getAdCatergories);
+router.get('/admin/categories', authController.getAuthentication, authController.checkAdmin, getAdCatergories);
+router.post('/admin/categories', authController.getAuthentication, authController.checkAdmin, addCategory);
+router.delete('/admin/categories', authController.getAuthentication, authController.checkAdmin, deleteCategory);
+router.put('/admin/categories', authController.getAuthentication, authController.checkAdmin, updateCategory);
 
-router.get('/admin/products', getAdProducts);
+router.get('/admin/products', authController.getAuthentication, authController.checkAdmin, getAdProducts);
+router.delete('/admin/products', authController.getAuthentication, authController.checkAdmin, deleteProducts);
 
-router.get('/admin/users', getAdUsers);
+router.get('/admin/users', authController.getAuthentication, authController.checkAdmin, getAdUsers);
+router.delete('/admin/users', authController.getAuthentication, authController.checkAdmin, deleteUser);
 
-router.get('/admin/upgradeRequests', getUpgradeRequest);
+router.get('/admin/upgradeRequests', authController.getAuthentication, authController.checkAdmin, getUpgradeRequest);
+router.put('/admin/upgradeRequests', authController.getAuthentication, authController.checkAdmin, responseUpgradeRequest);
 
 
 // ===== PROFILE PAGE'S API =====

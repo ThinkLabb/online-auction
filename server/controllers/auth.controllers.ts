@@ -203,7 +203,7 @@ export const getAccount = async (req: Request, res: Response) => {
     const user = res.locals.user;
     return res
       .status(200)
-      .json(successResponse({ name: user.name, email: user.email }, 'Get account successfully!'));
+      .json(successResponse({ name: user.name, email: user.email, role: user.role}, 'Get account successfully!'));
   } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
   }
@@ -227,13 +227,13 @@ export const logout = async (req: Request, res: Response) => {
 };
 
 
-export const checkAdmin = function (req: Request, res: Response) {
+export const checkAdmin = function (req: Request, res: Response, next: NextFunction) {
   try {
     const user = res.locals.user;
     if (user.role !== 'admin') {
       return res.status(500).json(errorResponse("Your are not admin"));
     }
-    return res.status(200).json(successResponse(null, "Access admin page successfully!"));
+    next()
   } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
   }

@@ -90,8 +90,8 @@ model SellerUpgradeRequest {
 
 model Category {
   category_id Int    @id @default(autoincrement())
-  name_level_1 String @db.Text
-  name_level_2 String @db.Text
+  name_level_1 String @db.Text 
+  name_level_2 String? @db.Text
   // Relationship
   products    Product[]
   @@unique([name_level_1, name_level_2])
@@ -100,7 +100,7 @@ model Category {
 model Product {
   product_id                BigInt      @id @default(autoincrement())
   seller_id                 String      @db.Uuid
-  category_id               Int
+  category_id               Int       
   name                      String      @db.Text
   status                    ProductStatus @default(open)
   start_price               Decimal     @db.Decimal(12, 2)
@@ -115,8 +115,8 @@ model Product {
   review_needed             Boolean     @default(false)
 
   // Relationships
-  seller                    User        @relation("SellerProducts", fields: [seller_id], references: [user_id], onDelete: Restrict)
-  category                  Category    @relation(fields: [category_id], references: [category_id], onDelete: Restrict)
+  seller                    User        @relation("SellerProducts", fields: [seller_id], references: [user_id], onDelete: Cascade)
+  category                  Category    @relation(fields: [category_id], references: [category_id], onDelete: Cascade)
   current_highest_bidder    User?       @relation("HighestBidder", fields: [current_highest_bidder_id], references: [user_id])
   images                    ProductImages[]
   description_history       ProductDescriptionHistory[]

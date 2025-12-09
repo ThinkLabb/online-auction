@@ -42,7 +42,7 @@ CREATE TABLE "SellerUpgradeRequest" (
 CREATE TABLE "Category" (
     "category_id" SERIAL NOT NULL,
     "name_level_1" TEXT NOT NULL,
-    "name_level_2" TEXT NOT NULL,
+    "name_level_2" TEXT,
 
     CONSTRAINT "Category_pkey" PRIMARY KEY ("category_id")
 );
@@ -181,9 +181,6 @@ CREATE UNIQUE INDEX "SellerUpgradeRequest_user_id_key" ON "SellerUpgradeRequest"
 CREATE UNIQUE INDEX "Category_name_level_1_name_level_2_key" ON "Category"("name_level_1", "name_level_2");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "BidHistory_product_id_bidder_id_key" ON "BidHistory"("product_id", "bidder_id");
-
--- CreateIndex
 CREATE UNIQUE INDEX "Order_product_id_key" ON "Order"("product_id");
 
 -- CreateIndex
@@ -196,10 +193,10 @@ CREATE UNIQUE INDEX "Order_buyer_review_id_key" ON "Order"("buyer_review_id");
 ALTER TABLE "SellerUpgradeRequest" ADD CONSTRAINT "SellerUpgradeRequest_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Product" ADD CONSTRAINT "Product_seller_id_fkey" FOREIGN KEY ("seller_id") REFERENCES "User"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Product" ADD CONSTRAINT "Product_seller_id_fkey" FOREIGN KEY ("seller_id") REFERENCES "User"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Product" ADD CONSTRAINT "Product_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "Category"("category_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Product" ADD CONSTRAINT "Product_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "Category"("category_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Product" ADD CONSTRAINT "Product_current_highest_bidder_id_fkey" FOREIGN KEY ("current_highest_bidder_id") REFERENCES "User"("user_id") ON DELETE SET NULL ON UPDATE CASCADE;
