@@ -1,5 +1,3 @@
-// types.ts
-
 export interface ProductSeller {
   name: string;
   rating: number;
@@ -30,6 +28,18 @@ export interface ProductDetails {
   exhaust?: string;
 }
 
+export interface RelatedProduct {
+  id: string;
+  name: string;
+  price: number;
+  buyNowPrice: number | null;
+  bidCount: number;
+  postedDate: string;
+  timeLeft: string;
+  bidderName: string;
+  image: string | null;
+}
+
 export interface Product {
   id: string;
   title: string;
@@ -47,9 +57,9 @@ export interface Product {
   topBidder: ProductSeller;
   qa: ProductQA[];
   isSeller: boolean;
+  relatedProducts?: RelatedProduct[];
 }
 
-// Used in the BidHistory component
 export interface BidHistoryItem {
   id: string;
   bidderId: string;

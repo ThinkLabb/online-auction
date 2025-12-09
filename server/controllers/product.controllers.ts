@@ -11,7 +11,7 @@ export const uploadProducts = async (req: Request, res: Response) => {
     const { images, ...productData } = req.body;
     const user = res.locals.user;
     if (!images || !Array.isArray(images)) {
-       return res.status(400).json({ error: 'Images must be an array' });
+      return res.status(400).json({ error: 'Images must be an array' });
     }
     const uploadPromises = images.map(async (base64String: string, index: number) => {
       const base64Data = base64String.replace(/^data:image\/\w+;base64,/, '');
@@ -24,7 +24,7 @@ export const uploadProducts = async (req: Request, res: Response) => {
         ContentType: 'image/png',
       });
       await s3Client.send(command);
-      return filename; 
+      return filename;
     });
     const uploadedImageKeys = await Promise.all(uploadPromises);
     await db.prisma.product.create({
@@ -51,7 +51,7 @@ export const uploadProducts = async (req: Request, res: Response) => {
     });
     res.json({ message: 'Product created and image keys saved successfully' });
   } catch (error) {
-    console.error("Upload Error:", error);
+    console.error('Upload Error:', error);
     res.status(500).json({ error: 'Server Error' });
   }
 };
@@ -72,14 +72,13 @@ export const getProductImage = async (req: Request, res: Response) => {
     res.setHeader('Cache-Control', 'public, max-age=31536000');
 
     if (s3Response.Body instanceof Readable) {
-        s3Response.Body.pipe(res);
+      s3Response.Body.pipe(res);
     } else {
-        console.error("S3 Body type:", typeof s3Response.Body);
-        throw new Error('S3 Body is not a Node.js Readable stream');
+      console.error('S3 Body type:', typeof s3Response.Body);
+      throw new Error('S3 Body is not a Node.js Readable stream');
     }
-
   } catch (error) {
-    console.error("Stream Image Error:", error);
+    console.error('Stream Image Error:', error);
     res.status(404).send('Image not found');
   }
 };
@@ -226,28 +225,22 @@ const calculateRating = (plus: number, minus: number) => {
   return Number(((plus / total) * 5).toFixed(1));
 };
 
+// --- src/controllers/product.controllers.ts (Thay thế hàm getProduct cũ) ---
+
 export const getProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const user = res.locals.user;
+
+    // 1. Lấy thông tin sản phẩm chính
     const productData = await db.prisma.product.findUnique({
-      where: {
-        product_id: BigInt(id),
-      },
+      where: { product_id: BigInt(id) },
       include: {
-        seller: {
-          select: { user_id: true, name: true, plus_review: true, minus_review: true },
-        },
+        seller: { select: { user_id: true, name: true, plus_review: true, minus_review: true } },
         category: true,
-        current_highest_bidder: {
-          select: { name: true, plus_review: true, minus_review: true },
-        },
+        current_highest_bidder: { select: { name: true, plus_review: true, minus_review: true } },
         images: true,
-
-        description_history: {
-          orderBy: { added_at: 'asc' },
-        },
-
+        description_history: { orderBy: { added_at: 'asc' } },
         q_and_a: {
           include: {
             questioner: { select: { name: true, plus_review: true, minus_review: true } },
@@ -262,6 +255,58 @@ export const getProduct = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
+    // 2. Lấy 5 sản phẩm liên quan (Related Products)
+    const relatedProductsRaw = await db.prisma.product.findMany({
+      where: {
+        category_id: productData.category_id, // Cùng danh mục
+        product_id: { not: productData.product_id }, // Khác ID hiện tại
+        status: 'open', // Đang mở bán
+        end_time: { gt: new Date() }, // Chưa hết hạn
+      },
+      select: {
+        product_id: true,
+        name: true,
+        current_price: true,
+        start_price: true,
+        buy_now_price: true,
+        bid_count: true,
+        created_at: true,
+        end_time: true,
+        current_highest_bidder: { select: { name: true } },
+        images: { take: 1, orderBy: { image_id: 'asc' }, select: { image_url: true } },
+      },
+      take: 5,
+      orderBy: { created_at: 'desc' },
+    });
+
+    const relatedProducts = relatedProductsRaw.map((p) => {
+      const now = new Date();
+      const end = new Date(p.end_time);
+      const diff = end.getTime() - now.getTime();
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const timeLeft = days > 0 ? `${days} day${days > 1 ? 's' : ''} left` : `${hours}h left`;
+
+      return {
+        id: p.product_id.toString(),
+        name: p.name,
+        price: Number(p.current_price) > 0 ? Number(p.current_price) : Number(p.start_price),
+        buyNowPrice: p.buy_now_price ? Number(p.buy_now_price) : null,
+        bidCount: p.bid_count,
+        postedDate: new Date(p.created_at).toLocaleDateString('en-GB'),
+        timeLeft: timeLeft,
+        bidderName: p.current_highest_bidder?.name || 'No Bids Yet',
+        image: p.images[0]?.image_url || null,
+      };
+    });
+
+    const now = new Date();
+    const endTime = new Date(productData.end_time);
+    const timeLeftMs = endTime.getTime() - now.getTime();
+    const daysLeft = Math.floor(timeLeftMs / (1000 * 60 * 60 * 24));
+    const hoursLeft = Math.floor((timeLeftMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const endsInString = timeLeftMs > 0 ? `${daysLeft} days ${hoursLeft} hours` : 'Ended';
+
     const descriptionList = productData.description_history.map((hist) => ({
       text: hist.description,
       date: new Date(hist.added_at).toLocaleDateString('vi-VN', {
@@ -272,13 +317,12 @@ export const getProduct = async (req: Request, res: Response) => {
         minute: '2-digit',
       }),
     }));
-
-    if (descriptionList.length === 0) {
+    if (descriptionList.length === 0)
       descriptionList.push({
         text: 'No description provided.',
         date: new Date(productData.created_at).toLocaleDateString(),
       });
-    }
+
     const responseData = {
       id: productData.product_id,
       title: productData.name,
@@ -287,17 +331,15 @@ export const getProduct = async (req: Request, res: Response) => {
         day: 'numeric',
         year: 'numeric',
       }),
-      endsIn: productData.end_time,
+      endsIn: endsInString,
       currentBid: Number(productData.current_price),
       bidsPlaced: productData.bid_count,
       buyNowPrice: productData.buy_now_price ? Number(productData.buy_now_price) : 0,
       minBidStep: Number(productData.step_price),
-
       images:
         productData.images.length > 0
           ? productData.images.map((img) => img.image_url)
           : ['https://via.placeholder.com/600x400?text=No+Image'],
-
       details: {
         brand: productData.category.name_level_1,
         year: 'N/A',
@@ -308,11 +350,8 @@ export const getProduct = async (req: Request, res: Response) => {
         performance: 'See description',
         exhaust: 'See description',
       },
-
       description: descriptionList,
-
       conditionText: 'Please refer to images and description for full condition details.',
-
       seller: {
         name: productData.seller.name,
         rating: calculateRating(productData.seller.plus_review, productData.seller.minus_review),
@@ -329,19 +368,18 @@ export const getProduct = async (req: Request, res: Response) => {
               productData.current_highest_bidder.plus_review +
               productData.current_highest_bidder.minus_review,
           }
-        : {
-            name: 'No Bids Yet',
-            rating: 0,
-            reviews: 0,
-          },
+        : { name: 'No Bids Yet', rating: 0, reviews: 0 },
       qa: productData.q_and_a.map((qa) => ({
         question: qa.question_text,
         asker: qa.questioner.name,
-        answer: qa.answer_text || 'Waiting for response...',
+        answer: qa.answer_text,
         responder: qa.answer_text ? `${productData.seller.name} (Seller)` : null,
         time: new Date(qa.question_time).toLocaleDateString(),
       })),
       isSeller: user ? user.id === productData.seller.user_id : false,
+
+      // QUAN TRỌNG: Trả về trường relatedProducts
+      relatedProducts: relatedProducts,
     };
 
     res.setHeader('Content-Type', 'application/json');
@@ -379,14 +417,14 @@ export const getProductsLV = async (req: Request, res: Response) => {
     const limit = Math.max(1, limitQuery);
     const skip = (page - 1) * limit;
     let whereClause: any = {};
-    if (level1 && level1 !== "*") {
+    if (level1 && level1 !== '*') {
       whereClause.category = {};
       whereClause.category.name_level_1 = String(level1);
-      if (level2 && level2 !== "*") {
+      if (level2 && level2 !== '*') {
         whereClause.category.name_level_2 = String(level2);
       }
     }
-   
+
     let orderByClause: any = {};
     const sortField: SortField =
       sortQuery && ['end_time', 'current_price'].includes(sortQuery) ? sortQuery : 'end_time';
@@ -437,4 +475,3 @@ export const getProductsLV = async (req: Request, res: Response) => {
     return res.status(500).json(errorResponse(String(e)));
   }
 };
-
