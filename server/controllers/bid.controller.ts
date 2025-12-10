@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import db from '../services/database.ts';
 import type { Request, Response } from 'express';
 
@@ -65,7 +66,6 @@ export const getBidHistory = async (req: Request, res: Response) => {
   }
 };
 
-
 export const banBidder = async (req: Request, res: Response) => {
   try {
     const { productId, bidderId } = req.params;
@@ -96,7 +96,7 @@ export const placeBid = async (req: Request, res: Response) => {
     const { productId } = req.params;
     const { amount } = req.body;
     const user = res.locals.user;
-    
+
     const bidAmount = parseFloat(amount);
     const prodIdBigInt = BigInt(productId);
 
@@ -106,11 +106,8 @@ export const placeBid = async (req: Request, res: Response) => {
         tx.user.findUnique({ where: { user_id: user.id } }),
         tx.bidHistory.findFirst({
           where: { product_id: prodIdBigInt },
-          orderBy: [
-            { bid_amount: 'desc' },
-            { bid_time: 'asc' }
-          ]
-        })
+          orderBy: [{ bid_amount: 'desc' }, { bid_time: 'asc' }],
+        }),
       ]);
 
       if (!product) throw new Error('Product not found');
@@ -139,7 +136,7 @@ export const placeBid = async (req: Request, res: Response) => {
       const currentDisplayPrice = Number(product.current_price) || Number(product.start_price);
       const stepPrice = Number(product.step_price);
       const startPrice = Number(product.start_price);
-      
+
       const minRequired = currentDisplayPrice + stepPrice;
       const actualMinRequired = product.bid_count === 0 ? startPrice : minRequired;
 
@@ -151,35 +148,35 @@ export const placeBid = async (req: Request, res: Response) => {
       let newHighestBidderId = user.id;
 
       if (!currentTopBid) {
-         newCurrentPrice = startPrice;
-         newHighestBidderId = user.id;
+        newCurrentPrice = startPrice;
+        newHighestBidderId = user.id;
       } else {
-         const currentMaxBid = Number(currentTopBid.bid_amount); 
-         const currentWinnerId = currentTopBid.bidder_id;
+        const currentMaxBid = Number(currentTopBid.bid_amount);
+        const currentWinnerId = currentTopBid.bidder_id;
 
-         if (user.id === currentWinnerId) {
+        if (user.id === currentWinnerId) {
+          newHighestBidderId = user.id;
+          newCurrentPrice = currentDisplayPrice;
+        } else {
+          if (bidAmount > currentMaxBid) {
             newHighestBidderId = user.id;
-            newCurrentPrice = currentDisplayPrice; 
-         } else {
-            if (bidAmount > currentMaxBid) {
-                newHighestBidderId = user.id;
-                newCurrentPrice = currentMaxBid + stepPrice;
+            newCurrentPrice = currentMaxBid + stepPrice;
 
-                if (newCurrentPrice > bidAmount) {
-                    newCurrentPrice = bidAmount;
-                }
-            } else if (bidAmount < currentMaxBid) {
-                newHighestBidderId = currentWinnerId;
-                newCurrentPrice = bidAmount;
-                
-                if (newCurrentPrice < currentDisplayPrice) {
-                    newCurrentPrice = currentDisplayPrice;
-                }
-            } else {
-                newHighestBidderId = currentWinnerId;
-                newCurrentPrice = currentMaxBid;
+            if (newCurrentPrice > bidAmount) {
+              newCurrentPrice = bidAmount;
             }
-         }
+          } else if (bidAmount < currentMaxBid) {
+            newHighestBidderId = currentWinnerId;
+            newCurrentPrice = bidAmount;
+
+            if (newCurrentPrice < currentDisplayPrice) {
+              newCurrentPrice = currentDisplayPrice;
+            }
+          } else {
+            newHighestBidderId = currentWinnerId;
+            newCurrentPrice = currentMaxBid;
+          }
+        }
       }
 
       const newBid = await tx.bidHistory.create({
@@ -209,11 +206,10 @@ export const placeBid = async (req: Request, res: Response) => {
         product_id: result.newBid.product_id.toString(),
         bid_id: result.newBid.bid_id.toString(),
       },
-      currentPrice: result.updatedProduct.current_price, 
+      currentPrice: result.updatedProduct.current_price,
       currentWinnerId: result.updatedProduct.current_highest_bidder_id,
-      isWinner: result.updatedProduct.current_highest_bidder_id === user.id
+      isWinner: result.updatedProduct.current_highest_bidder_id === user.id,
     });
-
   } catch (error: any) {
     console.error('Bid Error:', error);
 
@@ -224,6 +220,13 @@ export const placeBid = async (req: Request, res: Response) => {
     }
     if (error.message.includes('Bid too low') || error.message === 'Auction has ended') {
       return res.status(400).json({ message: error.message });
+    }
+    if (error instanceof Prisma.PrismaClientUnknownRequestError) {
+      if (error.message.includes('This user is banned from bidding on this product')) {
+        return res.status(403).json({
+          message: 'This user is banned from bidding on this product.',
+        });
+      }
     }
 
     return res.status(500).json({ message: 'Internal server error' });

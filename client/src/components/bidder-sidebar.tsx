@@ -109,7 +109,7 @@ export const BidderSidebar = ({
               disabled={isSubmitting}
               className="w-full bg-white border border-red-800 text-red-800 font-bold py-3 rounded shadow-sm hover:bg-red-50 transition duration-200 cursor-pointer disabled:opacity-50"
             >
-              Buy now for {formatCurrency(minNextBid.toString())}
+              Buy now for {formatCurrency(buyNowPrice.toString())}
             </button>
           )}
 
