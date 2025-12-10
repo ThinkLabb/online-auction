@@ -31,7 +31,7 @@ export const uploadProducts = async (req: Request, res: Response) => {
       data: {
         name: productData.productName,
         seller_id: user.id,
-        category_id: 1,
+        category_id: productData.categoryId,
         start_price: productData.startingPrice,
         buy_now_price: productData.buyNowPrice,
         step_price: productData.stepPrice,
