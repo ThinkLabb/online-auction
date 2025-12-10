@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { CategoryContext, useUser } from './UserContext.tsx';
 import CategoryDetail from './CategoryMenu.tsx';
@@ -10,7 +10,7 @@ function Layout() {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
 
     const navigate = useNavigate();
-    
+
     const handleLogout = async() => {
         try {
             const res = await fetch('/api/auth/logout', {
@@ -109,7 +109,10 @@ function Layout() {
                             ) : (
                                 <>
                                     <li className="bg-[#8D0000] text-white px-3 py-1 rounded text-sm hidden sm:block">Welcome, {user.name}</li>
-                                    <li className="bg-black text-white px-3 py-1 rounded cursor-pointer text-sm" onClick={handleLogout}>Logout</li>
+                                    <li className="bg-black text-white px-3 py-1 rounded cursor-pointer text-sm" onClick={(e) => {
+                      handleLogout();
+                      navigate("/")
+                    }}>Logout</li>
                                 </>
                             )}
                         </ul>

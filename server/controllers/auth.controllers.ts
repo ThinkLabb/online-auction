@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import * as authService from '../services/auth.services.ts';
 import { errorResponse, successResponse } from '../utils/response.ts';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import { success } from 'zod';
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -159,6 +160,43 @@ export const changePassword = async (req: Request, res: Response) => {
     return res.status(500).json(errorResponse(e));
   }
 };
+
+// Verify old password before changing password
+export const verifyUser = async (req: Request, res: Response) => {
+  try {
+    const { email, password } = await req.body;
+    const data = await authService.authenticateUser({ email, password });
+
+    if (!data.success || !data.user) {
+      console.log("No user")
+      return res.status(400).json(errorResponse(data.message));
+    }
+
+    const secret = process.env.JWT_SECRET!;
+    if (!secret) throw new Error("JWT_SECRET is not set");
+
+    const token = jwt.sign(
+        { info: req.body, message: data.message },
+        secret,
+        { expiresIn: "5m" }
+    );
+
+    res.cookie("reset_token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 1000 * 60 * 5,
+        sameSite: "strict"
+    });
+
+    return res
+      .status(200)
+      .json(successResponse(null, "Correct password"));
+;
+
+  } catch(e) {
+    return res.status(500).json(errorResponse(String(e)));
+  }
+}
 
 export const getAccount = async (req: Request, res: Response) => {
   try {

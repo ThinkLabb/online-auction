@@ -25,7 +25,7 @@ const schema = z.object({
 
 type Inputs = z.infer<typeof schema>;
 
-interface LocationOption {
+export interface LocationOption {
     name: string;
     code: number;
     codename: string;

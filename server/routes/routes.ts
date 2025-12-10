@@ -4,6 +4,7 @@ import { celebrate, Joi, Segments } from "celebrate";
 import * as emailController from "../controllers/email.controller.ts";
 import * as productController from "../controllers/product.controllers.ts";
 import { addCategory, deleteCategory, deleteProducts, deleteUser, getAdCatergories, getAdName, getAdProducts, getAdUsers, getUpgradeRequest, responseUpgradeRequest, updateCategory } from "../controllers/admin.controler.ts";
+import { editUserProfile, getMyProfile } from "../controllers/user.controllers.ts";
 import { getProduct, getProductsEndest, uploadProducts } from "../controllers/product.controllers.ts";
 import { banBidder, getBidHistory, placeBid } from "../controllers/bid.controller.ts";
 
@@ -81,5 +82,11 @@ router.get('/admin/upgradeRequests', authController.getAuthentication, authContr
 router.put('/admin/upgradeRequests', authController.getAuthentication, authController.checkAdmin, responseUpgradeRequest);
 
 
+// ===== PROFILE PAGE'S API =====
+router.get('/profile', authController.getAuthentication, getMyProfile);
+router.patch('/profile', authController.getAuthentication, editUserProfile);
+router.use('/profile/verifyuser', authController.verifyUser)
+
+// ===============================
 
 export default router;
