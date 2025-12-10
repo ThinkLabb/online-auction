@@ -19,7 +19,7 @@ function BiddingTab({ profile, setTab }: { profile: ProfileData; setTab: SetTab 
               rounded-sm ring ring-gray-200 shadow-sm shadow-black-300
             ">
             <Link to={`/product/${product.product_id}`} className="hover:text-[#8D0000] cursor-pointer w-50 h-full">
-              <img src={product.image_url} className="rounded-sm w-auto h-full object-contain"/>
+              <img src={`/api/assets/${product.image_url}`} className="rounded-sm w-auto h-full object-contain"/>
             </Link>
             <div className="flex flex-col gap-5 flex-grow">
               <div className="flex flex-row gap-5 justify-between">
@@ -77,7 +77,7 @@ function WonTab({ profile, setTab }: { profile: ProfileData; setTab: SetTab }) {
               rounded-sm ring ring-gray-200 shadow-sm shadow-black-300
             ">
             <Link to={`/product/${product.product_id}`} className="hover:text-[#8D0000] cursor-pointer w-50 h-full">
-              <img src={product.image_url} className="rounded-sm w-auto h-full object-contain"/>
+              <img src={`/api/assets/${product.image_url}`} className="rounded-sm w-auto h-full object-contain"/>
             </Link>
             <div className="flex flex-col gap-5 flex-grow">
               <div className="flex flex-row gap-5 justify-between">
@@ -127,7 +127,7 @@ function WatchlistTab({ profile, setTab }: { profile: ProfileData; setTab: SetTa
               rounded-sm ring ring-gray-200 shadow-sm shadow-black-300
             ">
             <Link to={`/product/${product.product_id}`} className="hover:text-[#8D0000] cursor-pointer w-50 h-full">
-              <img src={product.image_url} className="rounded-sm w-auto h-full object-contain"/>
+              <img src={`/api/assets/${product.image_url}`} className="rounded-sm w-auto h-full object-contain"/>
             </Link>
             <div className="flex flex-col gap-5 flex-grow">
               <div className="flex flex-row gap-5 justify-between">

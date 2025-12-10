@@ -86,7 +86,7 @@ router.put('/admin/upgradeRequests', authController.getAuthentication, authContr
 router.get('/profile', authController.getAuthentication, getMyProfile);
 router.patch('/profile', authController.getAuthentication, editUserProfile);
 router.use('/profile/verifyuser', authController.verifyUser)
-
+router.post('/watch-list/add', authController.getAuthentication, productController.addToWatchList);
 // ===============================
 
 export default router;

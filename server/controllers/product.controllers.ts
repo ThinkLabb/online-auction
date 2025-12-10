@@ -5,6 +5,7 @@ import * as productService from '../services/product.services.ts';
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { BUCKET_NAME, s3Client } from '../config/s3.ts';
 import { Readable } from 'stream'; // <--- 1. Import cái này
+import { Prisma } from '@prisma/client';
 
 export const uploadProducts = async (req: Request, res: Response) => {
   try {
@@ -469,5 +470,35 @@ export const getProductsLV = async (req: Request, res: Response) => {
     return res.json({ products: formattedProducts, totalItems: totalItems });
   } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
+  }
+};
+
+export const addToWatchList = async (req: Request, res: Response) => {
+  try {
+    const userId = res.locals.user.id;
+    const { productId } = req.body;
+    if (!productId) {
+      return res.status(400).json({ message: 'Product ID is required' });
+    }
+    await db.prisma.watchlist.create({
+      data: {
+        user_id: userId,
+        product_id: Number(productId),
+      },
+    });
+    return res.status(200).json({ message: 'Added to watch list successfully' });
+
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return res.status(409).json({ message: 'Product is already in your watch list' });
+      }
+
+      if (error.code === 'P2003') {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+    }
+    console.error('Add to watch list error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };

@@ -12,6 +12,7 @@ export const BidderSidebar = ({
 }) => {
   const [bidAmount, setBidAmount] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isWatching, setIsWatching] = useState(false); // New state for watch list loading
 
   const currentBid = Number(product.currentBid);
   const minBidStep = Number(product.minBidStep);
@@ -30,7 +31,7 @@ export const BidderSidebar = ({
       alert(`Bid too low! You must bid at least ${formatCurrency(minNextBid.toString())}`);
       return;
     }
-    if (bidValue >= buyNowPrice) {
+    if (canBuyNow && bidValue >= buyNowPrice) {
       alert(`Bid is higher than buy now price, please click buy now!!`);
       return;
     }
@@ -61,6 +62,31 @@ export const BidderSidebar = ({
     alert('Proceeding to buy now checkout...');
   };
 
+  const handleAddToWatchList = async () => {
+    if (isWatching) return;
+    setIsWatching(true);
+    try {
+      const response = await fetch('/api/watch-list/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id }), // Assuming backend needs productId
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to add to watch list');
+      }
+
+      alert('Added to watch list successfully!');
+    } catch (error: any) {
+      console.error('Watch list error:', error);
+      alert(error.message || 'Error adding to watch list');
+    } finally {
+      setIsWatching(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Product Info Card */}
@@ -85,7 +111,7 @@ export const BidderSidebar = ({
               </div>
             </div>
             <p className="text-[10px] text-gray-400">
-              Min step: + {formatCurrency(minNextBid.toString())}
+              Min step: + {formatCurrency(minBidStep.toString())} {/* Fixed: Display step amount, not next bid */}
             </p>
           </div>
 
@@ -113,9 +139,22 @@ export const BidderSidebar = ({
             </button>
           )}
 
-          <p className="text-[10px] text-center text-gray-400 mt-2">
-            By bidding, you agree to our terms
-          </p>
+          <button
+            onClick={handleAddToWatchList}
+            disabled={isWatching || isSubmitting}
+            className="w-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 rounded transition duration-200 cursor-pointer disabled:opacity-60"
+          >
+            {isWatching ? (
+               <span>Processing...</span>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                <span>Add to Watch List</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
