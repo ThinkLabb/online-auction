@@ -6,6 +6,8 @@ import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { BUCKET_NAME, s3Client } from '../config/s3.ts';
 import { Readable } from 'stream'; // <--- 1. Import cái này
 
+import nodemailer from 'nodemailer';
+
 export const uploadProducts = async (req: Request, res: Response) => {
   try {
     const { images, ...productData } = req.body;
@@ -469,5 +471,64 @@ export const getProductsLV = async (req: Request, res: Response) => {
     return res.json({ products: formattedProducts, totalItems: totalItems });
   } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
+  }
+};
+
+// QA section, a user can ask question about a product, seller gets email notification
+export const createProductQA = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { question } = req.body;
+    const user = res.locals.user; //asker
+
+    // validate input
+    if (!question) return res.status(400).json({ message: 'Question cannot be empty' });
+
+    /// find product
+    const product = await db.prisma.product.findUnique({
+      where: { product_id: BigInt(id) },
+      include: { seller: { select: { email: true, name: true } } },
+    });
+    // if no product found
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    /// save question to database
+    await db.prisma.productQandA.create({
+      data: {
+        product_id: BigInt(id),
+        questioner_id: user.id,
+        question_text: question,
+        question_time: new Date(),
+      },
+    });
+
+    // send email to seller
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS },
+    });
+
+    //product link for seller to answer question
+    const productLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/product/${id}`;
+
+    const mailOptions = {
+      from: '"Auction System" <noreply@auction.com>',
+      to: product.seller.email,
+      subject: `New Question: ${product.name}`,
+      html: `
+        <h3>Hello ${product.seller.name},</h3>
+        <p>User <strong>${user.name || 'Someone'}</strong> asked a question about your product:</p>
+        <div style="background:#f3f4f6; padding:15px; border-left:4px solid #8D0000; margin:10px 0;">
+          "${question}"
+        </div>
+        <p><a href="${productLink}">Click here to reply</a></p>
+      `,
+    };
+    transporter.sendMail(mailOptions).catch(console.error);
+
+    return res.status(201).json({ message: 'Question sent successfully!' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Server Error' });
   }
 };

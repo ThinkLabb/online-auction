@@ -4,6 +4,7 @@ import { ClipLoader } from 'react-spinners';
 import { useParams } from 'react-router-dom';
 import { SellerSidebar } from '../components/seller-sidebar';
 import { BidderSidebar } from '../components/bidder-sidebar';
+import { ProductQA } from '../components/productQA';
 import { Product } from '../lib/type';
 
 const formatCurrency = (amount: number) => {
@@ -163,51 +164,15 @@ const ProductPage = () => {
         </div>
 
         {/* Qna */}
-        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 mb-12">
-          <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-            <h2 className="text-xl font-bold text-gray-900">Questions & Answers</h2>
-            {!product.isSeller && (
-              <button className="bg-[#8D0000] text-white px-5 py-2 rounded text-sm font-bold hover:bg-[#6b0000] transition shadow-sm">
-                Ask a question
-              </button>
-            )}
-          </div>
-          <div className="space-y-6">
-            {product.qa.map((item, idx) => (
-              <div key={idx} className="flex flex-col gap-3">
-                <div>
-                  <h4 className="font-bold text-gray-900 text-sm">{item.question}</h4>
-                  <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
-                    <span>{item.asker}</span>
-                    <span>•</span>
-                    <span>{item.time}</span>
-                  </div>
-                </div>
-                {item.answer ? (
-                  <div className="bg-gray-50 p-4 rounded-lg border-l-2 border-[#8D0000] ml-0 md:ml-6">
-                    <p className="text-xs font-bold text-gray-900 mb-1">
-                      {item.responder} <span className="text-gray-400 font-normal">(Seller)</span>
-                    </p>
-                    <p className="text-sm text-gray-700">{item.answer}</p>
-                  </div>
-                ) : (
-                  <p className="text-xs text-gray-400 italic pl-4">Waiting for answer...</p>
-                )}
-              </div>
-            ))}
-            {product.qa.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-gray-400 text-sm">No questions yet.</p>
-              </div>
-            )}
-          </div>
+        <div className="mt-8">
+          <ProductQA product={product} onRefresh={fetchProduct} />
         </div>
 
         {/* --- RELATED PRODUCTS --- */}
         {product.relatedProducts && product.relatedProducts.length > 0 && (
           <div className="mt-16 mb-12">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Other products you might like</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Other products</h2>
               <a
                 href="/category"
                 className="text-sm font-bold text-[#8D0000] hover:underline flex items-center gap-1"

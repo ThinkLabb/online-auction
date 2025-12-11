@@ -25,7 +25,7 @@ function Router() {
       <Route path="/register" element={<Register />}></Route>
       <Route path="/signin" element={<LogIn />}></Route>
       <Route path="/forgotpassword" element={<ForgotPassword />}></Route>
-        <Route path="/admin" element={<AdminPage />}></Route>
+      <Route path="/admin" element={<AdminPage />}></Route>
     </Routes>
   );
 }
