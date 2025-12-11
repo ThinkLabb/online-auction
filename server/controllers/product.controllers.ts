@@ -7,7 +7,8 @@ import { BUCKET_NAME, s3Client } from '../config/s3.ts';
 import { Readable } from 'stream'; // <--- 1. Import cái này
 import { Prisma } from '@prisma/client';
 
-import nodemailer from 'nodemailer';
+// import nodemailer from 'nodemailer';
+import * as mailService from '../services/mail.service.ts';
 
 export const uploadProducts = async (req: Request, res: Response) => {
   try {
@@ -598,29 +599,20 @@ export const createProductQA = async (req: Request, res: Response) => {
     });
 
     // send email to seller
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS },
-    });
-
-    // product link for seller to answer question
     const productLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/product/${id}`;
 
-    const mailOptions = {
-      from: '"Auction System" <noreply@auction.com>',
+    await mailService.sendCustomEmail({
       to: product.seller.email,
       subject: `New Question: ${product.name}`,
       html: `
         <h3>Hello ${product.seller.name},</h3>
-        <p>User <strong>${user.name || 'Someone'}</strong> asked a question about your product:</p>
-        <div style="background:#f3f4f6; padding:15px; border-left:4px solid #8D0000; margin:10px 0;">
+        <p>User <strong>${user.name}</strong> asked a question about your product (${product.name}):</p>
+        <div style="background:#f3f4f6; padding:15px; border-left:4px solid #8D0000;">
           "${question}"
         </div>
-        <p><a href="${productLink}">Click here to reply</a></p>
+        <p><a href="${productLink}">Reply Now</a></p>
       `,
-    };
-    transporter.sendMail(mailOptions).catch(console.error);
-
+    });
     return res.status(201).json({ message: 'Question sent successfully!' });
   } catch (error) {
     console.error(error);
@@ -663,33 +655,23 @@ export const replyProductQA = async (req: Request, res: Response) => {
       },
     });
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS },
-    });
-
+    // send email to questioner
     const productLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/product/${qa.product_id}`;
 
-    const mailOptions = {
-      from: '"Auction System" <noreply@auction.com>',
+    await mailService.sendCustomEmail({
       to: qa.questioner.email,
-      subject: `Seller replied to your question on: ${qa.product.name}`,
+      subject: `Answer for ${qa.product.name}`,
       html: `
         <h3>Hello ${qa.questioner.name},</h3>
-        <p>The seller has replied to your question regarding product <strong>${qa.product.name}</strong>.</p>
-        
-        <div style="background:#f3f4f6; padding:15px; border-left:4px solid #8D0000; margin:15px 0;">
-          <p><strong>Your Question:</strong><br/>"${qa.question_text}"</p>
-          <p><strong>Seller's Answer:</strong><br/>"${answer}"</p>
+        <p>Seller <strong>${user.name}</strong> answered your question about product ${qa.product.name}:</p>
+        <div style="background:#f3f4f6; padding:15px; border-left:4px solid #8D0000;">
+          <p><strong>You asked:</strong> "${qa.question_text}"</p>
+          <p><strong>Answer:</strong> "${answer}"</p
         </div>
-
-        <p><a href="${productLink}" style="background: #8D0000; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Product</a></p>
+        <p><a href="${productLink}">Reply Now</a></p>
       `,
-    };
-
-    transporter.sendMail(mailOptions).catch(console.error);
-
-    return res.status(200).json({ message: 'Reply sent successfully' });
+    });
+    return res.status(201).json({ message: 'Answer sent successfully!' });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: String(error) });
