@@ -362,6 +362,7 @@ export const getProduct = async (req: Request, res: Response) => {
           }
         : { name: 'No Bids Yet', rating: 0, reviews: 0 },
       qa: productData.q_and_a.map((qa) => ({
+        id: qa.qa_id.toString(),
         question: qa.question_text,
         asker: qa.questioner.name,
         answer: qa.answer_text,
@@ -370,7 +371,6 @@ export const getProduct = async (req: Request, res: Response) => {
       })),
       isSeller: user ? user.id === productData.seller.user_id : false,
 
-      // QUAN TRỌNG: Trả về trường relatedProducts
       relatedProducts: relatedProducts,
     };
 
@@ -603,7 +603,7 @@ export const createProductQA = async (req: Request, res: Response) => {
       auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS },
     });
 
-    //product link for seller to answer question
+    // product link for seller to answer question
     const productLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/product/${id}`;
 
     const mailOptions = {
@@ -625,5 +625,73 @@ export const createProductQA = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Server Error' });
+  }
+};
+
+export const replyProductQA = async (req: Request, res: Response) => {
+  try {
+    const { qaId } = req.params;
+    const { answer } = req.body;
+    const user = res.locals.user; // current user (seller)
+
+    // validate input
+    if (!answer) return res.status(400).json({ message: 'Answer cannot be empty' });
+
+    // find question from database
+    const qa = await db.prisma.productQandA.findUnique({
+      where: { qa_id: BigInt(qaId) },
+      include: {
+        product: true,
+        questioner: { select: { email: true, name: true } }, // <--- questioner info for emailing
+      },
+    });
+
+    // check if question exists
+    if (!qa) return res.status(404).json({ message: 'Question not found' });
+
+    // check if current user is the seller of the product
+    if (qa.product.seller_id !== user.id) {
+      return res.status(403).json({ message: 'Unauthorized: You are not the seller' });
+    }
+
+    // save answer to database
+    await db.prisma.productQandA.update({
+      where: { qa_id: BigInt(qaId) },
+      data: {
+        answer_text: answer,
+        answer_time: new Date(),
+      },
+    });
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS },
+    });
+
+    const productLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/product/${qa.product_id}`;
+
+    const mailOptions = {
+      from: '"Auction System" <noreply@auction.com>',
+      to: qa.questioner.email,
+      subject: `Seller replied to your question on: ${qa.product.name}`,
+      html: `
+        <h3>Hello ${qa.questioner.name},</h3>
+        <p>The seller has replied to your question regarding product <strong>${qa.product.name}</strong>.</p>
+        
+        <div style="background:#f3f4f6; padding:15px; border-left:4px solid #8D0000; margin:15px 0;">
+          <p><strong>Your Question:</strong><br/>"${qa.question_text}"</p>
+          <p><strong>Seller's Answer:</strong><br/>"${answer}"</p>
+        </div>
+
+        <p><a href="${productLink}" style="background: #8D0000; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Product</a></p>
+      `,
+    };
+
+    transporter.sendMail(mailOptions).catch(console.error);
+
+    return res.status(200).json({ message: 'Reply sent successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: String(error) });
   }
 };

@@ -22,6 +22,7 @@ import {
   getProductsEndest,
   uploadProducts,
   createProductQA,
+  replyProductQA,
 } from '../controllers/product.controllers.ts';
 import { banBidder, getBidHistory, placeBid } from '../controllers/bid.controller.ts';
 
@@ -159,5 +160,6 @@ router.get('/admin/upgradeRequests', getUpgradeRequest);
 
 // QA route: ask question about a product
 router.post('/product/:id/qa', authController.getAuthentication, createProductQA);
+router.post('/qa/:qaId/reply', authController.getSellerAuthentication, replyProductQA);
 
 export default router;

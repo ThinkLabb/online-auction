@@ -10,6 +10,7 @@ export interface DescriptionItem {
 }
 
 export interface ProductQA {
+  id: string;
   question: string;
   asker: string;
   answer: string | null;
