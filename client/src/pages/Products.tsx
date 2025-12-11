@@ -64,19 +64,6 @@ const formatDate = (dateStr: string | null | undefined): string => {
     });
 };
 
-const calculateTimeRemaining = (endTimeStr: string | null | undefined): string => {
-    if (!endTimeStr) return 'N/A';
-    const diffMs = new Date(endTimeStr).getTime() - new Date().getTime();
-    if (diffMs <= 0) return 'Auction ended';
-    const d = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const h = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    if (d > 0) return `${d}d ${h}h remaining`;
-    if (h > 0) return `${h}h ${m}m remaining`;
-    if (m > 0) return `${m}m remaining`;
-    return 'Ending soon';
-};
-
 // **Responsive Change for SortTabs**: Uses flex-wrap and reduced spacing on mobile
 
 const SortTabs = React.memo(({ activeTab, setActiveTab }: SortTabsProps): JSX.Element => {
@@ -191,15 +178,12 @@ export default function ProductsPage(): JSX.Element {
                 apiUrlWithParams = `/api/products/${level1}/${level2}?${params.toString()}`;
             }
 
-            console.log(`Fetching products from: ${apiUrlWithParams}`);
-
             try {
                 const res = await fetch(apiUrlWithParams);
                 if (!res.ok) {
                     throw new Error('Network response was not ok');
                 }
                 const data: PaginatedProductsResponse = await res.json();
-                console.log(data);
                 setProducts(data.products || []);
                 setTotalItems(data.totalItems || 0);
             } catch (error) {
@@ -219,7 +203,7 @@ export default function ProductsPage(): JSX.Element {
             
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4"> 
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
-                    Products in {level1} {level2 !== "*" ? `/ ${level2}` : ""}
+                    Products {level1 !== undefined ? ` in ${level1}` : ""} {level2 !== undefined ? `/ ${level2}` : ""}
                 </h2>
                 <SortTabs activeTab={activeSortTab} setActiveTab={setActiveSortTab} />
             </div>

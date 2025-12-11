@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 export const formatCurrency = (priceStr: string | null | undefined): string => {
   if (!priceStr) return '';
   const price = Number(priceStr);
-  return new Intl.NumberFormat('de-DE').format(price) + ' VND';
+  return new Intl.NumberFormat('de-DE').format(price) + ' USD';
 };
 
 export const formatDate = (dateStr: string | null | undefined): string => {
@@ -87,13 +87,10 @@ export const MemoProductCard = memo(({ product }: { product: Product }) => {
     return () => clearInterval(intervalId);
   }, [end_time]);
 
-  // Prevent button click from triggering the Link (if you want the button to do something specific later)
   const handleBuyNowClick = (e: React.MouseEvent) => {
     if (!canBuyNow) {
       e.preventDefault();
     }
-    // If you want "Buy Now" to do something different than just going to the product page, add logic here.
-    // Currently, it bubbles up to the Link.
   };
 
   return (

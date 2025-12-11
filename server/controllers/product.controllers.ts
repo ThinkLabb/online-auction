@@ -5,6 +5,7 @@ import * as productService from '../services/product.services.ts';
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { BUCKET_NAME, s3Client } from '../config/s3.ts';
 import { Readable } from 'stream'; // <--- 1. Import cái này
+import { Prisma } from '@prisma/client';
 
 import nodemailer from 'nodemailer';
 
@@ -33,7 +34,7 @@ export const uploadProducts = async (req: Request, res: Response) => {
       data: {
         name: productData.productName,
         seller_id: user.id,
-        category_id: 1,
+        category_id: productData.categoryId,
         start_price: productData.startingPrice,
         buy_now_price: productData.buyNowPrice,
         step_price: productData.stepPrice,
@@ -298,13 +299,6 @@ export const getProduct = async (req: Request, res: Response) => {
       };
     });
 
-    const now = new Date();
-    const endTime = new Date(productData.end_time);
-    const timeLeftMs = endTime.getTime() - now.getTime();
-    const daysLeft = Math.floor(timeLeftMs / (1000 * 60 * 60 * 24));
-    const hoursLeft = Math.floor((timeLeftMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const endsInString = timeLeftMs > 0 ? `${daysLeft} days ${hoursLeft} hours` : 'Ended';
-
     const descriptionList = productData.description_history.map((hist) => ({
       text: hist.description,
       date: new Date(hist.added_at).toLocaleDateString('vi-VN', {
@@ -329,7 +323,7 @@ export const getProduct = async (req: Request, res: Response) => {
         day: 'numeric',
         year: 'numeric',
       }),
-      endsIn: endsInString,
+      endsIn: productData.end_time,
       currentBid: Number(productData.current_price),
       bidsPlaced: productData.bid_count,
       buyNowPrice: productData.buy_now_price ? Number(productData.buy_now_price) : 0,
@@ -471,6 +465,107 @@ export const getProductsLV = async (req: Request, res: Response) => {
     return res.json({ products: formattedProducts, totalItems: totalItems });
   } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
+  }
+};
+
+export const addToWatchList = async (req: Request, res: Response) => {
+  try {
+    const userId = res.locals.user.id;
+    const { productId } = req.body;
+    if (!productId) {
+      return res.status(400).json({ message: 'Product ID is required' });
+    }
+    await db.prisma.watchlist.create({
+      data: {
+        user_id: userId,
+        product_id: Number(productId),
+      },
+    });
+    return res.status(200).json({ message: 'Added to watch list successfully' });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return res.status(409).json({ message: 'Product is already in your watch list' });
+      }
+
+      if (error.code === 'P2003') {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+    }
+    console.error('Add to watch list error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const handleBuyNow = async (req: Request, res: Response) => {
+  try {
+    const { productId } = req.params;
+
+    const buyerId = res.locals.user.id;
+
+    const result = await db.prisma.$transaction(async (tx) => {
+      const product = await tx.product.findUnique({
+        where: { product_id: BigInt(productId) },
+      });
+
+      if (!product) {
+        throw new Error('Sản phẩm không tồn tại.');
+      }
+
+      if (product.status !== 'open') {
+        throw new Error('Sản phẩm này đã bán, hết hạn hoặc không còn khả dụng.');
+      }
+
+      if (Number(product.buy_now_price) == 0) {
+        throw new Error('Sản phẩm này không hỗ trợ tính năng Mua Ngay.');
+      }
+
+      if (product.seller_id === buyerId) {
+        throw new Error('Bạn không thể mua sản phẩm do chính mình đăng bán.');
+      }
+
+      await Promise.all([
+        // 1. Tạo đơn hàng
+        tx.order.create({
+          data: {
+            product_id: product.product_id,
+            buyer_id: buyerId,
+            seller_id: product.seller_id,
+            final_price: product.buy_now_price,
+            status: 'pending_payment',
+          },
+        }),
+
+        // 2. Cập nhật sản phẩm
+        tx.product.update({
+          where: { product_id: product.product_id },
+          data: {
+            status: 'sold',
+            current_price: product.buy_now_price,
+            current_highest_bidder_id: buyerId,
+            end_time: new Date(),
+            bid_count: { increment: 1 },
+          },
+        }),
+
+        // 3. Lưu lịch sử bid
+        tx.bidHistory.create({
+          data: {
+            product_id: product.product_id,
+            bidder_id: buyerId,
+            bid_amount: product.buy_now_price,
+            bid_time: new Date(),
+          },
+        }),
+      ]);
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Mua ngay thành công!',
+    });
+  } catch (error) {
+    console.error('Buy Now Error:', error);
   }
 };
 

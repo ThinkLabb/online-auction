@@ -1,4 +1,3 @@
--- Replaces the existing function with the new logic
 CREATE OR REPLACE FUNCTION delete_bids_on_deny()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -7,27 +6,22 @@ DECLARE
     new_highest_bidder UUID; 
     product_start_price DECIMAL(12, 2);
 BEGIN
-    -- 1. Delete the banned user's bids
     DELETE FROM "BidHistory"
     WHERE product_id = NEW.product_id
       AND bidder_id = NEW.bidder_id;
 
-    -- 2. Calculate statistics from REMAINING bids
     SELECT COUNT(*), MAX(bid_amount)
     INTO remaining_bid_count, new_max_bid
     FROM "BidHistory"
     WHERE product_id = NEW.product_id;
 
-    -- 3. Logic to determine new highest bidder
     IF remaining_bid_count > 0 THEN
-        -- Find the user who holds the new max bid
         SELECT bidder_id INTO new_highest_bidder
         FROM "BidHistory"
         WHERE product_id = NEW.product_id AND bid_amount = new_max_bid
         ORDER BY bid_time ASC
         LIMIT 1;
     ELSE
-        -- No bids left; revert to start price
         SELECT start_price INTO product_start_price
         FROM "Product"
         WHERE product_id = NEW.product_id;
@@ -36,8 +30,6 @@ BEGIN
         new_highest_bidder := NULL;
     END IF;
 
-    -- 4. Update the Product table
-    -- Note: We cast to UUID explicitly to match the column type
     UPDATE "Product"
     SET 
         bid_count = remaining_bid_count,
@@ -48,3 +40,29 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trigger_remove_bids_after_deny
+AFTER INSERT ON "DeniedBidders"
+FOR EACH ROW
+EXECUTE FUNCTION delete_bids_on_deny();
+
+CREATE OR REPLACE FUNCTION check_if_banned()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 
+        FROM "DeniedBidders" 
+        WHERE product_id = NEW.product_id 
+        AND bidder_id = NEW.bidder_id
+    ) THEN
+        RAISE EXCEPTION 'This user is banned from bidding on this product.';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trigger_check_banned_before_bid
+BEFORE INSERT ON "BidHistory"
+FOR EACH ROW
+EXECUTE FUNCTION check_if_banned();
