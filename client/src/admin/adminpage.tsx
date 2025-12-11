@@ -33,7 +33,7 @@ const ADMIN_SIDEBAR_ITEMS: SidebarItem[] = [
     { id: 'products', label: 'Product Management', icon: Package },
     { id: 'users', label: 'User Management', icon: Users },
     { id: 'upgrade-requests', label: 'Upgrade Approval', icon: UserCheck },
-    { id: 'settings', label: 'System Settings', icon: Settings },
+    // { id: 'settings', label: 'System Settings', icon: Settings },
 ];
 
 const fetchData = async <T,>(url: string, setData: React.Dispatch<React.SetStateAction<T[]>>, setLoading: React.Dispatch<React.SetStateAction<boolean>>, setError: React.Dispatch<React.SetStateAction<string | null>>): Promise<void> => {
@@ -301,10 +301,9 @@ const CategoryManagement: React.FC = () => {
 
     return (
         <div className="max-w-6xl flex flex-col gap-4">
-            <h2 className="text-2xl font-bold">Category Management</h2>
-            <div className="flex flex-row gap-2 justify-between items-center bg-white p-4 rounded-lg shadow-sm">
-                <input type="text" placeholder="Search Categories..." className={getInputClasses("w-1/3 border-gray-300")} />
-                <button className={primaryButtonClass} onClick={() => setIsAddModalOpen(true)}>Add</button>
+            <div className="flex flex-row gap-2 justify-between items-center">
+                <h2 className="text-2xl font-bold">Category Management</h2>
+                <button  className={primaryButtonClass} onClick={() => setIsAddModalOpen(true)}>Add</button>
             </div>
 
             <div className="overflow-x-auto border rounded-md shadow-md bg-white">
@@ -326,7 +325,7 @@ const CategoryManagement: React.FC = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.parent_name || <span className="text-gray-400 italic">None (Level 1)</span>}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.product_count}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                        <button className={iconGhostBlueClass} title="View Details"><Eye className="h-4 w-4" /></button>
+                                        {/* <button className={iconGhostBlueClass} title="View Details"><Eye className="h-4 w-4" /></button> */}
                                         {/* <button className={getButtonClasses('ghost', 'icon', "text-yellow-600 hover:text-yellow-800 mr-2")} title="Edit"><Edit className="h-4 w-4" /></button> */}
                                         <button
                                             className={getButtonClasses('ghost', 'icon', "text-yellow-600 hover:text-yellow-800 mr-2")}
@@ -516,9 +515,9 @@ const ProductManagement: React.FC = () => {
     return (
         <div className="max-w-6xl flex flex-col gap-4">
             <h2 className="text-2xl font-bold">Product Management</h2>
-            <div className="flex flex-row gap-2 justify-between items-center bg-white p-4 rounded-lg shadow-sm">
+            {/* <div className="flex flex-row gap-2 justify-between items-center bg-white p-4 rounded-lg shadow-sm">
                 <input type="text" placeholder="Search Products..." className={getInputClasses("w-1/3 border-gray-300")} />
-            </div>
+            </div> */}
 
             <div className="overflow-x-auto border rounded-md">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -537,7 +536,7 @@ const ProductManagement: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.current_price.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm"><span className={cn(product.status === 'Active Auction' ? 'text-green-600' : 'text-red-600', "font-semibold")}>{product.status}</span></td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                    <button className={iconGhostBlueClass} title="View Details"><Eye className="h-4 w-4" /></button>
+                                    {/* <button className={iconGhostBlueClass} title="View Details"><Eye className="h-4 w-4" /></button> */}
                                     <button className={iconDestructiveClass} title="Remove Product" onClick={() => handleDeleteProduct(product)}><Trash2 className="h-4 w-4" /></button>
                                 </td>
                             </tr>
@@ -602,9 +601,9 @@ const UserManagement: React.FC<{ setActiveTab: React.Dispatch<React.SetStateActi
     return (
         <div className="max-w-6xl flex flex-col gap-4">
             <h2 className="text-2xl font-bold">Users List</h2>
-            <div className="flex flex-row gap-2 justify-between items-center bg-white p-4 rounded-lg shadow-sm">
+            {/* <div className="flex flex-row gap-2 justify-between items-center bg-white p-4 rounded-lg shadow-sm">
                 <input type="text" placeholder="Search Users..." className={getInputClasses("w-1/3 border-gray-300")} />
-            </div>
+            </div> */}
 
             <div className="overflow-x-auto border rounded-md">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -628,7 +627,7 @@ const UserManagement: React.FC<{ setActiveTab: React.Dispatch<React.SetStateActi
                                     <button
                                         className={iconGhostBlueClass}
                                         title="View Details"
-                                        onClick={() =>{console.log(user); openViewModal(user)}}
+                                        onClick={() =>{openViewModal(user)}}
                                     >
                                         <Eye className="h-4 w-4" />
                                     </button>

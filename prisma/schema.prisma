@@ -195,8 +195,8 @@ model Reviews {
 
   // Relationships
   product                Product  @relation(fields: [product_id], references: [product_id])
-  reviewer               User     @relation("Reviewer", fields: [reviewer_id], references: [user_id])
-  reviewee               User     @relation("Reviewee", fields: [reviewee_id], references: [user_id])
+  reviewer               User     @relation("Reviewer", fields: [reviewer_id], references: [user_id], onDelete: Cascade)
+  reviewee               User     @relation("Reviewee", fields: [reviewee_id], references: [user_id], onDelete: Cascade)
   order_as_seller_review Order?   @relation("SellerReview")
   order_as_buyer_review  Order?   @relation("BuyerReview")
 }
@@ -230,8 +230,8 @@ model Order {
 
   // Relationships
   product        Product   @relation(fields: [product_id], references: [product_id])
-  buyer          User      @relation("BuyerOrders", fields: [buyer_id], references: [user_id])
-  seller         User      @relation("SellerOrders", fields: [seller_id], references: [user_id])
+  buyer          User      @relation("BuyerOrders", fields: [buyer_id], references: [user_id], onDelete: Cascade)
+  seller         User      @relation("SellerOrders", fields: [seller_id], references: [user_id], onDelete: Cascade)
   seller_review  Reviews?  @relation("SellerReview", fields: [seller_review_id], references: [review_id], onDelete: SetNull)
   buyer_review   Reviews?  @relation("BuyerReview", fields: [buyer_review_id], references: [review_id], onDelete: SetNull)
   chat_messages  OrderChat[]
@@ -246,5 +246,5 @@ model OrderChat {
 
   // Relationships
   order Order @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
-  sender User @relation(fields: [sender_id], references: [user_id])
+  sender User @relation(fields: [sender_id], references: [user_id], onDelete: Cascade)
 }

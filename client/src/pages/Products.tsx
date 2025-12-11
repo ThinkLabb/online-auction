@@ -100,7 +100,7 @@ const Pagination = React.memo(({ currentPage, totalPages, onPageChange }: Pagina
         if (currentPage + delta < totalPages - 1) range.push('...');
         range.unshift(1);
         if (totalPages > 1) range.push(totalPages);
-        
+
         return range.filter((item, index, self) =>
             !(item === '...' && self[index - 1] === '...') && !(item === self[index-1])
         );
@@ -157,7 +157,6 @@ export default function ProductsPage(): JSX.Element {
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     useEffect(() => {
-        // Reset về trang 1 khi thay đổi bộ lọc, sắp xếp, hoặc số mục trên trang
         setCurrentPage(1);
     }, [level1, level2, activeSortTab, itemsPerPage]);
 
@@ -173,11 +172,11 @@ export default function ProductsPage(): JSX.Element {
             });
 
             if (!level1 || !level2) {
-                apiUrlWithParams = `/api/products/*/*`
+                apiUrlWithParams = `/api/products/*/*?${params.toString()}`
             } else {
                 apiUrlWithParams = `/api/products/${level1}/${level2}?${params.toString()}`;
             }
-
+            
             try {
                 const res = await fetch(apiUrlWithParams);
                 if (!res.ok) {

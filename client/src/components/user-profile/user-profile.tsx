@@ -142,7 +142,7 @@ function EditProfile( {profile, setAction} : {profile: ProfileData, setAction: S
       });
   }
 
-  console.log(watch("province"))
+  (watch("province"))
 
   useEffect(() => {
     loadProvince()
