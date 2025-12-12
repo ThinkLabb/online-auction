@@ -3,8 +3,8 @@ import { PrismaClient } from '@prisma/client';
 import { ProductStatus, OrderStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { authenticateUser, changePassword } from "../services/auth.services";
-import { errorResponse } from "../utils/response";
-import { string } from "zod";
+import { errorResponse, successResponse } from "../utils/response";
+import { locales, string } from "zod";
 import { Decimal } from "@prisma/client/runtime/library";
 import { profile } from "console";
 import { ResolveFnOutput } from "module";
@@ -382,7 +382,64 @@ export const deleteWatchlistProduct = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid Product ID format" });
     }
 
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json(errorResponse(String(error)));
   }
+}
+
+export const requestRole = async (req: Request, res: Response) => {
+  try {
+    const user_id = res.locals.user.id;
+    if (!user_id) {
+      return res.status(401).json({ message: "Unauthorized: Can't find user" });
+    }
+
+    const { message } = req.body as {
+      message: string
+    };
+
+    const existingRequest = await prisma.sellerUpgradeRequest.findUnique({
+      where: { user_id: user_id }
+    });
+
+    // Nếu đã có record
+    if (existingRequest) {
+      // Trường hợp 1: Đã là Seller hoặc đã được duyệt
+      if (existingRequest.is_approved) {
+        return res.status(400).json({ message: "You are already a Seller" });
+      }
+
+      // Trường hợp 2: Đang chờ duyệt (Chưa duyệt và chưa bị từ chối)
+      if (!existingRequest.is_approved && !existingRequest.is_denied) {
+        return res.status(409).json({ message: "Request is pending approval" });
+      }
+      
+      // Trường hợp 3: Đã bị từ chối trước đó -> Cho phép gửi lại (UPDATE record cũ)
+      // Reset is_denied = false, cập nhật message và thời gian gửi
+      const updatedResult = await prisma.sellerUpgradeRequest.update({
+        where: { user_id: user_id },
+        data: {
+            message: message,
+            is_denied: false,       // Reset trạng thái từ chối
+            is_approved: false,     // Đảm bảo chưa duyệt
+            requested_at: new Date() // Cập nhật lại thời gian gửi
+        }
+      });
+
+      return res.json(successResponse(null, updatedResult.message ? updatedResult.message : "Re-submitted request successfully"));
+    }
+
+    const result = await prisma.sellerUpgradeRequest.create({
+      data: {
+        user_id: user_id,
+        message: message
+      }
+    })
+
+    return res.json(successResponse(null, result.message? result.message : "Success"))
+  } catch (error) {
+    return res.status(500).json(errorResponse(String(error)));
+  }
+
+
 
 }

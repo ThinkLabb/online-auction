@@ -136,7 +136,11 @@ export default function UserProfile() {
               Change password
             </button>
             
-            <button className="
+            {
+              profile.role === "bidder"
+              ? <button 
+              onClick={() => setAction("request-role")} 
+              className="
               cursor-pointer bg-yellow-300 text-black-800
               hover:bg-yellow-400 hover:scale-101
               active:scale-95 
@@ -145,6 +149,17 @@ export default function UserProfile() {
             ">
               Let me sell
             </button>
+            : <button className="
+              cursor-pointer bg-yellow-300 text-black-800
+              hover:bg-yellow-400 hover:scale-101
+              active:scale-95 
+              transition-all duration-200 hover:shadow-md 
+              rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 font-medium p-2
+            ">
+              Add product
+            </button>
+            }
+            
 
             <button 
               className="

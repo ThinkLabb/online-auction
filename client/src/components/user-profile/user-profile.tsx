@@ -288,13 +288,34 @@ const formatDateForInput = (dateInput?: string | Date | null) => {
           </div>
         </div>
 
-        <button 
-            type="submit" 
-            disabled={loading}
-            className={`w-full bg-[#8D0000] font-bold text-white py-2.5 rounded-md transition-colors mt-2 flex justify-center items-center ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-red-800'}`}
-        >
-            {loading ? <ClipLoader loading={loading} size={20} color='white' /> : <p>Save</p>}
-        </button>
+        <div className="mt-10 flex flex-col md:flex-row md:mx-auto gap-5">
+          <button 
+              type="submit" 
+              disabled={loading}
+              className="
+                md:order-2
+                rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 py-3 px-10
+                cursor-pointer bg-[#8D0000] text-white
+                hover:scale-101 hover:bg-[#760000] hover:shadow-md
+                transition-all duration-200 active:scale-95
+              "          >
+              {loading ? <ClipLoader loading={loading} size={20} color='white' /> : <p>Save</p>}
+          </button>
+
+          <button 
+            onClick={() => setAction("view-tabs")}
+            type="button"
+            className="
+              md:order-1
+              rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 py-3 px-10
+              cursor-pointer bg-white
+              hover:scale-101 hover:bg-gray-100 hover:shadow-md
+              transition-all duration-200 active:scale-95
+            "
+          >
+            Back
+          </button>
+        </div>
       </form>
 
     </div>
@@ -456,6 +477,7 @@ function ChangePassword( {profile, setAction} : {profile: ProfileData, setAction
 
                 <button 
                   onClick={() => setAction("view-tabs")}
+                  type="button"
                   className="
                     md:order-1
                     rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 py-3 px-10
@@ -515,6 +537,124 @@ function ChangePassword( {profile, setAction} : {profile: ProfileData, setAction
   )
 }
 
+function RequesRole( {setAction} : {setAction: SetAction} ) {
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState<string | null> (null)
+  
+  
+
+  const onSubmitRequest = async () => {
+
+  if (!message || message.trim() === "") {
+    setError("Message must not be left blank!");
+    return; // Dừng hàm ngay lập tức, không gửi API
+  }
+
+    setError(null);
+    setLoading(true);
+
+    try {
+
+      const res = await fetch('/api/profile/role', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          message: message
+        })
+      });
+
+      const result = await res.json();
+      setLoading(false);
+
+      if (!res.ok) {
+        let errorMsg = "Errors occure";
+         
+        if (typeof result.message === 'string') {
+            errorMsg = result.message;
+        } else if (result.message && typeof result.message === 'object') {
+            errorMsg = Object.values(result.message)[0] as string;
+        }
+         
+         setError(errorMsg);
+      } else {
+        setError(null)
+        setAction("view-tabs")
+      }
+    } catch(e) {
+      setLoading(false);
+      console.log(e)
+    }
+  }
+
+  return(
+    <div className='p-8 border border-gray-200 shadow-lg rounded-lg bg-white flex flex-col gap-4'>
+      <h1 className="text-3xl font-bold text-foreground">
+        Let us know why you want to be a seller
+      </h1>
+      
+      <hr/>
+
+      {error && <div className="text-[#8D0000]">{error}</div>}
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          onSubmitRequest()
+        }}
+        className="flex flex-col gap-6"
+      >
+        <label 
+          htmlFor="message"
+          className="text-muted-foreground"
+        >
+          Your message
+        </label>
+
+        <textarea 
+          id="message"
+          onChange={(e) => {
+            if (error) setError(null);
+            setMessage(e.target.value)
+          }}
+          placeholder="Leave your message here..."
+          className='w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]'
+        />
+
+        <div className="mt-10 flex flex-col md:flex-row md:mx-auto gap-5">
+          <button
+            type="submit"
+            disabled={loading}
+            className="
+              md:order-2
+              rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 py-3 px-10
+              cursor-pointer bg-[#8D0000] text-white
+              hover:scale-101 hover:bg-[#760000] hover:shadow-md
+              transition-all duration-200 active:scale-95
+            "
+          >
+            {loading ? "Đang kiểm tra..." : "Continue"}
+          </button>
+
+          <button 
+            onClick={() => setAction("view-tabs")}
+            type="button"
+            className="
+              md:order-1
+              rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 py-3 px-10
+              cursor-pointer bg-white
+              hover:scale-101 hover:bg-gray-100 hover:shadow-md
+              transition-all duration-200 active:scale-95
+            "
+          >
+            Back
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
 function ViewTabs( {profile, setAction} : {profile: ProfileData, setAction: SetAction} ) {
   return(
     <UserTab profile={profile}/>
@@ -526,6 +666,7 @@ export default function UserAction( {profile, action, setAction} : {profile:Prof
     switch(action) {
       case "edit-profile" : return(<EditProfile profile={profile} setAction={setAction}/>)
       case "change-password" : return(<ChangePassword profile={profile} setAction={setAction}/>)
+      case "request-role" : return(<RequesRole setAction={setAction}/>)
       case "view-tabs" : return(<ViewTabs profile={profile} setAction={setAction}/>)
       default : return <h1 className="text-3xl text-red-500">Invalid Action!</h1>;
     }

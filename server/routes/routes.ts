@@ -157,6 +157,7 @@ router.patch('/profile', authController.getAuthentication, userControllers.editU
 router.use('/profile/verifyuser', authController.verifyUser);
 router.post('/watch-list/add', authController.getAuthentication, productController.addToWatchList);
 router.delete('/watch-list/:product_id', authController.getAuthentication, userControllers.deleteWatchlistProduct)
+router.post('/profile/role', authController.getAuthentication, userControllers.requestRole);
 
 // ===============================
 router.get('/admin/upgradeRequests', getUpgradeRequest);
