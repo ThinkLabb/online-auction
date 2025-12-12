@@ -778,3 +778,48 @@ export const searchProducts = async (req: Request, res: Response) => {
     return res.status(500).json(errorResponse(String(e)));
   }
 };
+
+export const appendProductDescription = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params; // Product ID
+    const { description } = req.body;
+    const user = res.locals.user; // user is the seller
+
+    if (!description || description.trim() === '') {
+      return res.status(400).json({ message: 'Description cannot be empty' });
+    }
+
+    // find product in database
+    const product = await db.prisma.product.findUnique({
+      where: { product_id: BigInt(id) },
+    });
+
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    // only seller can append description
+    if (product.seller_id !== user.id) {
+      return res.status(403).json({ message: 'Unauthorized: You are not the seller' });
+    }
+
+    // only open products can be updated
+    if (product.status !== 'open') {
+      return res
+        .status(400)
+        .json({ message: 'Cannot update description for closed/sold products' });
+    }
+
+    // append new description to history table
+    await db.prisma.productDescriptionHistory.create({
+      data: {
+        product_id: BigInt(id),
+        description: description,
+        added_at: new Date(),
+      },
+    });
+
+    return res.status(200).json({ message: 'Description appended successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: String(error) });
+  }
+};

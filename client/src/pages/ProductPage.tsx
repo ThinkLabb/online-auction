@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Share2, Heart, ChevronRight, ThumbsUp } from 'lucide-react';
+import { Share2, Heart, ChevronRight, ThumbsUp, Plus, Pencil, Save, X } from 'lucide-react';
 import { ClipLoader } from 'react-spinners';
 import { useParams } from 'react-router-dom';
 import { SellerSidebar } from '../components/seller-sidebar';
@@ -19,7 +19,12 @@ const formatCurrency = (amount: number) => {
 const ProductPage = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [activeImage, setActiveImage] = useState<string>('');
+
   const { id } = useParams<{ id: string }>();
+
+  const [isAddingDesc, setIsAddingDesc] = useState(false);
+  const [newDesc, setNewDesc] = useState('');
+  const [isSavingDesc, setIsSavingDesc] = useState(false);
 
   // 1. Fetch dữ liệu
   const fetchProduct = async () => {
@@ -47,6 +52,38 @@ const ProductPage = () => {
   const getImageUrl = (img: string) => {
     if (!img) return 'https://placehold.co/600x400?text=No+Image';
     return img.startsWith('http') ? img : `/api/assets/${img}`;
+  };
+
+  // edit description
+  const handleAppendDescription = async () => {
+    if (!newDesc.trim()) {
+      alert('Please enter description content');
+      return;
+    }
+
+    setIsSavingDesc(true);
+    try {
+      const res = await fetch(`/api/product/${product?.id}/description`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: newDesc }),
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to update');
+      }
+
+      alert('Description updated successfully!');
+      setNewDesc('');
+      setIsAddingDesc(false);
+      fetchProduct();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setIsSavingDesc(false);
+    }
   };
 
   if (!product) {
@@ -104,11 +141,13 @@ const ProductPage = () => {
               </div>
             </div>
 
-            {/* Description */}
+            {/* Description & Specs Container */}
             <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
               <h2 className="text-xl font-bold text-gray-900 mb-6 border-l-4 border-[#8D0000] pl-3">
                 Product details
               </h2>
+
+              {/* --- SPECIFICATIONS --- */}
               <div className="mb-8">
                 <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4">
                   Specifications
@@ -138,17 +177,86 @@ const ProductPage = () => {
                   )}
                 </div>
               </div>
+
+              {/* --- DESCRIPTION (ĐÃ UPDATE LOGIC) --- */}
               <div>
-                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4">
-                  Description
-                </h3>
+                {/* Header: Dùng flex để đẩy nút sang phải */}
+                <div className="flex justify-between items-end mb-4">
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                    Description
+                  </h3>
+                  {/* Nút Add Info chỉ hiện cho Seller */}
+                  {product.isSeller && !isAddingDesc && (
+                    <button
+                      onClick={() => setIsAddingDesc(true)}
+                      className="text-xs font-bold text-[#8D0000] flex items-center gap-1 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus size={14} /> Add Info
+                    </button>
+                  )}
+                </div>
+
+                {/* FORM NHẬP LIỆU (Chèn vào đây) */}
+                {isAddingDesc && (
+                  <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in">
+                    <h4 className="text-xs font-bold text-gray-800 mb-2 flex items-center gap-1">
+                      <Pencil size={12} /> Append info:
+                    </h4>
+                    <textarea
+                      value={newDesc}
+                      onChange={(e) => setNewDesc(e.target.value)}
+                      rows={3}
+                      className="w-full border border-gray-300 p-2 rounded text-sm mb-2 focus:outline-none focus:border-[#8D0000] bg-white"
+                      placeholder="Type details..."
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => {
+                          setIsAddingDesc(false);
+                          setNewDesc('');
+                        }}
+                        className="px-3 py-1 text-xs font-bold text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 rounded"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleAppendDescription}
+                        disabled={isSavingDesc}
+                        className="px-3 py-1 text-xs font-bold text-white bg-[#8D0000] hover:bg-[#6b0000] rounded"
+                      >
+                        {isSavingDesc ? <ClipLoader size={10} color="#fff" /> : 'Save'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* List of descriptions */}
                 <div className="space-y-4 text-gray-600 leading-relaxed text-sm text-justify">
                   {product.description.map((item, idx) => (
-                    <div key={idx}>
+                    <div
+                      key={idx}
+                      className={idx > 0 ? 'border-t border-dashed border-gray-300 pt-4 mt-2' : ''}
+                    >
+                      {idx > 0 && (
+                        <div className="flex items-center gap-1 text-[#8D0000] font-bold text-[10px] mb-1 bg-red-50 w-fit px-2 py-0.5 rounded">
+                          <Pencil size={10} />
+                          <span>UPDATE: {item.date}</span>
+                        </div>
+                      )}
+
                       <p className="whitespace-pre-line">{item.text}</p>
-                      <p className="text-xs text-gray-400 mt-1 italic">Updated: {item.date}</p>
+
+                      {/* // neu idx = 0 thi hien ngay thoi gian dang ban dau */}
+                      {idx === 0 && item.date && (
+                        <p className="text-xs text-gray-400 mt-2 italic">
+                          Original posted: {item.date}
+                        </p>
+                      )}
                     </div>
                   ))}
+                  {product.description.length === 0 && (
+                    <p className="italic text-gray-400">No description provided.</p>
+                  )}
                 </div>
               </div>
             </div>

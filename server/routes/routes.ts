@@ -24,6 +24,7 @@ import {
   createProductQA,
   replyProductQA,
   searchProducts,
+  appendProductDescription,
 } from '../controllers/product.controllers.ts';
 import { banBidder, getBidHistory, placeBid } from '../controllers/bid.controller.ts';
 
@@ -166,4 +167,10 @@ router.get('/products/search', productController.searchProducts);
 router.post('/product/:id/qa', authController.getAuthentication, createProductQA);
 router.post('/qa/:qaId/reply', authController.getSellerAuthentication, replyProductQA);
 
+// Append product description
+router.post(
+  '/product/:id/description',
+  authController.getSellerAuthentication,
+  appendProductDescription
+);
 export default router;
