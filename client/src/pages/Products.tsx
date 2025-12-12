@@ -184,17 +184,24 @@ export default function ProductsPage(): JSX.Element {
         page: currentPage.toString(),
         limit: itemsPerPage.toString(),
       });
+      console.log("lvel", level1, level2)
 
       if (keyword) {
         // full-text search
         params.append('keyword', keyword);
         apiUrlWithParams = `/api/products/search?${params.toString()}`;
-      } else if (!level1 || !level2) {
-        // all categories
-        apiUrlWithParams = `/api/products/*/*?${params.toString()}`;
+      } else if (!level2 || level2 === '*') {
+        console.log("----")
+        if (!level1 || level1 === '*')
+          apiUrlWithParams = `/api/productsLV/*/*?${params.toString()}`;
+        else {
+          apiUrlWithParams = `/api/productsLV/${level1}/*?${params.toString()}`;
+          console.log(apiUrlWithParams)
+        }
       } else {
         // specific category
-        apiUrlWithParams = `/api/products/${level1}/${level2}?${params.toString()}`;
+        apiUrlWithParams = `/api/productsLV/${level1}/${level2}?${params.toString()}`;
+        console.log(apiUrlWithParams)
       }
 
       try {
