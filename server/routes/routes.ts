@@ -73,7 +73,7 @@ router.post(
   authController.getAuthentication,
   productController.handleBuyNow
 );
-router.get('/products/:level1/:level2', productController.getProductsLV);
+router.get('/productsLV/:level1/:level2', productController.getProductsLV);
 
 router.post('/upload', authController.getSellerAuthentication, uploadProducts);
 

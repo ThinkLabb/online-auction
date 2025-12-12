@@ -124,9 +124,9 @@ export const MemoProductCard = memo(({ product }: { product: Product }) => {
       <div
         className={`${
           diff <= 10
-            ? "border border-[#8D0000] shadow-[0_0_10px_rgba(141,0,0,0.6)] bg-[#8D0000]/10"
-            : "border border-gray-200 shadow-sm  bg-white"
-        } p-2 rounded-md overflow-hidden flex flex-col transition-shadow h-full`}
+            ? "border border-[#8D0000] shadow-[0_0_10px_rgba(141,0,0,0.6)]"
+            : "border border-gray-200 shadow-sm"
+        } p-2 rounded-md overflow-hidden flex flex-col transition-shadow h-full bg-white`}
       >
         <div  className="relative w-full aspect-4/3 bg-gray-100 shrink-0">
           <img
