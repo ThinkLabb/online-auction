@@ -40,6 +40,7 @@ const createUserSchema = {
     password: Joi.string().required().min(8).max(30).regex(strongPasswordRegex),
     code: Joi.string().required(),
     address: Joi.string().required().min(5).max(100),
+    recaptchaToken: Joi.required(),
   }),
 };
 

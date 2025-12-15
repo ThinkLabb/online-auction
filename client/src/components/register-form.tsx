@@ -4,6 +4,9 @@ import { z } from 'zod'
 import { ClipLoader } from "react-spinners"
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate } from 'react-router-dom';
+import ReCAPTCHA from "react-google-recaptcha";
+import { useRef } from "react";
+
 
 // 1. Định nghĩa Schema Zod
 const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,30}$/;
@@ -35,6 +38,7 @@ export interface LocationOption {
 export default function Register() {
     const [loading, setLoading] = useState<boolean>(false)
     const [loadingSendCode, setLoadingSendCode] = useState<boolean>(false)
+    const recaptchaRef = useRef<ReCAPTCHA>(null);
 
     const {
         register,
@@ -52,6 +56,11 @@ export default function Register() {
         setLoading(true)
         try {
             const address = `${data.homenumber}, ${data.street}, ${data.ward}, ${data.province}`;
+            const token = recaptchaRef.current?.getValue();
+            if (!token) {
+                alert("Vui lòng xác thực reCAPTCHA");
+                return;
+            }
 
             const res = await fetch('/api/auth/register', {
                 method: 'POST',
@@ -63,7 +72,8 @@ export default function Register() {
                     email: data.email,
                     address: address,
                     password: data.password,
-                    code: data.otp
+                    code: data.otp,
+                    recaptchaToken: token 
                 }),
             });
 
@@ -304,14 +314,23 @@ export default function Register() {
                     {errors.confirmpassword && <span className='text-[#8D0000]'>{errors.confirmpassword.message}</span>}
                 </div>
 
+                <ReCAPTCHA
+                    sitekey="6Lce-yosAAAAANX0klvmA9vGX6u_GknKTrz-0tzM"
+                    ref={recaptchaRef}
+                />
+
+
                 {/* Submit Button */}
                 <button 
                     type="submit" 
+                    data-sitekey="6LfB-SosAAAAABEI2CZiXH1ps_FpGyEqE-vpjZOm"
                     disabled={loading}
                     className={`w-full bg-[#8D0000] font-bold text-white py-2.5 rounded-md transition-colors mt-2 flex justify-center items-center ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-red-800'}`}
                 >
                     {loading ? <ClipLoader loading={loading} size={20} color='white' /> : <p>Create Account</p>}
                 </button>
+
+                
 
                 {/* Sign-in link */}
                 <p className="text-center text-gray-600">

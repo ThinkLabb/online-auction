@@ -6,7 +6,31 @@ import { success } from 'zod';
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const result = await authService.create(req.body);
+    const recaptchaToken = req.body.recaptchaToken;
+
+    const response = await fetch(
+      "https://www.google.com/recaptcha/api/siteverify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `secret=${process.env.RECAPTCHA_SECRET}&response=${recaptchaToken}`,
+      }
+    );
+
+    const data = await response.json();
+
+    if (!data.success) {
+      return res.status(400).json(errorResponse("reCAPTCHA failed"));
+    }
+
+    const userdata = {
+      name: req.body.name,
+      email: req.body.email,
+      address: req.body.address,
+      password: req.body.password,
+      code: req.body.code
+    }
+    const result = await authService.create(userdata);
    
     if (!result.success || !result.user) {
       return res.status(400).json(errorResponse(result.message));
