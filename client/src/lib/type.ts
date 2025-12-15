@@ -59,6 +59,7 @@ export interface Product {
   qa: ProductQA[];
   isSeller: boolean;
   relatedProducts?: RelatedProduct[];
+  isWatchlisted: boolean
 }
 
 export interface BidHistoryItem {

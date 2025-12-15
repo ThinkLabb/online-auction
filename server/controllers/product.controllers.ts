@@ -40,6 +40,7 @@ export const uploadProducts = async (req: Request, res: Response) => {
         buy_now_price: productData.buyNowPrice,
         step_price: productData.stepPrice,
         current_price: productData.startingPrice,
+        auto_extend: productData.autoRenewal,
         end_time: new Date(productData.auctionEndTime),
         description_history: {
           create: {
@@ -233,6 +234,8 @@ export const getProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const user = res.locals.user;
+
+    // 1. Fetch Product Data
     const productData = await db.prisma.product.findUnique({
       where: { product_id: BigInt(id) },
       include: {
@@ -255,12 +258,28 @@ export const getProduct = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    // take 5 related products
+    // 2. NEW: Check if product is in User's Watchlist
+    // We only check this if a user is logged in
+    let isWatchlisted = false;
+    if (user) {
+      const watchlistEntry = await db.prisma.watchlist.findUnique({
+        where: {
+          // Prisma generates this compound key name from @@id([user_id, product_id])
+          user_id_product_id: {
+            user_id: user.id, // Assuming res.locals.user.id holds the UUID
+            product_id: productData.product_id,
+          },
+        },
+      });
+      isWatchlisted = !!watchlistEntry; // Convert object (or null) to boolean
+    }
+
+    // 3. Take 5 related products
     const relatedProductsRaw = await db.prisma.product.findMany({
       where: {
         category_id: productData.category_id,
         product_id: { not: productData.product_id },
-        status: 'open', // Đang mở bán
+        status: 'open',
         end_time: { gt: new Date() },
       },
       select: {
@@ -370,7 +389,10 @@ export const getProduct = async (req: Request, res: Response) => {
         responder: qa.answer_text ? `${productData.seller.name} (Seller)` : null,
         time: new Date(qa.question_time).toLocaleDateString(),
       })),
+      
+      // Flags
       isSeller: user ? user.id === productData.seller.user_id : false,
+      isWatchlisted: isWatchlisted, // NEW FIELD
 
       relatedProducts: relatedProducts,
     };

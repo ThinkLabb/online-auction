@@ -41,8 +41,22 @@ async function main() {
   await prisma.category.deleteMany()
   await prisma.sellerUpgradeRequest.deleteMany()
   await prisma.user.deleteMany()
+  // 1. CLEAN CONFIG TABLE
+  await prisma.auctionConfig.deleteMany() 
 
   console.log('🌱  SEEDING STARTED...')
+
+  // -------------------------------------------------------
+  // 0. CREATE AUCTION CONFIG (Global Settings)
+  // -------------------------------------------------------
+  console.log('⚙️  Setting Auction Configuration...');
+  await prisma.auctionConfig.create({
+    data: {
+      id: 1, // Force ID 1 for consistency
+      extend_window_minutes: 5,  // 5 minutes before end
+      extend_duration_minutes: 10 // Extend by 10 minutes
+    }
+  });
 
   // -------------------------------------------------------
   // 1. CREATE USERS (20 Users: 1 Admin, 5 Sellers, 15 Bidders)

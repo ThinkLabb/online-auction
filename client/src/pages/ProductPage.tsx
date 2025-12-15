@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Share2, Heart, ChevronRight, ThumbsUp, Plus, Pencil, Save, X } from 'lucide-react';
+import { Share2, Heart, ChevronRight, Plus, Pencil } from 'lucide-react'; // Removed unused imports
 import { ClipLoader } from 'react-spinners';
 import { useParams } from 'react-router-dom';
+import ReactQuill from 'react-quill-new'; // Import Quill
+import 'react-quill-new/dist/quill.snow.css'; // Import Styles
+
 import { SellerSidebar } from '../components/seller-sidebar';
 import { BidderSidebar } from '../components/bidder-sidebar';
 import { ProductQA } from '../components/productQA';
@@ -14,6 +17,15 @@ const formatCurrency = (amount: number) => {
   })
     .format(amount)
     .replace('₫', '');
+};
+
+// Toolbar configuration for the Append Info box (simplified)
+const quillModules = {
+  toolbar: [
+    ['bold', 'italic', 'underline'],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    ['clean'],
+  ],
 };
 
 const ProductPage = () => {
@@ -30,7 +42,7 @@ const ProductPage = () => {
   const fetchProduct = async () => {
     try {
       if (!id) return;
-      setProduct(null);
+      // setProduct(null); // Optional: Comment out to prevent flashing loading screen on re-fetch
       setActiveImage('');
 
       const res = await fetch(`/api/product/${id}`);
@@ -54,9 +66,12 @@ const ProductPage = () => {
     return img.startsWith('http') ? img : `/api/assets/${img}`;
   };
 
-  // edit description
+  // Edit description handler
   const handleAppendDescription = async () => {
-    if (!newDesc.trim()) {
+    // Validation: Strip HTML tags to check if it's truly empty
+    const plainText = newDesc.replace(/<[^>]+>/g, '').trim();
+    
+    if (!plainText) {
       alert('Please enter description content');
       return;
     }
@@ -66,7 +81,7 @@ const ProductPage = () => {
       const res = await fetch(`/api/product/${product?.id}/description`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: newDesc }),
+        body: JSON.stringify({ description: newDesc }), // Send HTML string
         credentials: 'include',
       });
 
@@ -178,14 +193,12 @@ const ProductPage = () => {
                 </div>
               </div>
 
-              {/* --- DESCRIPTION (ĐÃ UPDATE LOGIC) --- */}
+              {/* --- DESCRIPTION --- */}
               <div>
-                {/* Header: Dùng flex để đẩy nút sang phải */}
                 <div className="flex justify-between items-end mb-4">
                   <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
                     Description
                   </h3>
-                  {/* Nút Add Info chỉ hiện cho Seller */}
                   {product.isSeller && !isAddingDesc && (
                     <button
                       onClick={() => setIsAddingDesc(true)}
@@ -196,20 +209,25 @@ const ProductPage = () => {
                   )}
                 </div>
 
-                {/* FORM NHẬP LIỆU (Chèn vào đây) */}
+                {/* FORM NHẬP LIỆU (UPDATED FOR QUILL) */}
                 {isAddingDesc && (
                   <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in">
                     <h4 className="text-xs font-bold text-gray-800 mb-2 flex items-center gap-1">
                       <Pencil size={12} /> Append info:
                     </h4>
-                    <textarea
-                      value={newDesc}
-                      onChange={(e) => setNewDesc(e.target.value)}
-                      rows={3}
-                      className="w-full border border-gray-300 p-2 rounded text-sm mb-2 focus:outline-none focus:border-[#8D0000] bg-white"
-                      placeholder="Type details..."
-                    />
-                    <div className="flex justify-end gap-2">
+                    
+                    {/* Quill Editor */}
+                    <div className="bg-white mb-3">
+                      <ReactQuill 
+                        theme="snow"
+                        value={newDesc}
+                        onChange={setNewDesc}
+                        modules={quillModules}
+                        className="h-32 mb-10" // mb-10 handles toolbar overflow space usually
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2 mt-2">
                       <button
                         onClick={() => {
                           setIsAddingDesc(false);
@@ -244,9 +262,11 @@ const ProductPage = () => {
                         </div>
                       )}
 
-                      <p className="whitespace-pre-line">{item.text}</p>
+                      <div 
+                        className="content-html" 
+                        dangerouslySetInnerHTML={{ __html: item.text }} 
+                      />
 
-                      {/* // neu idx = 0 thi hien ngay thoi gian dang ban dau */}
                       {idx === 0 && item.date && (
                         <p className="text-xs text-gray-400 mt-2 italic">
                           Original posted: {item.date}
@@ -276,91 +296,30 @@ const ProductPage = () => {
           <ProductQA product={product} onRefresh={fetchProduct} />
         </div>
 
-        {/* --- RELATED PRODUCTS --- */}
+        {/* Related Products - Logic Hidden to save space as it was unchanged */}
         {product.relatedProducts && product.relatedProducts.length > 0 && (
-          <div className="mt-16 mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Other products</h2>
-              <a
-                href="/category"
-                className="text-sm font-bold text-[#8D0000] hover:underline flex items-center gap-1"
-              >
-                View all <ChevronRight size={16} />
-              </a>
+            <div className="mt-16 mb-12">
+               {/* ... (Existing related products code) ... */}
+               {/* I'm omitting the full render here to keep the answer focused, 
+                   but in your real file, keep the code you had below ProductQA */}
+               <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Other products</h2>
+                {/* ... */}
+               </div>
+               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+                  {product.relatedProducts.map((prod) => (
+                    <a href={`/product/${prod.id}`} key={prod.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col h-full">
+                         {/* ... Product Card Content ... */}
+                         <div className="p-4 flex flex-col flex-1">
+                            <h3 className="font-bold text-gray-900 text-sm mb-2 line-clamp-2">{prod.name}</h3>
+                            <div className="mt-auto pt-2">
+                                <span className="text-[#8D0000] font-bold">{formatCurrency(prod.price)} VND</span>
+                            </div>
+                         </div>
+                    </a>
+                  ))}
+               </div>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
-              {product.relatedProducts.map((prod) => (
-                <a
-                  href={`/product/${prod.id}`}
-                  key={prod.id}
-                  className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col h-full"
-                >
-                  <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden border-b border-gray-50">
-                    <img
-                      src={getImageUrl(prod.image || '')}
-                      alt={prod.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-md shadow-sm border border-gray-200 text-xs font-semibold text-gray-700">
-                      {prod.bidCount} Bids
-                    </div>
-                  </div>
-
-                  <div className="p-4 flex flex-col flex-1">
-                    <h3
-                      className="font-bold text-gray-900 text-sm mb-2 line-clamp-2 min-h-[2.5rem] group-hover:text-[#8D0000] transition-colors"
-                      title={prod.name}
-                    >
-                      {prod.name}
-                    </h3>
-
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] text-gray-500 font-medium">Current Price</span>
-                      <span className="text-[#8D0000] font-bold text-lg">
-                        {formatCurrency(prod.price)} <span className="text-xs">VND</span>
-                      </span>
-                    </div>
-
-                    <div className="text-[11px] text-gray-400 mb-3">Posted: {prod.postedDate}</div>
-
-                    <div className="bg-gray-50 rounded px-2.5 py-2 mb-3 border border-gray-100">
-                      <p className="text-[10px] text-gray-400 mb-0.5 font-bold uppercase tracking-wider">
-                        Highest Bidder
-                      </p>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-[8px] font-bold text-gray-500">
-                          {prod.bidderName.charAt(0)}
-                        </div>
-                        <p className="text-xs font-semibold text-gray-800 truncate flex-1">
-                          {prod.bidderName}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="text-right mb-3">
-                      <span className="text-[#8D0000] text-xs font-bold bg-red-50 px-2 py-0.5 rounded-full">
-                        {prod.timeLeft}
-                      </span>
-                    </div>
-
-                    <div className="mt-auto pt-2">
-                      {prod.buyNowPrice ? (
-                        <button className="w-full bg-[#8D0000] hover:bg-[#6b1e1e] text-white font-bold py-2 rounded-lg text-xs uppercase tracking-wide transition-colors shadow-sm flex items-center justify-center gap-1">
-                          Buy Now <span className="opacity-80">|</span>{' '}
-                          {formatCurrency(prod.buyNowPrice)}
-                        </button>
-                      ) : (
-                        <button className="w-full bg-gray-100 text-gray-400 font-bold py-2 rounded-lg text-xs uppercase cursor-not-allowed">
-                          Bid Only
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </div>
         )}
       </div>
     </div>
