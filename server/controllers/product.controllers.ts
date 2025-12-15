@@ -619,7 +619,7 @@ export const createProductQA = async (req: Request, res: Response) => {
     });
 
     // send email to seller
-    const productLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/product/${id}`;
+    const productLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/product/${id}`;
 
     await mailService.sendCustomEmail({
       to: product.seller.email,
@@ -676,7 +676,7 @@ export const replyProductQA = async (req: Request, res: Response) => {
     });
 
     // send email to questioner
-    const productLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/product/${qa.product_id}`;
+    const productLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/product/${qa.product_id}`;
 
     await mailService.sendCustomEmail({
       to: qa.questioner.email,
