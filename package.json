@@ -50,6 +50,7 @@
     "react-router-dom": "^7.1.1",
     "react-spinners": "^0.17.0",
     "react-toastify": "^11.0.3",
+    "ws": "^8.18.3",
     "zod": "^4.1.13"
   },
   "devDependencies": {

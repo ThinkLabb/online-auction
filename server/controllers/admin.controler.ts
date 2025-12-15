@@ -59,6 +59,8 @@ export const updateCategory = async (req: Request, res: Response) => {
   try {
     const newCategory = req.body.newCategory;
 
+    console.log(newCategory)
+
     if (newCategory.parent_name === null) {
       return res.status(500).json(errorResponse('Can not set parent null'));
     } else {

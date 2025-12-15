@@ -1,14 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { PrismaClient } from '@prisma/client';
 import { ProductStatus, OrderStatus } from "@prisma/client";
-import bcrypt from "bcryptjs";
-import { authenticateUser, changePassword } from "../services/auth.services";
 import { errorResponse, successResponse } from "../utils/response";
-import { json, locales, string } from "zod";
-import { Decimal } from "@prisma/client/runtime/library";
-import { profile } from "console";
-import { ResolveFnOutput } from "module";
-import { useParams } from "react-router-dom";
 
 const prisma = new PrismaClient();
 

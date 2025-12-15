@@ -2,6 +2,8 @@ import express, {Router} from "express";
 import Config from "./config/config.ts";
 import routes from "./routes/routes.ts"
 import cookieParser from "cookie-parser";
+import { startAuctionCloser } from "./jobs/close_auction.ts";
+
 
 async function main() {
   const config: Config = new Config();
@@ -19,6 +21,8 @@ async function main() {
   app.use(router);
 
   app.use("/api/", routes);
+  
+  startAuctionCloser();
   
   app.listen(config.PORT, ( )=> {
     console.log(`Server listening on port ${config.PORT}`);
