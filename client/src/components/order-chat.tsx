@@ -51,14 +51,13 @@ async function fetchInitialChatData(
       sender_name: msg.sender_id === cur_id ? cur_name : partner_name,
       message_text: msg.message_text,
       sent_at: msg.sent_at,
-      order_name: `Đơn hàng ${orderId}`,
     }))
 
     return {
       chatMessages
     }
   } catch (error) {
-    console.error("Lỗi fetchInitialChatData:", error)
+    console.error("Error fetchInitialChatData:", error)
     return {
       chatMessages: []
     }
@@ -184,7 +183,7 @@ export function OrderChat({
         <div ref={messagesContainerRef} className="h-96 overflow-y-auto space-y-3 p-4 bg-gray-100 rounded-lg">
           {loading && <div className="w-full h-full flex flex-col justify-center items-center"> <ClipLoader size={50} color="#8D0000" loading={loading}/> </div>}
           {!messages && (
-            <div className="text-center py-2 text-sm text-gray-500">--- Bắt đầu cuộc trò chuyện ---</div>
+            <div className="text-center py-2 text-sm text-gray-500">--- Start the conversation ---</div>
           )}
 
           {messages.map(msg => {
@@ -211,7 +210,7 @@ export function OrderChat({
         <div className="flex gap-2 mt-4">
           <input
             type="text"
-            placeholder="Nhập tin nhắn..."
+            placeholder="Type a message..."
             className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:ring-2 focus:ring-[#8D0000] focus:border-[#8D0000] outline-none"
             value={newMessage}
             onChange={e => setNewMessage(e.target.value)}
@@ -222,7 +221,7 @@ export function OrderChat({
             onClick={sendMessage}
             disabled={!newMessage.trim() || loading || loadingSendMess}
             className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 w-10 bg-[#8D0000] text-white transition-colors hover:cursor-pointer"
-            title="Gửi"
+            title="Send"
           >
             <SendIcon />
           </button>
