@@ -233,6 +233,13 @@ export const BidderSidebar = ({
           <UserCard title="Top Bidder" user={product.topBidder} />
         </div>
       </div>
+
+      {/* Seller */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 divide-y divide-gray-100">
+        <div className="">
+          <UserCard title="Seller" user={product.seller} />
+        </div>
+      </div>
     </div>
   );
 };

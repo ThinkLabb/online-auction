@@ -279,7 +279,9 @@ const ProductPage = () => {
             </div>
           </div>
 
-          <div className="lg:col-span-4">
+          {/* right col */}
+          <div className="lg:col-span-4 space-y-4">
+            {/* place bid and buy now */}
             {product.isSeller ? (
               <SellerSidebar product={product} onBidSuccess={fetchProduct} />
             ) : (
