@@ -96,19 +96,17 @@ export const MemoProductCard = memo(({ product }: { product: Product }) => {
   // const diff = (new Date().getTime() - new Date(created_at).getTime()) / 1000 / 60;
 
   function useDiffTimer(created_at: string) {
-  const [diff, setDiff] = useState(() => {
-    return (Date.now() - new Date(created_at).getTime()) / 1000 / 60;
-  });
+    const [diff, setDiff] = useState(() => {
+      return (Date.now() - new Date(created_at).getTime()) / 1000 / 60;
+    });
 
-  useEffect(() => {
-    if (diff > 10) return;
+    useEffect(() => {
+      if (diff > 10) return;
 
-      const msLeft = (10 - diff) * 60 * 1000; 
+      const msLeft = (10 - diff) * 60 * 1000;
 
       const timeout = setTimeout(() => {
-        setDiff(
-          (Date.now() - new Date(created_at).getTime()) / 1000 / 60
-        );
+        setDiff((Date.now() - new Date(created_at).getTime()) / 1000 / 60);
       }, msLeft);
 
       return () => clearTimeout(timeout);
@@ -124,11 +122,11 @@ export const MemoProductCard = memo(({ product }: { product: Product }) => {
       <div
         className={`${
           diff <= 10
-            ? "border border-[#8D0000] shadow-[0_0_10px_rgba(141,0,0,0.6)] bg-[#8D0000]/10"
-            : "border border-gray-200 shadow-sm  bg-white"
-        } p-2 rounded-md overflow-hidden flex flex-col transition-shadow h-full`}
+            ? 'border border-[#8D0000] shadow-[0_0_10px_rgba(141,0,0,0.6)]'
+            : 'border border-gray-200 shadow-sm'
+        } p-2 rounded-md overflow-hidden flex flex-col transition-shadow h-full bg-white`}
       >
-        <div  className="relative w-full aspect-4/3 bg-gray-100 shrink-0">
+        <div className="relative w-full aspect-4/3 bg-gray-100 shrink-0">
           <img
             src={
               image_url ? `/api/assets/${image_url}` : 'https://placehold.co/600x400?text=No+Image'

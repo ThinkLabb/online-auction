@@ -1,45 +1,57 @@
-import { useState, useEffect, useMemo } from "react";
-import UserTab from "./user-profile-tabs";
-import { ProfileData } from "./types";
-import { SetAction } from "./types";
-import { useForm, SubmitHandler } from "react-hook-form";
-import z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Navigate, useNavigate } from "react-router-dom";
-import { ClipLoader } from "react-spinners";
-import { LocationOption } from "../register-form";
-import { formatDate } from "../product";
+import { useState, useEffect, useMemo } from 'react';
+import UserTab from './user-profile-tabs';
+import { ProfileData } from './types';
+import { SetAction } from './types';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import z from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { ClipLoader } from 'react-spinners';
+import { LocationOption } from '../register-form';
+import { formatDate } from '../product';
 
 const schema = z.object({
-  name: z.string().min(3, { message: "Name must be 3–50 characters." }).max(50, { message: "Name must be 3–50 characters." }),
-  email: z.string().email({ message: "Invalid email format" }),
+  name: z
+    .string()
+    .min(3, { message: 'Name must be 3–50 characters.' })
+    .max(50, { message: 'Name must be 3–50 characters.' }),
+  email: z.string().email({ message: 'Invalid email format' }),
   birthdate: z.string().nullable().optional(),
-  homenumber: z.string().min(1, { message: "House number is required" }).regex(/^\d+$/, { message: "Home number must contain only digits." }),
-  street: z.string().min(1, { message: "Street is required" }),
-  province: z.string().min(1, { message: "Province is required" }),
-  ward: z.string().min(1, { message: "Ward is required" }),
+  homenumber: z
+    .string()
+    .min(1, { message: 'House number is required' })
+    .regex(/^\d+$/, { message: 'Home number must contain only digits.' }),
+  street: z.string().min(1, { message: 'Street is required' }),
+  province: z.string().min(1, { message: 'Province is required' }),
+  ward: z.string().min(1, { message: 'Ward is required' }),
 });
 
 type Inputs = z.infer<typeof schema>;
 
 export const getAddressParts = (fullAddress?: string | null) => {
   if (!fullAddress) {
-    return { homenumber: "", street: "", ward: "", province: "" };
+    return { homenumber: '', street: '', ward: '', province: '' };
   }
-  const parts = fullAddress.split(',').map(part => part.trim());
-  
+  const parts = fullAddress.split(',').map((part) => part.trim());
+
   return {
-    homenumber: parts[0] || "",
-    street: parts[1] || "",
-    ward: parts[2] || "",
-    province: parts[3] || ""
+    homenumber: parts[0] || '',
+    street: parts[1] || '',
+    ward: parts[2] || '',
+    province: parts[3] || '',
   };
 };
 
+<<<<<<< HEAD
 function EditProfile( {profile, setAction} : {profile: ProfileData, setAction: SetAction} ) {
 
   const formatDateForInput = (dateInput?: string | Date | null) => {
     if (!dateInput) return "";
+=======
+function EditProfile({ profile, setAction }: { profile: ProfileData; setAction: SetAction }) {
+  const formatDateForInput = (dateInput?: string | Date | null) => {
+    if (!dateInput) return '';
+>>>>>>> 6b763a05d73a292c1257e29ac869d0bdc64813ad
 
     // Trường hợp 1: Nếu là chuỗi dạng "d/m/y" (VD: "7/5/2005" hoặc "13/05/2005")
     if (typeof dateInput === 'string' && dateInput.includes('/')) {
@@ -49,7 +61,7 @@ function EditProfile( {profile, setAction} : {profile: ProfileData, setAction: S
         let d = parts[1].padStart(2, '0');
         let m = parts[0].padStart(2, '0');
         let y = parts[2];
-        
+
         // Logic check: Nếu input là M/D/Y (Mỹ) mà server trả về (VD: 12/31/2005)
         // Nếu số đầu > 12 thì chắc chắn là Ngày -> Giữ nguyên D/M/Y
         // Nếu số thứ 2 > 12 thì chắc chắn số 2 là Ngày -> Đảo thành M/D/Y
@@ -60,7 +72,7 @@ function EditProfile( {profile, setAction} : {profile: ProfileData, setAction: S
 
     // Trường hợp 2: Date object hoặc ISO String chuẩn
     const date = new Date(dateInput);
-    if (isNaN(date.getTime())) return "";
+    if (isNaN(date.getTime())) return '';
 
     // Dùng getFullYear/Month/Date để tránh bị lệch múi giờ (UTC vs Local)
     const yyyy = date.getFullYear();
@@ -77,7 +89,7 @@ function EditProfile( {profile, setAction} : {profile: ProfileData, setAction: S
     watch,
     handleSubmit,
     formState: { errors },
-    setError
+    setError,
   } = useForm<Inputs>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -87,18 +99,18 @@ function EditProfile( {profile, setAction} : {profile: ProfileData, setAction: S
       homenumber: addressDefaults.homenumber,
       street: addressDefaults.street,
       ward: addressDefaults.ward,
-      province: addressDefaults.province
-    }
-  })
+      province: addressDefaults.province,
+    },
+  });
 
-  console.log("Hế lô KD")
-  console.log(watch('ward'))
+  console.log('Hế lô KD');
+  console.log(watch('ward'));
 
-  const [loading, setLoading] = useState(false)
-  const [disable, setDisable] = useState(true)
+  const [loading, setLoading] = useState(false);
+  const [disable, setDisable] = useState(true);
 
   const onSubmitProfile: SubmitHandler<Inputs> = async (data) => {
-    setLoading(true)    
+    setLoading(true);
 
     try {
       const address = `${data.homenumber}, ${data.street}, ${data.ward}, ${data.province}`;
@@ -112,7 +124,7 @@ function EditProfile( {profile, setAction} : {profile: ProfileData, setAction: S
           name: data.name,
           email: data.email,
           address: address,
-          birthdate: data.birthdate
+          birthdate: data.birthdate,
         }),
       });
 
@@ -120,10 +132,8 @@ function EditProfile( {profile, setAction} : {profile: ProfileData, setAction: S
 
       if (!res.ok) {
         if (!result.success) {
-          if (result.message?.name)
-            setError('name', { message: result.message.name });
-          if (result.message?.email)
-            setError('email', { message: result.message.email });
+          if (result.message?.name) setError('name', { message: result.message.name });
+          if (result.message?.email) setError('email', { message: result.message.email });
           if (result.message?.birthdate)
             setError('birthdate', { message: result.message.birthdate });
           // if (result.message?.address)
@@ -134,37 +144,44 @@ function EditProfile( {profile, setAction} : {profile: ProfileData, setAction: S
       console.error('[v0] Update error:', err);
     } finally {
       setLoading(false);
+<<<<<<< HEAD
       profile.name = data.name
       profile.email = data.email
       profile.address = `${data.homenumber}, ${data.street}, ${data.ward}, ${data.province}`
       profile.birthdate = data.birthdate? data.birthdate:""
       alert("Edited profile successfully!")
+=======
+      profile.name = data.name;
+      profile.email = data.email;
+      profile.address = `${data.homenumber}, ${data.street}, ${data.ward}, ${data.province}`;
+      profile.birthdate = data.birthdate ? data.birthdate : '';
+>>>>>>> 6b763a05d73a292c1257e29ac869d0bdc64813ad
     }
-  }
+  };
 
-  const [province, setProvince] = useState<LocationOption[]>([])
-  const [ward, setWard] = useState<LocationOption[]>([])
-  const provinceCur = watch("province");
-  const wardCurr = watch("ward");
+  const [province, setProvince] = useState<LocationOption[]>([]);
+  const [ward, setWard] = useState<LocationOption[]>([]);
+  const provinceCur = watch('province');
+  const wardCurr = watch('ward');
 
   const fetchJsonData = async (url: string) => {
     const res = await fetch(url);
     if (!res.ok) {
-        throw new Error(`HTTP error! Status: ${res.status}`);
+      throw new Error(`HTTP error! Status: ${res.status}`);
     }
     const data = await res.json();
-    return Object.values(data) as LocationOption[]; 
-  }
+    return Object.values(data) as LocationOption[];
+  };
 
   function loadProvince() {
-      fetchJsonData("../admin_new/province.json")
-          .then((data) => {
-              console.log(data);
-              setProvince(data);
-          })
-          .catch((error) => {
-              console.error('Fetch province error:', error);
-          });
+    fetchJsonData('../admin_new/province.json')
+      .then((data) => {
+        console.log(data);
+        setProvince(data);
+      })
+      .catch((error) => {
+        console.error('Fetch province error:', error);
+      });
   }
 
   function loadWard() {
@@ -173,7 +190,7 @@ function EditProfile( {profile, setAction} : {profile: ProfileData, setAction: S
       return;
     }
 
-    fetchJsonData("../admin_new/ward.json")
+    fetchJsonData('../admin_new/ward.json')
       .then((data) => {
         setWard(data);
       })
@@ -182,134 +199,160 @@ function EditProfile( {profile, setAction} : {profile: ProfileData, setAction: S
       });
   }
 
-  (watch("province"))
+  watch('province');
 
   useEffect(() => {
-    loadProvince()
-  }, [])
+    loadProvince();
+  }, []);
 
   useEffect(() => {
-    loadWard()
-  }, [provinceCur]) 
+    loadWard();
+  }, [provinceCur]);
 
   const filterWard = useMemo(() => {
     if (!ward || ward.length === 0 || !provinceCur) return [];
-    return ward.filter(w =>
-        w.path_with_type.includes(provinceCur)
-    );
+    return ward.filter((w) => w.path_with_type.includes(provinceCur));
   }, [provinceCur, ward]);
 
-  return(
+  return (
     <div className="px-10 py-20 rounded-sm ring ring-gray-200 shadow-sm shadow-stone-300">
-      <form onSubmit={handleSubmit(onSubmitProfile)} className='flex flex-col gap-4'>
-
+      <form onSubmit={handleSubmit(onSubmitProfile)} className="flex flex-col gap-4">
         {/* 1. Full Name */}
-        <div className='flex flex-col gap-2'>
-          <label htmlFor="name" className="font-semibold text-gray-900">Full Name</label>
-          <input 
-            type="text" 
-            id="name" 
-            placeholder='John Doe' 
-            {...register("name", { required: true })} 
-            className='w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]' 
+        <div className="flex flex-col gap-2">
+          <label htmlFor="name" className="font-semibold text-gray-900">
+            Full Name
+          </label>
+          <input
+            type="text"
+            id="name"
+            placeholder="John Doe"
+            {...register('name', { required: true })}
+            className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
           />
-          {errors.name && <span className='text-[#8D0000]'>{errors.name.message}</span>}
+          {errors.name && <span className="text-[#8D0000]">{errors.name.message}</span>}
         </div>
 
         {/* 2. Email */}
-        <div className='flex flex-col gap-2'>
-          <label htmlFor="email" className="font-semibold text-gray-900">Email</label>
-          <div className='flex flex-col sm:flex-row gap-2'>
-            <input 
-                type="text" 
-                id="email" 
-                placeholder='your@example.com' 
-                {...register("email", { required: true })} 
-                className='flex-grow px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]' 
+        <div className="flex flex-col gap-2">
+          <label htmlFor="email" className="font-semibold text-gray-900">
+            Email
+          </label>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              id="email"
+              placeholder="your@example.com"
+              {...register('email', { required: true })}
+              className="flex-grow px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
             />
           </div>
-          {errors.email && <span className='text-[#8D0000]'>{errors.email.message}</span>}
+          {errors.email && <span className="text-[#8D0000]">{errors.email.message}</span>}
         </div>
-        
-        <div className='flex flex-col gap-2'>
-          <label htmlFor="birthdate" className="font-semibold text-gray-900">Date of Birth</label>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="birthdate" className="font-semibold text-gray-900">
+            Date of Birth
+          </label>
           <input
             type="date"
             id="birthdate"
-            {...register("birthdate")}
-            className='w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]'
+            {...register('birthdate')}
+            className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
           />
-          {errors.birthdate && <span className='text-[#8D0000]'>{errors.birthdate.message}</span>}
+          {errors.birthdate && <span className="text-[#8D0000]">{errors.birthdate.message}</span>}
         </div>
 
         {/* 4. Address Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"> {/* Grid 1 cột trên mobile, 2 cột trên sm+ */}
-
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {' '}
+          {/* Grid 1 cột trên mobile, 2 cột trên sm+ */}
           {/* Province/City */}
           <div className="flex flex-col gap-2">
-            <label htmlFor="city" className="font-semibold text-gray-900" >Province/City</label>
-            <select id="city" value={provinceCur} {...register("province")}
-              className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]">
+            <label htmlFor="city" className="font-semibold text-gray-900">
+              Province/City
+            </label>
+            <select
+              id="city"
+              value={provinceCur}
+              {...register('province')}
+              className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
+            >
               <option value="">Select city</option>
               {province.map((option) => (
-                <option key={option.code} value={option.name}>{option.name}</option>
+                <option key={option.code} value={option.name}>
+                  {option.name}
+                </option>
               ))}
             </select>
             {errors.province && <span className="text-[#8D0000]">{errors.province.message}</span>}
           </div>
-
-            {/* Ward */}
+          {/* Ward */}
           <div className="flex flex-col gap-2">
-            <label htmlFor="ward" className="font-semibold text-gray-900" >Ward</label>
-            <select id="ward"
+            <label htmlFor="ward" className="font-semibold text-gray-900">
+              Ward
+            </label>
+            <select
+              id="ward"
               value={wardCurr}
-              {...register("ward")} 
-              className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]" >
+              {...register('ward')}
+              className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
+            >
               <option value="">Select ward</option>
               {filterWard.map((option) => (
-                <option key={option.code} value={option.name}>{option.name}</option>
+                <option key={option.code} value={option.name}>
+                  {option.name}
+                </option>
               ))}
             </select>
             {errors.ward && <span className="text-[#8D0000]">{errors.ward.message}</span>}
           </div>
-              
-              {/* Street */}
+          {/* Street */}
           <div className="flex flex-col gap-2">
-            <label htmlFor="street" className="font-semibold text-gray-900" >Street</label>
-            <input type="text" id="street" 
+            <label htmlFor="street" className="font-semibold text-gray-900">
+              Street
+            </label>
+            <input
+              type="text"
+              id="street"
               className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
-              {...register("street")}
+              {...register('street')}
             />
             {errors.street && <span className="text-[#8D0000]">{errors.street.message}</span>}
           </div>
-
-              {/* House Number */}
+          {/* House Number */}
           <div className="flex flex-col gap-2">
-            <label htmlFor="homenumber" className="font-semibold text-gray-900" >House Number</label>
-            <input type="text" id="homenumber" 
+            <label htmlFor="homenumber" className="font-semibold text-gray-900">
+              House Number
+            </label>
+            <input
+              type="text"
+              id="homenumber"
               className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
-              {...register("homenumber")}
+              {...register('homenumber')}
             />
-            {errors.homenumber && <span className="text-[#8D0000]">{errors.homenumber.message}</span>}
+            {errors.homenumber && (
+              <span className="text-[#8D0000]">{errors.homenumber.message}</span>
+            )}
           </div>
         </div>
 
         <div className="mt-10 flex flex-col md:flex-row md:mx-auto gap-5">
-          <button 
-              type="submit" 
-              disabled={loading}
-              className="
+          <button
+            type="submit"
+            disabled={loading}
+            className="
                 md:order-2
                 rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 py-3 px-10
                 cursor-pointer bg-[#8D0000] text-white
                 hover:scale-101 hover:bg-[#760000] hover:shadow-md
                 transition-all duration-200 active:scale-95
-              "          >
-              {loading ? <ClipLoader loading={loading} size={20} color='white' /> : <p>Save</p>}
+              "
+          >
+            {loading ? <ClipLoader loading={loading} size={20} color="white" /> : <p>Save</p>}
           </button>
 
-          <button 
-            onClick={() => setAction("view-tabs")}
+          <button
+            onClick={() => setAction('view-tabs')}
             type="button"
             className="
               md:order-1
@@ -323,101 +366,106 @@ function EditProfile( {profile, setAction} : {profile: ProfileData, setAction: S
           </button>
         </div>
       </form>
-
     </div>
-  )
+  );
 }
 
-function ChangePassword( {profile, setAction} : {profile: ProfileData, setAction: SetAction} ) {
-  const [loading, setLoading] = useState(false)
-  const [oldPassword, setOldPassword] = useState('')
-  const [error, setError] = useState<string | null> (null)
-  
-  const [step, setStep] = useState("verify")
-  
-  const email = profile.email
+function ChangePassword({ profile, setAction }: { profile: ProfileData; setAction: SetAction }) {
+  const [loading, setLoading] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const [step, setStep] = useState('verify');
+
+  const email = profile.email;
 
   const onSubmitVerify = async () => {
     setError(null);
     setLoading(true);
 
     try {
-
       const res = await fetch('/api/profile/verifyuser', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: email,
-          password: oldPassword
-        })
+          password: oldPassword,
+        }),
       });
 
       const result = await res.json();
       setLoading(false);
 
       if (!res.ok) {
-        let errorMsg = "Errors occure";
-         
-         if (typeof result.message === 'string') {
-             errorMsg = result.message;
-         } else if (result.message && typeof result.message === 'object') {
-             errorMsg = Object.values(result.message)[0] as string;
-         }
-         
-         setError(errorMsg);
-      } else {
-        setError(null)
-        setStep("new-password")
-      }
-    } catch(e) {
-      setLoading(false);
-      console.log(e)
-    }
-  }
+        let errorMsg = 'Errors occure';
 
-   const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,30}$/;
-    
-   const schema = z.object({
-      password: z.string().regex(strongPasswordRegex, {message: "Password must contain uppercase, lowercase, number, and special character (!@#$%^&*)"}),
+        if (typeof result.message === 'string') {
+          errorMsg = result.message;
+        } else if (result.message && typeof result.message === 'object') {
+          errorMsg = Object.values(result.message)[0] as string;
+        }
+
+        setError(errorMsg);
+      } else {
+        setError(null);
+        setStep('new-password');
+      }
+    } catch (e) {
+      setLoading(false);
+      console.log(e);
+    }
+  };
+
+  const strongPasswordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,30}$/;
+
+  const schema = z
+    .object({
+      password: z
+        .string()
+        .regex(strongPasswordRegex, {
+          message:
+            'Password must contain uppercase, lowercase, number, and special character (!@#$%^&*)',
+        }),
       confirmpassword: z.string(),
-   }).refine((data) => data.password === data.confirmpassword, {
-      message: "Confirmation password does not match",
-      path: ["confirmpassword"]
-   })
+    })
+    .refine((data) => data.password === data.confirmpassword, {
+      message: 'Confirmation password does not match',
+      path: ['confirmpassword'],
+    });
 
   type Inputs = {
-    password: string
-    confirmpassword: string
-  }
+    password: string;
+    confirmpassword: string;
+  };
 
   const {
     register,
     watch,
     handleSubmit,
-    formState: {errors},
+    formState: { errors },
   } = useForm<Inputs>({
-    resolver: zodResolver(schema)
-  })
+    resolver: zodResolver(schema),
+  });
 
-
-   
   const onSubmitNewPassword = async (data: Inputs) => {
-    try { 
-        setLoading(true);
-        const res = await fetch('/api/changepassword', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-              email: email,
-              password: data.password
-          }),
-        });
+    try {
+      setLoading(true);
+      const res = await fetch('/api/changepassword', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: data.password,
+        }),
+      });
 
-        setLoading(false)
-        const result = await res.json();
+      setLoading(false);
+      const result = await res.json();
 
+<<<<<<< HEAD
         if (!result.isSuccess) {
           console.log("Fail full!!!")
           setError(result.message)
@@ -429,41 +477,49 @@ function ChangePassword( {profile, setAction} : {profile: ProfileData, setAction
 
     } catch(e) {
         console.error(e)
+=======
+      if (!result.isSuccess) {
+        console.log('Fail full!!!');
+        setError(result.message);
+      } else {
+        console.log('Success full!!!');
+        setError(null);
+        setAction('view-tabs');
+      }
+    } catch (e) {
+      console.error(e);
+>>>>>>> 6b763a05d73a292c1257e29ac869d0bdc64813ad
     }
-  }
+  };
 
   const renderStep = () => {
-    switch(step) {
-      case "verify":
-        return(
-          <div className='p-8 border border-gray-200 shadow-lg rounded-lg bg-white flex flex-col gap-4'>
-            <h1 className="text-3xl font-bold text-foreground">
-                Verify your self!
-            </h1>
-            
-            <hr/>
+    switch (step) {
+      case 'verify':
+        return (
+          <div className="p-8 border border-gray-200 shadow-lg rounded-lg bg-white flex flex-col gap-4">
+            <h1 className="text-3xl font-bold text-foreground">Verify your self!</h1>
+
+            <hr />
 
             {error && <div className="text-[#8D0000]">{error}</div>}
 
             <form
               onSubmit={(e) => {
-                e.preventDefault()
-                onSubmitVerify()
+                e.preventDefault();
+                onSubmitVerify();
               }}
               className="flex flex-col gap-6"
             >
-              <label 
-                htmlFor="password"
-                className="text-muted-foreground"
-              >
+              <label htmlFor="password" className="text-muted-foreground">
                 Old password
               </label>
 
-              <input 
-                id="password" type="password"
+              <input
+                id="password"
+                type="password"
                 onChange={(e) => setOldPassword(e.target.value)}
                 placeholder="********"
-                className='w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]'
+                className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
               />
 
               <div className="mt-10 flex flex-col md:flex-row md:mx-auto gap-5">
@@ -478,11 +534,11 @@ function ChangePassword( {profile, setAction} : {profile: ProfileData, setAction
                     transition-all duration-200 active:scale-95
                   "
                 >
-                  {loading ? "Đang kiểm tra..." : "Continue"}
+                  {loading ? 'Đang kiểm tra...' : 'Continue'}
                 </button>
 
-                <button 
-                  onClick={() => setAction("view-tabs")}
+                <button
+                  onClick={() => setAction('view-tabs')}
                   type="button"
                   className="
                     md:order-1
@@ -496,135 +552,145 @@ function ChangePassword( {profile, setAction} : {profile: ProfileData, setAction
                 </button>
               </div>
             </form>
-
-
-  
           </div>
-        )
-      
-      case "new-password":
-        return(
-          <div className='p-8 border border-gray-200 shadow-lg rounded-lg bg-white flex flex-col gap-4'>
-            <h1 className="text-3xl font-bold text-foreground">
-                Create a new password
-            </h1>
-            <hr/>
-            <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmitNewPassword)}>
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="password" className="font-semibold text-gray-900" >New password </label>
-                  <input type="password" id="password" placeholder="********" className='w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]' {...register("password")}/>
-                  <p className="text-xs text-gray-500">
-                      At least 8 characters with uppercase, lowercase, number, and special character
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="confirmpassword" className="font-semibold text-gray-900">Retype new password</label>
-                  <input type="password" id="confirmpassword" placeholder="********" className='w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]'  {...register("confirmpassword")}/>
-                </div>
+        );
 
-                <div className="flex flex-row gap-4 w-full justify-end mt-4">
-                  <div onClick={() => setAction("view-tabs")} className={`w-fit bg-black font-bold text-white py-2 px-4 rounded-md transition-color hover:cursor-pointer`}>
-                      Cancel
-                  </div>
-                  <button type="submit" className={`w-fit bg-[#8D0000] font-bold text-white py-2 px-4 rounded-md transition-color hover:cursor-pointer`}>
-                      {loading ? <ClipLoader loading={loading} size={20} color='white'/> : <p>Continue</p> }
-                  </button>
+      case 'new-password':
+        return (
+          <div className="p-8 border border-gray-200 shadow-lg rounded-lg bg-white flex flex-col gap-4">
+            <h1 className="text-3xl font-bold text-foreground">Create a new password</h1>
+            <hr />
+            <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmitNewPassword)}>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="password" className="font-semibold text-gray-900">
+                  New password{' '}
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  placeholder="********"
+                  className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
+                  {...register('password')}
+                />
+                <p className="text-xs text-gray-500">
+                  At least 8 characters with uppercase, lowercase, number, and special character
+                </p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="confirmpassword" className="font-semibold text-gray-900">
+                  Retype new password
+                </label>
+                <input
+                  type="password"
+                  id="confirmpassword"
+                  placeholder="********"
+                  className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
+                  {...register('confirmpassword')}
+                />
+              </div>
+
+              <div className="flex flex-row gap-4 w-full justify-end mt-4">
+                <div
+                  onClick={() => setAction('view-tabs')}
+                  className={`w-fit bg-black font-bold text-white py-2 px-4 rounded-md transition-color hover:cursor-pointer`}
+                >
+                  Cancel
                 </div>
+                <button
+                  type="submit"
+                  className={`w-fit bg-[#8D0000] font-bold text-white py-2 px-4 rounded-md transition-color hover:cursor-pointer`}
+                >
+                  {loading ? (
+                    <ClipLoader loading={loading} size={20} color="white" />
+                  ) : (
+                    <p>Continue</p>
+                  )}
+                </button>
+              </div>
             </form>
           </div>
-        )
+        );
     }
-  }
+  };
 
-  return(
-    <>
-      {renderStep()}
-    </>
-  )
+  return <>{renderStep()}</>;
 }
 
-function RequesRole( {setAction} : {setAction: SetAction} ) {
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState<string | null> (null)
-  
-  
+function RequesRole({ setAction }: { setAction: SetAction }) {
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const onSubmitRequest = async () => {
-
-  if (!message || message.trim() === "") {
-    setError("Message must not be left blank!");
-    return; // Dừng hàm ngay lập tức, không gửi API
-  }
+    if (!message || message.trim() === '') {
+      setError('Message must not be left blank!');
+      return; // Dừng hàm ngay lập tức, không gửi API
+    }
 
     setError(null);
     setLoading(true);
 
     try {
-
       const res = await fetch('/api/profile/role', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: message
-        })
+          message: message,
+        }),
       });
 
       const result = await res.json();
       setLoading(false);
 
       if (!res.ok) {
-        let errorMsg = "Errors occure";
-         
-        if (typeof result.message === 'string') {
-            errorMsg = result.message;
-        } else if (result.message && typeof result.message === 'object') {
-            errorMsg = Object.values(result.message)[0] as string;
-        }
-         
-         setError(errorMsg);
-      } else {
-        setError(null)
-        setAction("view-tabs")
-      }
-    } catch(e) {
-      setLoading(false);
-      console.log(e)
-    }
-  }
+        let errorMsg = 'Errors occure';
 
-  return(
-    <div className='p-8 border border-gray-200 shadow-lg rounded-lg bg-white flex flex-col gap-4'>
+        if (typeof result.message === 'string') {
+          errorMsg = result.message;
+        } else if (result.message && typeof result.message === 'object') {
+          errorMsg = Object.values(result.message)[0] as string;
+        }
+
+        setError(errorMsg);
+      } else {
+        setError(null);
+        setAction('view-tabs');
+      }
+    } catch (e) {
+      setLoading(false);
+      console.log(e);
+    }
+  };
+
+  return (
+    <div className="p-8 border border-gray-200 shadow-lg rounded-lg bg-white flex flex-col gap-4">
       <h1 className="text-3xl font-bold text-foreground">
         Let us know why you want to be a seller
       </h1>
-      
-      <hr/>
+
+      <hr />
 
       {error && <div className="text-[#8D0000]">{error}</div>}
 
       <form
         onSubmit={(e) => {
-          e.preventDefault()
-          onSubmitRequest()
+          e.preventDefault();
+          onSubmitRequest();
         }}
         className="flex flex-col gap-6"
       >
-        <label 
-          htmlFor="message"
-          className="text-muted-foreground"
-        >
+        <label htmlFor="message" className="text-muted-foreground">
           Your message
         </label>
 
-        <textarea 
+        <textarea
           id="message"
           onChange={(e) => {
             if (error) setError(null);
-            setMessage(e.target.value)
+            setMessage(e.target.value);
           }}
           placeholder="Leave your message here..."
-          className='w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]'
+          className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
         />
 
         <div className="mt-10 flex flex-col md:flex-row md:mx-auto gap-5">
@@ -639,11 +705,11 @@ function RequesRole( {setAction} : {setAction: SetAction} ) {
               transition-all duration-200 active:scale-95
             "
           >
-            {loading ? "Đang kiểm tra..." : "Continue"}
+            {loading ? 'Đang kiểm tra...' : 'Continue'}
           </button>
 
-          <button 
-            onClick={() => setAction("view-tabs")}
+          <button
+            onClick={() => setAction('view-tabs')}
             type="button"
             className="
               md:order-1
@@ -658,28 +724,35 @@ function RequesRole( {setAction} : {setAction: SetAction} ) {
         </div>
       </form>
     </div>
-  )
+  );
 }
 
-function ViewTabs( {profile, setAction} : {profile: ProfileData, setAction: SetAction} ) {
-  return(
-    <UserTab profile={profile}/>
-  )
+function ViewTabs({ profile, setAction }: { profile: ProfileData; setAction: SetAction }) {
+  return <UserTab profile={profile} />;
 }
 
-export default function UserAction( {profile, action, setAction} : {profile:ProfileData, action:string, setAction: SetAction}) {
+export default function UserAction({
+  profile,
+  action,
+  setAction,
+}: {
+  profile: ProfileData;
+  action: string;
+  setAction: SetAction;
+}) {
   const renderAction = () => {
-    switch(action) {
-      case "edit-profile" : return(<EditProfile profile={profile} setAction={setAction}/>)
-      case "change-password" : return(<ChangePassword profile={profile} setAction={setAction}/>)
-      case "request-role" : return(<RequesRole setAction={setAction}/>)
-      case "view-tabs" : return(<ViewTabs profile={profile} setAction={setAction}/>)
-      default : return <h1 className="text-3xl text-red-500">Invalid Action!</h1>;
+    switch (action) {
+      case 'edit-profile':
+        return <EditProfile profile={profile} setAction={setAction} />;
+      case 'change-password':
+        return <ChangePassword profile={profile} setAction={setAction} />;
+      case 'request-role':
+        return <RequesRole setAction={setAction} />;
+      case 'view-tabs':
+        return <ViewTabs profile={profile} setAction={setAction} />;
+      default:
+        return <h1 className="text-3xl text-red-500">Invalid Action!</h1>;
     }
-  }
-  return(
-    <div className="h-full flex-4 min-w-0">
-      {renderAction()}
-    </div>
-  )
+  };
+  return <div className="h-full flex-4 min-w-0">{renderAction()}</div>;
 }

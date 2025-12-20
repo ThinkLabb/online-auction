@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 
 const FONT_SIZE = 16;
-const MATRIX_COLOR = '#8D0000'; 
+const MATRIX_COLOR = '#8D0000';
 
 interface MatrixRainProps {
   color?: string;
@@ -72,7 +72,7 @@ const MatrixRain: React.FC<MatrixRainProps> = ({ color = MATRIX_COLOR, speed = 5
 
     return () => {
       clearInterval(interval);
-      resizeObserver.unobserve(canvas); 
+      resizeObserver.unobserve(canvas);
     };
   }, [color, speed]);
 

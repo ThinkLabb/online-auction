@@ -1,20 +1,20 @@
-import { ProductStatus, OrderStatus } from "@prisma/client";
+import { ProductStatus, OrderStatus } from '@prisma/client';
 
 type BiddingProduct = {
-  product_id: number,
-  name: string,
-  image_url: string,
-  status: ProductStatus,
-  max_bid: number,
-  buy_now_price?: number,
-  current_price: number,
-  bid_count: number,
-  end_time: string,
+  product_id: number;
+  name: string;
+  image_url: string;
+  status: ProductStatus;
+  max_bid: number;
+  buy_now_price?: number;
+  current_price: number;
+  bid_count: number;
+  end_time: string;
 
-  seller_name: string,
-  category_name: string,
-  current_highest_bidder_name?: string
-}
+  seller_name: string;
+  category_name: string;
+  current_highest_bidder_name?: string;
+};
 
 type WonProduct = {
   product_id: number;
@@ -33,7 +33,7 @@ type WatchlistItem = {
   product_id: number;
   name: string;
   image_url: string;
-  current_highest_bidder_name: string | null,
+  current_highest_bidder_name: string | null;
   current_price: number;
   buy_now_price?: number;
   bid_count: number;
@@ -67,7 +67,7 @@ export type ProductItem = {
   end_time: string;
 
   highest_bidder_name?: string;
-}
+};
 
 export type ProfileData = {
   name: string;
@@ -83,11 +83,11 @@ export type ProfileData = {
   watchlist_count: number;
   rating: number;
   rating_label: string;
-  bidding_products: Array<BiddingProduct>,
-  won_products: Array<WonProduct>,
-  watchlist: Array<WatchlistItem>,
-  ratings: Array<ReviewReceived>
-}
+  bidding_products: Array<BiddingProduct>;
+  won_products: Array<WonProduct>;
+  watchlist: Array<WatchlistItem>;
+  ratings: Array<ReviewReceived>;
+};
 
-export type SetTab = (tab: "bidding" | "won-products" | "watchlist" | "ratings") => void;
-export type SetAction = (action: "view-tabs" | "edit-profile" | "change-password") => void;
+export type SetTab = (tab: 'bidding' | 'won-products' | 'watchlist' | 'ratings') => void;
+export type SetAction = (action: 'view-tabs' | 'edit-profile' | 'change-password') => void;

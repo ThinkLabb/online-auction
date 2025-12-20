@@ -1,17 +1,30 @@
 import { Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import { CategoryContext, useUser } from './UserContext.tsx';
+import { CategoryContext, UserProvider, useUser } from './UserContext.tsx';
 import CategoryDetail from './CategoryMenu.tsx';
-import { useEffect, useState } from 'react';
-import { Bell, BellDot, BellIcon, CircleUserRound } from 'lucide-react';
+import { JSX, useEffect, useState } from 'react';
+import { Bell, CreditCard, Truck, CheckCircle, Star } from 'lucide-react';
+
+type Order = {
+  order_id: string;
+  status: string;
+};
 
 function Layout() {
   const { user, setUser } = useUser();
-
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [keyword, setKeyword] = useState('');
+  const [orders, setOrders] = useState<Order[] | null>(null);
+  const [showOrders, setShowOrders] = useState(false);
 
   const navigate = useNavigate();
+
+  const statusIcons: Record<string, JSX.Element> = {
+    pending_payment: <CreditCard className="fill-[#8D0000] stroke-1" />,
+    payment_confirmed: <Truck className="fill-[#8D0000] stroke-1" />,
+    shipping: <CheckCircle className="fill-[#8D0000] stroke-1" />,
+    completed: <Star className="fill-[#8D0000] stroke-1" />,
+  };
 
   const handleLogout = async () => {
     try {
@@ -52,6 +65,8 @@ function Layout() {
             name: result.data.name,
             email: result.data.email,
           });
+
+          setOrders(result.data.orders);
         }
       } catch (e) {
         console.error(e);
@@ -123,9 +138,41 @@ function Layout() {
                 </>
               ) : (
                 <>
-                  <li className=''><Bell/></li>
-                  <li className=''><Link to={"/profile"}><CircleUserRound/></Link></li>
-                  <li className="flex flex-row bg-[#8D0000] text-white px-3 py-1 rounded text-sm hidden sm:block">
+                  <li className="relative">
+                    <Bell
+                      className="w-6 h-6 hover:cursor-pointer text-gray-700 transition-colors hover:text-[#8D0000]"
+                      onClick={() => setShowOrders((prev) => !prev)}
+                    />
+
+                    {/* Badge số lượng order */}
+                    {orders && orders.length > 0 && (
+                      <span className="absolute top-0 right-0 -translate-x-1/2 -translate-y-1/2 bg-[#8D0000] text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-semibold shadow-sm">
+                        {orders.length}
+                      </span>
+                    )}
+
+                    {showOrders && orders && orders.length > 0 && (
+                      <ul className="absolute left-0 mt-2 w-64 bg-white border border-gray-200 shadow-lg rounded-lg z-50 max-h-72 overflow-y-auto">
+                        {orders.map((o) => (
+                          <li
+                            key={o.order_id}
+                            className="px-4 py-2 hover:bg-gray-100 transition-colors flex justify-between items-center text-sm last:border-b-0 hover:cursor-pointer bg-bl"
+                            onClick={() => {
+                              (navigate(`/payment/${o.order_id}`), setShowOrders(false));
+                            }}
+                          >
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-800">Order #{o.order_id}</span>
+                              <span className="text-gray-500 text-xs mt-0.5">{o.status}</span>
+                            </div>
+                            {statusIcons[o.status] || null}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+
+                  <li className="bg-[#8D0000] text-white px-3 py-1 rounded text-sm hidden sm:block">
                     Welcome, {user.name}
                   </li>
                   <li

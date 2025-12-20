@@ -9,37 +9,36 @@ import { ClipLoader } from "react-spinners"
 
 export default function UserProfile() {
   const navigate = useNavigate();
-  const [action, setAction] = useState("view-tabs")
+  const [action, setAction] = useState('view-tabs');
   const [loading, setLoading] = useState(true);
   const { user, setUser } = useUser();
   const [profile, setProfile] = useState<ProfileData | null>(null);
 
-  const handleLogout = async() => {
+  const handleLogout = async () => {
     try {
       const res = await fetch('/api/auth/logout', {
         method: 'POST',
-        credentials: 'include'
+        credentials: 'include',
       });
 
       const result = await res.json();
       if (res.ok && result.isSuccess) {
         setUser(null);
       }
-    } catch(e) {
-    }
+    } catch (e) {}
   };
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("/api/profile", {
-          method: "GET",
-          credentials: "include",
+        const res = await fetch('/api/profile', {
+          method: 'GET',
+          credentials: 'include',
         });
 
         if (res.ok) {
           const data = await res.json();
-          console.log(data)
+          console.log(data);
           setProfile(data);
         }
       } catch (err) {
@@ -50,7 +49,7 @@ export default function UserProfile() {
     };
 
     fetchProfile();
-  }, [user, navigate])
+  }, [user, navigate]);
 
   if (loading) return(
     <div className="min-h-[50vh] w-full flex flex-col justify-center items-center"> 
@@ -61,7 +60,6 @@ export default function UserProfile() {
 
   return (
     <div className="w-[90%] max-w-8xl justify-between mx-auto">
-
       {/* TITLE */}
       <h1 className="text-center text-5xl font-bold text-[#8D0000] mt-10">
         Welcome, {profile.name}!
@@ -78,7 +76,7 @@ export default function UserProfile() {
           <h2 className="text-xl font-bold">Total wins</h2>
           <p className="text-3xl font-bold text-[#8D0000]">{profile.total_wins}</p>
           <p>Win rate: {profile.win_rate}%</p>
-        </div>        
+        </div>
         <div className="flex-1 min-w-0 flex flex-col grow gap-2 px-6 py-3 ring ring-gray-200 rounded-sm shadow-sm shadow-stone-300">
           <h2 className="text-xl font-bold">Watchlist</h2>
           <p className="text-3xl font-bold text-[#8D0000]">{profile.watchlist_count}</p>
@@ -94,29 +92,30 @@ export default function UserProfile() {
       {/* PROFLE INFO */}
 
       <div className="my-10 flex flex-col md:flex-row gap-5">
-
         {/* PROFILE CARD - LEFT */}
         <div className="max-w-2xl flex-1 min-w-0 px-5 pt-10 rounded-sm ring ring-gray-200 shadow-sm shadow-stone-300">
           <div className="flex flex-row gap-5 mb-5">
-            <img src={userIcon} alt="User icon" className="w-auto h-12"/>
+            <img src={userIcon} alt="User icon" className="w-auto h-12" />
             <div className="min-w-0">
               <h3 className="text-lg font-bold truncate">{profile.name}</h3>
               <p className="text-md text-gray-300 truncate">{profile.email}</p>
             </div>
           </div>
 
-          <hr className="border-[#8D0000]"/>
-          
+          <hr className="border-[#8D0000]" />
+
           <div className="my-5 grid grid-cols-5 gap-2 min-w-0">
             <p className="font-bold col-span-2 col-start-1">Account type</p>
             <p className="text-right col-span-3 col-start-3">{profile.role}</p>
             <p className="font-bold col-span-2 col-start-1">Join date</p>
-            <p className="text-right col-span-3 col-start-3">{new Date(profile.created_at).toLocaleDateString("vi-VN")}</p>
+            <p className="text-right col-span-3 col-start-3">
+              {new Date(profile.created_at).toLocaleDateString('vi-VN')}
+            </p>
           </div>
 
           <div className="flex flex-col gap-3 my-10">
-            <button 
-              onClick={() => setAction("edit-profile")}
+            <button
+              onClick={() => setAction('edit-profile')}
               className="
                 cursor-pointer bg-[#8D0000] 
                 hover:bg-[#760000] hover:scale-101
@@ -129,44 +128,48 @@ export default function UserProfile() {
             </button>
 
             <button
-              onClick={() => setAction("change-password")} 
+              onClick={() => setAction('change-password')}
               className="
               cursor-pointer bg-black text-white
               hover:bg-[#5C5C5C] hover:scale-101
               active:scale-95 
               transition-all duration-200 hover:shadow-md
               rounded-sm shadow-sm shadow-stone-300 font-medium p-2
-            ">
+            "
+            >
               Change password
             </button>
-            
-            {
-              profile.role === "bidder"
-              ? <button 
-              onClick={() => setAction("request-role")} 
-              className="
+
+            {profile.role === 'bidder' ? (
+              <button
+                onClick={() => setAction('request-role')}
+                className="
               cursor-pointer bg-yellow-300 text-black-800
               hover:bg-yellow-400 hover:scale-101
               active:scale-95 
               transition-all duration-200 hover:shadow-md 
               rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 font-medium p-2
-            ">
-              Let me sell
-            </button>
-            : <Link to="/upload" className="
+            "
+              >
+                Let me sell
+              </button>
+            ) : (
+              <Link
+                to="/upload"
+                className="
               text-center
               cursor-pointer bg-yellow-300 text-black-800
               hover:bg-yellow-400 hover:scale-101
               active:scale-95 
               transition-all duration-200 hover:shadow-md 
               rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 font-medium p-2
-            ">
-              Add product
-            </Link>
-            }
-            
+            "
+              >
+                Add product
+              </Link>
+            )}
 
-            <button 
+            <button
               className="
                 cursor-pointer bg-white text-[#8D0000]
                 hover:bg-[#F0EEEE] hover:scale-101
@@ -176,7 +179,7 @@ export default function UserProfile() {
               "
               onClick={() => {
                 handleLogout();
-                navigate("/");
+                navigate('/');
               }}
             >
               Sign out
@@ -185,8 +188,8 @@ export default function UserProfile() {
         </div>
 
         {/* TABS */}
-        <UserAction profile={profile} action={action} setAction={setAction}/>
+        <UserAction profile={profile} action={action} setAction={setAction} />
       </div>
     </div>
-  )
+  );
 }

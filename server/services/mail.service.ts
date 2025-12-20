@@ -4,7 +4,7 @@ import db from './database.ts';
 import { totp } from 'otplib';
 
 totp.options = {
-  step: 60,
+  step: 120,
   digits: 6,
   window: 1,
 };

@@ -41,8 +41,22 @@ async function main() {
   await prisma.category.deleteMany()
   await prisma.sellerUpgradeRequest.deleteMany()
   await prisma.user.deleteMany()
+  // 1. CLEAN CONFIG TABLE
+  await prisma.auctionConfig.deleteMany() 
 
   console.log('🌱  SEEDING STARTED...')
+
+  // -------------------------------------------------------
+  // 0. CREATE AUCTION CONFIG (Global Settings)
+  // -------------------------------------------------------
+  console.log('⚙️  Setting Auction Configuration...');
+  await prisma.auctionConfig.create({
+    data: {
+      id: 1, // Force ID 1 for consistency
+      extend_window_minutes: 5,  // 5 minutes before end
+      extend_duration_minutes: 10 // Extend by 10 minutes
+    }
+  });
 
   // -------------------------------------------------------
   // 1. CREATE USERS (20 Users: 1 Admin, 5 Sellers, 15 Bidders)
@@ -280,48 +294,63 @@ async function main() {
   for (const p of soldProducts) {
     if (!p.current_highest_bidder_id) continue;
 
+    // const order = await prisma.order.create({
+    //     data: {
+    //         product_id: p.product_id,
+    //         buyer_id: p.current_highest_bidder_id,
+    //         seller_id: p.seller_id,
+    //         final_price: p.current_price,
+    //         status: OrderStatus.completed,
+    //         shipping_address: "123 Delivery Road, District 1, HCMC",
+    //         buyer_confirmed_receipt: true,
+    //         created_at: p.end_time,
+    //     }
+    // });
+
     const order = await prisma.order.create({
         data: {
             product_id: p.product_id,
             buyer_id: p.current_highest_bidder_id,
             seller_id: p.seller_id,
             final_price: p.current_price,
-            status: OrderStatus.completed,
-            shipping_address: "123 Delivery Road, District 1, HCMC",
-            buyer_confirmed_receipt: true,
-            created_at: p.end_time,
+            status: OrderStatus.pending_payment, // ❌ Pending, chưa thanh toán
+            shipping_address: null,             // Chưa có địa chỉ shipping
+            buyer_confirmed_receipt: false,     // Chưa nhận hàng
+            seller_review_id: null,             // Chưa có review
+            buyer_review_id: null,              // Chưa có review
+            created_at: new Date(),             // Hoặc p.end_time
         }
     });
 
-    const buyerReview = await prisma.reviews.create({
-        data: {
-            product_id: p.product_id,
-            reviewer_id: p.current_highest_bidder_id,
-            reviewee_id: p.seller_id,
-            is_positive: true,
-            comment: randomElement(SAMPLE_COMMENTS),
-            order_as_buyer_review: { connect: { order_id: order.order_id } }
-        }
-    });
+    // const buyerReview = await prisma.reviews.create({
+    //     data: {
+    //         product_id: p.product_id,
+    //         reviewer_id: p.current_highest_bidder_id,
+    //         reviewee_id: p.seller_id,
+    //         is_positive: true,
+    //         comment: randomElement(SAMPLE_COMMENTS),
+    //         order_as_buyer_review: { connect: { order_id: order.order_id } }
+    //     }
+    // });
 
-    const sellerReview = await prisma.reviews.create({
-        data: {
-            product_id: p.product_id,
-            reviewer_id: p.seller_id,
-            reviewee_id: p.current_highest_bidder_id,
-            is_positive: true,
-            comment: "Customer paid quickly, very trustworthy.",
-            order_as_seller_review: { connect: { order_id: order.order_id } }
-        }
-    });
+    // const sellerReview = await prisma.reviews.create({
+    //     data: {
+    //         product_id: p.product_id,
+    //         reviewer_id: p.seller_id,
+    //         reviewee_id: p.current_highest_bidder_id,
+    //         is_positive: true,
+    //         comment: "Customer paid quickly, very trustworthy.",
+    //         order_as_seller_review: { connect: { order_id: order.order_id } }
+    //     }
+    // });
 
-    await prisma.order.update({
-        where: { order_id: order.order_id },
-        data: {
-            buyer_review_id: buyerReview.review_id,
-            seller_review_id: sellerReview.review_id
-        }
-    });
+    // await prisma.order.update({
+    //     where: { order_id: order.order_id },
+    //     data: {
+    //         buyer_review_id: buyerReview.review_id,
+    //         seller_review_id: sellerReview.review_id
+    //     }
+    // });
 
     await prisma.orderChat.createMany({
         data: [
@@ -334,8 +363,8 @@ async function main() {
 
   console.log('✅  SEEDING COMPLETED!');
   console.log(`   - Users created: ${users.length + 1}`);
-  console.log(`   - Products created: ${products.length}`);
-  console.log(`   - Orders created: ${soldProducts.length}`);
+  // console.log(`   - Products created: ${products.length}`);
+  // console.log(`   - Orders created: ${soldProducts.length}`);
 }
 
 main()

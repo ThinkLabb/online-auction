@@ -17,13 +17,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
 export const useUser = () => useContext(UserContext);
 
-
 export type CategoryContextType = {
   activeLevel1: string;
   setActiveLevel1: (value: string) => void;
 };
 
 export const CategoryContext = createContext<CategoryContextType>({
-  activeLevel1: "",
+  activeLevel1: '',
   setActiveLevel1: () => {}, // hàm rỗng
 });

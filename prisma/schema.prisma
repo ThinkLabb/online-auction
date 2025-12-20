@@ -248,3 +248,10 @@ model OrderChat {
   order Order @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
   sender User @relation(fields: [sender_id], references: [user_id], onDelete: Cascade)
 }
+
+model AuctionConfig {
+  id                      Int      @id @default(autoincrement())
+  extend_window_minutes   Int      @default(5)  // Khoảng thời gian nhạy cảm (VD: 5 phút cuối)
+  extend_duration_minutes Int      @default(10) // Thời gian cộng thêm (VD: 10 phút)
+  updated_at              DateTime @default(now()) @updatedAt
+}

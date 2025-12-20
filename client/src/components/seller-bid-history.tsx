@@ -16,7 +16,7 @@ const formatTimeAgo = (dateString: string) => {
   return date.toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' });
 };
 
-export default function BidHistory({ id, onBidSuccess }: { id: string, onBidSuccess: () => void }) {
+export default function BidHistory({ id, onBidSuccess }: { id: string; onBidSuccess: () => void }) {
   const [bidHistory, setBidHistory] = useState<BidHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -122,9 +122,7 @@ export default function BidHistory({ id, onBidSuccess }: { id: string, onBidSucc
 
                     <div className="flex flex-col min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold text-gray-900 truncate">
-                          {bid.bidderName}
-                        </p>
+                        <p className="text-sm font-bold text-gray-900 truncate">{bid.bidderName}</p>
 
                         {isTopBid && (
                           <span className="shrink-0 text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded border border-yellow-200 font-medium">

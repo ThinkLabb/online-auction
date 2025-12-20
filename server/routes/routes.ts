@@ -24,8 +24,10 @@ import {
   createProductQA,
   replyProductQA,
   searchProducts,
+  appendProductDescription,
 } from '../controllers/product.controllers.ts';
 import { banBidder, getBidHistory, placeBid } from '../controllers/bid.controller.ts';
+import { addChat, addReview, changeOrder, getChat, getOrder } from '../controllers/payment.controller.ts';
 
 const router = express.Router();
 
@@ -39,6 +41,7 @@ const createUserSchema = {
     password: Joi.string().required().min(8).max(30).regex(strongPasswordRegex),
     code: Joi.string().required(),
     address: Joi.string().required().min(5).max(100),
+    recaptchaToken: Joi.required(),
   }),
 };
 
@@ -73,7 +76,7 @@ router.post(
   authController.getAuthentication,
   productController.handleBuyNow
 );
-router.get('/products/:level1/:level2', productController.getProductsLV);
+router.get('/productsLV/:level1/:level2', productController.getProductsLV);
 
 router.post('/upload', authController.getSellerAuthentication, uploadProducts);
 
@@ -173,5 +176,46 @@ router.get('/products/search', productController.searchProducts);
 // QA route: ask question about a product
 router.post('/product/:id/qa', authController.getAuthentication, createProductQA);
 router.post('/qa/:qaId/reply', authController.getSellerAuthentication, replyProductQA);
+
+// Append product description
+router.post(
+  '/product/:id/description',
+  authController.getSellerAuthentication,
+  appendProductDescription
+);
+
+
+//============================ 
+// Payment
+router.get(
+  '/payment/:orderid',
+  authController.getAuthentication,
+  getOrder
+)
+
+router.put(
+  '/payment/:orderid',
+  authController.getAuthentication,
+  changeOrder
+)
+
+router.post(
+  '/payment-review/:orderid',
+  authController.getAuthentication,
+  addReview
+)
+
+router.post(
+  '/chat/:orderid',
+  authController.getAuthentication,
+  addChat
+)
+
+
+router.get(
+  '/chat/:orderid',
+  authController.getAuthentication,
+  getChat
+)
 
 export default router;
