@@ -41,7 +41,9 @@ export const uploadProducts = async (req: Request, res: Response) => {
         step_price: productData.stepPrice,
         current_price: productData.startingPrice,
         auto_extend: productData.autoRenewal,
+        review_needed: productData.isRequiredReview,
         end_time: new Date(productData.auctionEndTime),
+        allow_unrated_bidder: productData.allowUnratedBidders,
         description_history: {
           create: {
             description: productData.description,

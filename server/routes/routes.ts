@@ -12,8 +12,10 @@ import {
   getAdName,
   getAdProducts,
   getAdUsers,
+  getAuctionConfig,
   getUpgradeRequest,
   responseUpgradeRequest,
+  updateAuctionConfig,
   updateCategory,
 } from '../controllers/admin.controler.ts';
 import * as userControllers from '../controllers/user.controllers.ts';
@@ -154,17 +156,42 @@ router.put(
   responseUpgradeRequest
 );
 
+router.get(
+  '/admin/settings',
+  authController.getAuthentication,
+  authController.checkAdmin,
+  getAuctionConfig
+);
+router.put(
+  '/admin/settings',
+  authController.getAuthentication,
+  authController.checkAdmin,
+  updateAuctionConfig
+);
+
 // ===== PROFILE PAGE'S API =====
 router.get('/profile', authController.getAuthentication, userControllers.getMyProfile);
 router.patch('/profile', authController.getAuthentication, userControllers.editUserProfile);
 router.use('/profile/verifyuser', authController.verifyUser);
 router.post('/watch-list/add', authController.getAuthentication, productController.addToWatchList);
-router.delete('/watch-list/:product_id', authController.getAuthentication, userControllers.deleteWatchlistProduct)
-router.delete('/seller-list/:product_id', authController.getAuthentication, userControllers.deleteSellerlistProduct)
+router.delete(
+  '/watch-list/:product_id',
+  authController.getAuthentication,
+  userControllers.deleteWatchlistProduct
+);
+router.delete(
+  '/seller-list/:product_id',
+  authController.getAuthentication,
+  userControllers.deleteSellerlistProduct
+);
 
 router.post('/profile/role', authController.getAuthentication, userControllers.requestRole);
 
-router.get('/profile/seller/products', authController.getSellerAuthentication, userControllers.getSellerProducts)
+router.get(
+  '/profile/seller/products',
+  authController.getSellerAuthentication,
+  userControllers.getSellerProducts
+);
 
 // ===============================
 

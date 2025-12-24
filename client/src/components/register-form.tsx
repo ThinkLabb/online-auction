@@ -70,6 +70,7 @@ export default function Register() {
     try {
       const address = `${data.homenumber}, ${data.street}, ${data.ward}, ${data.province}`;
       const token = recaptchaRef.current?.getValue();
+      console.log(token)
       if (!token) {
         alert('Vui lòng xác thực reCAPTCHA');
         return;

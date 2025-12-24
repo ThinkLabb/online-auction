@@ -113,6 +113,7 @@ model Product {
   end_time                  DateTime    @db.Timestamptz
   auto_extend               Boolean     @default(false)
   review_needed             Boolean     @default(false)
+  allow_unrated_bidder      Boolean     @default(true)
 
   // Relationships
   seller                    User        @relation("SellerProducts", fields: [seller_id], references: [user_id], onDelete: Cascade)
