@@ -32,8 +32,9 @@ export const BidderSidebar = ({
     const bidValue = parseFloat(bidAmount);
 
     if (isNaN(bidValue)) return alert('Please enter a valid number.');
-    if (bidValue < minNextBid) return alert(`Bid too low! Min: ${formatCurrency(minNextBid.toString())}`);
-    
+    if (bidValue < minNextBid)
+      return alert(`Bid too low! Min: ${formatCurrency(minNextBid.toString())}`);
+
     if (confirm(`Place bid of ${formatCurrency(bidValue.toString())}?`)) {
       setIsSubmitting(true);
       try {
@@ -64,7 +65,7 @@ export const BidderSidebar = ({
         });
         if (!response.ok) throw new Error('Purchase failed');
         onBidSuccess();
-        window.location.reload(); 
+        window.location.reload();
       } catch (error: any) {
         alert(error.message);
       } finally {
@@ -79,10 +80,10 @@ export const BidderSidebar = ({
     setIsWatchLoading(true);
 
     // Determine logic based on current state
-    const endpoint = inWatchList 
+    const endpoint = inWatchList
       ? `/api/watch-list/${product.id}` // If currently watching, endpoint to remove
-      : '/api/watch-list/add';          // If not watching, endpoint to add
-      
+      : '/api/watch-list/add'; // If not watching, endpoint to add
+
     const method = inWatchList ? 'DELETE' : 'POST';
 
     try {
@@ -96,7 +97,6 @@ export const BidderSidebar = ({
 
       // Flip the state immediately upon success
       setInWatchList(!inWatchList);
-      
     } catch (error: any) {
       console.error(error);
       alert('Could not update watchlist. Please try again.');
@@ -123,7 +123,9 @@ export const BidderSidebar = ({
                 value={bidAmount}
                 onChange={(e) => setBidAmount(e.target.value)}
               />
-              <div className="bg-gray-100 text-gray-600 px-3 py-2 rounded text-sm flex items-center">VND</div>
+              <div className="bg-gray-100 text-gray-600 px-3 py-2 rounded text-sm flex items-center">
+                VND
+              </div>
             </div>
           </div>
 
@@ -150,9 +152,10 @@ export const BidderSidebar = ({
             onClick={handleToggleWatchList}
             disabled={isWatchLoading}
             className={`w-full flex items-center justify-center gap-2 font-medium py-3 rounded border transition-colors duration-200
-              ${inWatchList 
-                ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' // Active Styles (Remove)
-                : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100' // Inactive Styles (Add)
+              ${
+                inWatchList
+                  ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' // Active Styles (Remove)
+                  : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100' // Inactive Styles (Add)
               }`}
           >
             {isWatchLoading ? (
@@ -162,16 +165,35 @@ export const BidderSidebar = ({
                 {inWatchList ? (
                   // Filled Heart (Remove)
                   <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 fill-current" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 fill-current"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                     <span>Remove from Watchlist</span>
                   </>
                 ) : (
                   // Outline Heart (Add)
                   <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
                     </svg>
                     <span>Add to Watchlist</span>
                   </>
@@ -184,32 +206,14 @@ export const BidderSidebar = ({
 
       {/* User Info Cards (Seller & Top Bidder) */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 divide-y divide-gray-100">
-        
         {/* Seller Info */}
         <div className="pb-4">
-          <UserCard 
-            title="Seller Information" 
-            user={{
-              name: product.seller?.name || 'Unknown Seller',
-              rating: product.seller?.rating || 0,
-              // Assuming 'reviews' is a number or can be derived. 
-              // If UserCard expects specific structure, adapt here.
-              // For now, passing full seller object if it matches or creating a shape.
-            }} 
-          />
+          <UserCard title="Seller" user={product.seller} />
         </div>
 
         {/* Top Bidder Info */}
         <div className="pt-4">
           <UserCard title="Top Bidder" user={product.topBidder} />
-        </div>
-
-      </div>
-
-      {/* Seller */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 divide-y divide-gray-100">
-        <div className="">
-          <UserCard title="Seller" user={product.seller} />
         </div>
       </div>
     </div>
