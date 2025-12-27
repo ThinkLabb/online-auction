@@ -257,11 +257,19 @@ const CategoryManagement: React.FC = () => {
   const [editName, setEditName] = useState('');
   const [editParentId, setEditParentId] = useState<number | null>(null);
 
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+
   const openEditModal = (category: Category) => {
     setEditCategory(category);
     setEditName(category.name);
     setEditParentId(category.parent_id);
     setIsEditModalOpen(true);
+  };
+
+  const openViewModal = (category: Category) => {
+    setSelectedCategory(category);
+    setIsViewModalOpen(true);
   };
 
   useEffect(() => {
@@ -322,6 +330,8 @@ const CategoryManagement: React.FC = () => {
       setError(String(e));
     }
   };
+
+  
 
   const handleAddCategory = async (category: Category) => {
     try {
@@ -402,6 +412,16 @@ const CategoryManagement: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                     {/* <button className={iconGhostBlueClass} title="View Details"><Eye className="h-4 w-4" /></button> */}
                     {/* <button className={getButtonClasses('ghost', 'icon', "text-yellow-600 hover:text-yellow-800 mr-2")} title="Edit"><Edit className="h-4 w-4" /></button> */}
+                    
+                    <button
+                      className={iconGhostBlueClass}
+                      title="View Details"
+                      onClick={() => {
+                        openViewModal(category);
+                      }}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
                     <button
                       className={getButtonClasses(
                         'ghost',
@@ -428,6 +448,33 @@ const CategoryManagement: React.FC = () => {
             })}
           </tbody>
         </table>
+        {isViewModalOpen && selectedCategory && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="max-w-xl mx-auto p-6 bg-white shadow-lg rounded-2xl space-y-4">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-800">User Details</h2>
+              <div className="grid grid-cols-2 gap-4 text-gray-700">
+                <div className="font-medium">ID:</div>
+                <div>{selectedCategory.id}</div>
+                <div className="font-medium">Name:</div>
+                <div>{selectedCategory.name}</div>
+                <div className="font-medium">Parent ID:</div>
+                <div>{selectedCategory.parent_id}</div>
+                <div className="font-medium">Parent Name:</div>
+                <div>{selectedCategory.parent_name}</div>
+                <div className="font-medium">Product Count:</div>
+                <div>{selectedCategory.product_count}</div>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setIsViewModalOpen(false)}
+                  className="px-4 py-2 bg-[#8D0000] text-white font-medium rounded-md text-sm hover:cursor-pointer transition duration-150 ease-in-out"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* --- Add Modal --- */}
