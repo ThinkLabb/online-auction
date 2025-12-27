@@ -523,58 +523,75 @@ export const addToWatchList = async (req: Request, res: Response) => {
 export const handleBuyNow = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
-
     const buyerId = res.locals.user.id;
 
-    const result = await db.prisma.$transaction(async (tx) => {
+    await db.prisma.$transaction(async (tx) => {
+      // 1. Fetch current product details for validation
       const product = await tx.product.findUnique({
         where: { product_id: BigInt(productId) },
       });
 
+      // Validation Checks
       if (!product) {
         throw new Error('Sản phẩm không tồn tại.');
       }
-
       if (product.status !== 'open') {
         throw new Error('Sản phẩm này đã bán, hết hạn hoặc không còn khả dụng.');
       }
-
-      if (Number(product.buy_now_price) == 0) {
+      if (Number(product.buy_now_price) === 0) {
         throw new Error('Sản phẩm này không hỗ trợ tính năng Mua Ngay.');
       }
-
       if (product.seller_id === buyerId) {
         throw new Error('Bạn không thể mua sản phẩm do chính mình đăng bán.');
       }
 
+      // 2. Atomic Update (Concurrency Check)
+      const updateResult = await tx.product.updateMany({
+        where: {
+          product_id: BigInt(productId),
+          status: 'open',
+        },
+        data: {
+          status: 'sold',
+          current_price: product.buy_now_price,
+          current_highest_bidder_id: buyerId,
+          end_time: new Date(),
+          bid_count: { increment: 1 },
+        },
+      });
+
+      if (updateResult.count === 0) {
+        throw new Error('Giao dịch thất bại: Sản phẩm đã được mua bởi người khác.');
+      }
+
+      // 3. Create Order and History
       await Promise.all([
-        // 1. Tạo đơn hàng
-        tx.order.create({
-          data: {
-            product_id: product.product_id,
+        // FIX: Use upsert instead of create to handle the Unique Constraint error
+        tx.order.upsert({
+          where: {
+            product_id: BigInt(productId), // Finds existing order by product_id
+          },
+          create: {
+            // If no order exists, create new
+            product_id: BigInt(productId),
             buyer_id: buyerId,
             seller_id: product.seller_id,
             final_price: product.buy_now_price,
             status: 'pending_payment',
           },
-        }),
-
-        // 2. Cập nhật sản phẩm
-        tx.product.update({
-          where: { product_id: product.product_id },
-          data: {
-            status: 'sold',
-            current_price: product.buy_now_price,
-            current_highest_bidder_id: buyerId,
-            end_time: new Date(),
-            bid_count: { increment: 1 },
+          update: {
+            // If order exists (orphan data), overwrite it with new buyer info
+            buyer_id: buyerId,
+            seller_id: product.seller_id,
+            final_price: product.buy_now_price,
+            status: 'pending_payment',
+            created_at: new Date(), // Optional: reset creation time
           },
         }),
 
-        // 3. Lưu lịch sử bid
         tx.bidHistory.create({
           data: {
-            product_id: product.product_id,
+            product_id: BigInt(productId),
             bidder_id: buyerId,
             bid_amount: product.buy_now_price,
             bid_time: new Date(),
@@ -587,8 +604,12 @@ export const handleBuyNow = async (req: Request, res: Response) => {
       success: true,
       message: 'Mua ngay thành công!',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Buy Now Error:', error);
+    return res.status(400).json({
+      success: false,
+      message: error.message || 'Đã có lỗi xảy ra trong quá trình xử lý.',
+    });
   }
 };
 
