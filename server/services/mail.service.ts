@@ -86,16 +86,16 @@ export type CustomMailOptions = {
   bcc?: string | string[]; // security purpose
 };
 
-export const sendCustomEmail = async (options: CustomMailOptions) => {
-  // reuse transporter setup
-  let transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.MAIL,
-      pass: process.env.PASSWORD,
-    },
-  });
+// Dua bien transporter ra ngoai ham sendCustomEmail() de toi uu hieu nang
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.MAIL,
+    pass: process.env.PASSWORD,
+  },
+});
 
+export const sendCustomEmail = async (options: CustomMailOptions) => {
   let mailOptions = {
     from: process.env.MAIL,
     to: options.to,

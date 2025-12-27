@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+// import userIcon from '@/assets/user.png';
 import userIcon from '../assets/user.png';
 import { useUser } from '../UserContext';
 import { ProfileData } from '../components/user-profile/types';
