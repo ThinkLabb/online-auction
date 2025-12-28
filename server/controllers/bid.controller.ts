@@ -72,22 +72,110 @@ export const banBidder = async (req: Request, res: Response) => {
     if (!productId || !bidderId) {
       return res.status(400).json({ message: 'Product ID and Bidder ID are required.' });
     }
-    const deniedBidder = await db.prisma.deniedBidders.create({
-      data: {
-        product_id: BigInt(productId),
-        bidder_id: bidderId,
-      },
+
+    const prodIdBigInt = BigInt(productId);
+
+    const result = await db.prisma.$transaction(async (tx) => {
+      // 1. Trigger Database sẽ chạy ngay khi dòng này được thực thi
+      // Trigger sẽ làm nhiệm vụ: XÓA BID HISTORY của user này.
+      // (Ta không cần gọi lệnh deleteMany trong code nữa)
+      const deniedBidder = await tx.deniedBidders.create({
+        data: {
+          product_id: prodIdBigInt,
+          bidder_id: bidderId,
+        },
+      });
+
+      // 2. Lấy thông tin sản phẩm (Start Price, Step Price)
+      const product = await tx.product.findUnique({
+        where: { product_id: prodIdBigInt },
+      });
+
+      if (!product) throw new Error('Product not found');
+
+      // 3. Lấy danh sách bid còn lại (Dữ liệu lúc này ĐÃ SẠCH vì trigger đã chạy xong)
+      const remainingBids = await tx.bidHistory.findMany({
+        where: { product_id: prodIdBigInt },
+        orderBy: [
+          { bid_amount: 'desc' }, 
+          { bid_time: 'asc' },   
+        ],
+        take: 2, 
+      });
+
+      // 4. Tính toán lại giá (Logic Proxy Bidding)
+      // Phần này sẽ "sửa sai" cho trigger nếu trigger tính giá không chuẩn
+      let newCurrentPrice = Number(product.start_price);
+      let newHighestBidderId = null;
+      const stepPrice = Number(product.step_price);
+
+      if (remainingBids.length === 0) {
+        // Hết người bid -> Về giá khởi điểm
+        newCurrentPrice = Number(product.start_price);
+        newHighestBidderId = null;
+      } else if (remainingBids.length === 1) {
+        // Còn 1 người -> Về giá khởi điểm (hoặc giữ nguyên bid của họ tùy luật)
+        // Thông thường nếu không còn đối thủ, giá sẽ là Start Price
+        newHighestBidderId = remainingBids[0].bidder_id;
+        newCurrentPrice = Number(product.start_price); 
+      } else {
+        // Còn >= 2 người -> Logic Proxy: Giá nhì + Step
+        const winnerMaxBid = Number(remainingBids[0].bid_amount);
+        const secondMaxBid = Number(remainingBids[1].bid_amount);
+        
+        newHighestBidderId = remainingBids[0].bidder_id;
+        
+        // Công thức: Giá người thứ 2 + Bước giá
+        let calculatedPrice = secondMaxBid + stepPrice;
+
+        // Giá sàn không được vượt quá giá trần của người thắng
+        if (calculatedPrice > winnerMaxBid) {
+          calculatedPrice = winnerMaxBid;
+        }
+
+        newCurrentPrice = calculatedPrice;
+      }
+
+      // 5. Đếm lại số bid thực tế
+      const newBidCount = await tx.bidHistory.count({
+        where: { product_id: prodIdBigInt },
+      });
+
+      // 6. CẬP NHẬT LẠI PRODUCT (Ghi đè lên kết quả của Trigger)
+      const updatedProduct = await tx.product.update({
+        where: { product_id: prodIdBigInt },
+        data: {
+          current_price: newCurrentPrice,
+          current_highest_bidder_id: newHighestBidderId,
+          bid_count: newBidCount,
+        },
+      });
+
+      return { deniedBidder, updatedProduct };
     });
 
     return res.status(200).json({
-      message: 'User banned successfully.',
+      message: 'User banned and auction state recalculated successfully.',
       data: {
-        ...deniedBidder,
-        product_id: deniedBidder.product_id.toString(),
+        bannedUser: {
+            ...result.deniedBidder,
+            // CHUYỂN ĐỔI Ở ĐÂY:
+            product_id: result.deniedBidder.product_id.toString(), 
+        },
+        newProductState: {
+            current_price: result.updatedProduct.current_price,
+            current_highest_bidder_id: result.updatedProduct.current_highest_bidder_id,
+            bid_count: result.updatedProduct.bid_count
+        }
       },
     });
-  } catch (error) {
-    return res.status(500).json({ message: 'Internal server error.' });
+  } catch (error: any) {
+    console.error("Ban Bidder Error: ", error);
+    // Bắt lỗi trigger trả về (ví dụ nếu trigger lỗi)
+    if (error.code === 'P2010' || error.message.includes('trigger')) { 
+        return res.status(500).json({ message: 'Database trigger failed.', error: error.message });
+    }
+    return res.status(500).json({ message: 'Internal server error.', error: error.message });
   }
 };
 
@@ -100,104 +188,117 @@ export const placeBid = async (req: Request, res: Response) => {
     const bidAmount = parseFloat(amount);
     const prodIdBigInt = BigInt(productId);
 
-    const result = await db.prisma.$transaction(async (tx) => {
-      const [product, userData, currentTopBid] = await Promise.all([
-        tx.product.findUnique({ where: { product_id: prodIdBigInt } }),
-        tx.user.findUnique({ where: { user_id: user.id } }),
-        tx.bidHistory.findFirst({
-          where: { product_id: prodIdBigInt },
-          orderBy: [{ bid_amount: 'desc' }, { bid_time: 'asc' }],
-        }),
-      ]);
+    const result = await db.prisma.$transaction(
+      async (tx) => {
+        const [product, userData, currentTopBid] = await Promise.all([
+          tx.product.findUnique({ where: { product_id: prodIdBigInt } }),
+          tx.user.findUnique({ where: { user_id: user.id } }),
+          tx.bidHistory.findFirst({
+            where: { product_id: prodIdBigInt },
+            orderBy: [{ bid_amount: 'desc' }, { bid_time: 'asc' }],
+          }),
+        ]);
 
-      if (!product) throw new Error('Product not found');
-      if (!userData) throw new Error('User not found');
+        if (!product) throw new Error('Product not found');
+        if (!userData) throw new Error('User not found');
 
-      const now = new Date();
-      if (now > product.end_time || product.status !== 'open') {
-        throw new Error('Auction has ended');
-      }
+        const now = new Date();
+        if (now > product.end_time || product.status !== 'open') {
+          throw new Error('Auction has ended');
+        }
 
-      if (product.review_needed) {
+        // --- LOGIC KIỂM TRA ĐIỂM ĐÁNH GIÁ (UPDATED) ---
         const minus = userData.minus_review || 0;
         const plus = userData.plus_review || 0;
         const total = plus + minus;
 
-        if (total > 0) {
-          const ratio = plus / total;
-          if (ratio < 0.8) {
-            throw new Error('REVIEW_LOW');
+        // TRƯỜNG HỢP 1: Người dùng chưa từng được đánh giá (Total = 0)
+        if (total === 0) {
+          // Kiểm tra xem sản phẩm có cho phép người chưa có rating bid không
+          // Giả sử field trong DB là 'allow_unrated_bidder' như schema trước đó
+          if (product.allow_unrated_bidder === false) {
+            throw new Error('UNRATED_NOT_ALLOWED');
           }
-        } else {
-          throw new Error('REVIEW_LOW');
+          // Nếu allow_unrated_bidder = true, cho phép đi tiếp (bỏ qua check 80%)
         }
-      }
 
-      const currentDisplayPrice = Number(product.current_price) || Number(product.start_price);
-      const stepPrice = Number(product.step_price);
-      const startPrice = Number(product.start_price);
+        // TRƯỜNG HỢP 2: Người dùng ĐÃ CÓ đánh giá (Total > 0)
+        else {
+          // Nếu sản phẩm yêu cầu review > 80%
+          if (product.review_needed) {
+            const ratio = plus / total;
+            if (ratio < 0.8) {
+              throw new Error('REVIEW_LOW');
+            }
+          }
+        }
+        // ------------------------------------------------
 
-      const minRequired = currentDisplayPrice + stepPrice;
-      const actualMinRequired = product.bid_count === 0 ? startPrice : minRequired;
+        const currentDisplayPrice = Number(product.current_price) || Number(product.start_price);
+        const stepPrice = Number(product.step_price);
+        const startPrice = Number(product.start_price);
 
-      if (bidAmount < actualMinRequired) {
-        throw new Error(`Bid too low. Minimum allowed is ${actualMinRequired}`);
-      }
+        const minRequired = currentDisplayPrice + stepPrice;
+        const actualMinRequired = product.bid_count === 0 ? startPrice : minRequired;
 
-      let newCurrentPrice = 0;
-      let newHighestBidderId = user.id;
+        if (bidAmount < actualMinRequired) {
+          throw new Error(`Bid too low. Minimum allowed is ${actualMinRequired}`);
+        }
 
-      if (!currentTopBid) {
-        newCurrentPrice = startPrice;
-        newHighestBidderId = user.id;
-      } else {
-        const currentMaxBid = Number(currentTopBid.bid_amount);
-        const currentWinnerId = currentTopBid.bidder_id;
+        // ... (Phần logic tính toán giá mới giữ nguyên như cũ) ...
+        let newCurrentPrice = 0;
+        let newHighestBidderId = user.id;
 
-        if (user.id === currentWinnerId) {
+        if (!currentTopBid) {
+          newCurrentPrice = startPrice;
           newHighestBidderId = user.id;
-          newCurrentPrice = currentDisplayPrice;
         } else {
-          if (bidAmount > currentMaxBid) {
+          const currentMaxBid = Number(currentTopBid.bid_amount);
+          const currentWinnerId = currentTopBid.bidder_id;
+
+          if (user.id === currentWinnerId) {
             newHighestBidderId = user.id;
-            newCurrentPrice = currentMaxBid + stepPrice;
-
-            if (newCurrentPrice > bidAmount) {
-              newCurrentPrice = bidAmount;
-            }
-          } else if (bidAmount < currentMaxBid) {
-            newHighestBidderId = currentWinnerId;
-            newCurrentPrice = bidAmount;
-
-            if (newCurrentPrice < currentDisplayPrice) {
-              newCurrentPrice = currentDisplayPrice;
-            }
+            newCurrentPrice = currentDisplayPrice;
           } else {
-            newHighestBidderId = currentWinnerId;
-            newCurrentPrice = currentMaxBid;
+            if (bidAmount > currentMaxBid) {
+              newHighestBidderId = user.id;
+              newCurrentPrice = currentMaxBid + stepPrice;
+              if (newCurrentPrice > bidAmount) newCurrentPrice = bidAmount;
+            } else if (bidAmount < currentMaxBid) {
+              newHighestBidderId = currentWinnerId;
+              newCurrentPrice = bidAmount;
+              if (newCurrentPrice < currentDisplayPrice) newCurrentPrice = currentDisplayPrice;
+            } else {
+              newHighestBidderId = currentWinnerId;
+              newCurrentPrice = currentMaxBid;
+            }
           }
         }
+
+        const newBid = await tx.bidHistory.create({
+          data: {
+            product_id: prodIdBigInt,
+            bidder_id: user.id,
+            bid_amount: bidAmount,
+          },
+        });
+
+        const updatedProduct = await tx.product.update({
+          where: { product_id: prodIdBigInt },
+          data: {
+            current_price: newCurrentPrice,
+            current_highest_bidder_id: newHighestBidderId,
+            bid_count: { increment: 1 },
+          },
+        });
+
+        return { newBid, updatedProduct };
+      },
+      {
+        maxWait: 5000,
+        timeout: 20000,
       }
-
-      const newBid = await tx.bidHistory.create({
-        data: {
-          product_id: prodIdBigInt,
-          bidder_id: user.id,
-          bid_amount: bidAmount,
-        },
-      });
-
-      const updatedProduct = await tx.product.update({
-        where: { product_id: prodIdBigInt },
-        data: {
-          current_price: newCurrentPrice,
-          current_highest_bidder_id: newHighestBidderId,
-          bid_count: { increment: 1 },
-        },
-      });
-
-      return { newBid, updatedProduct };
-    });
+    );
 
     return res.status(200).json({
       message: 'Bid placed successfully!',
@@ -213,18 +314,27 @@ export const placeBid = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Bid Error:', error);
 
-    if (error.message === 'REVIEW_LOW') {
+    // Xử lý lỗi trả về client
+    if (error.message === 'UNRATED_NOT_ALLOWED') {
       return res.status(403).json({
-        message: 'Your review score is too low to bid on this product (Required > 80%).',
+        message: 'Seller does not allow bidders with no rating history.',
       });
     }
+
+    if (error.message === 'REVIEW_LOW') {
+      return res.status(403).json({
+        message: 'Your positive rating score is below 80%. You cannot bid on this product.',
+      });
+    }
+
     if (error.message.includes('Bid too low') || error.message === 'Auction has ended') {
       return res.status(400).json({ message: error.message });
     }
+
     if (error instanceof Prisma.PrismaClientUnknownRequestError) {
       if (error.message.includes('This user is banned from bidding on this product')) {
         return res.status(403).json({
-          message: 'This user is banned from bidding on this product.',
+          message: 'You have been banned from bidding on this product by the seller.',
         });
       }
     }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import UserTab from './user-profile-tabs';
-import { ProfileData } from './types';
-import { SetAction } from './types';
+import { Profile } from './interfaces';
+import { SetAction } from './interfaces';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,6 +9,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import { LocationOption } from '../register-form';
 import { formatDate } from '../product';
+import { profile } from 'console';
 
 const schema = z.object({
   name: z
@@ -42,7 +43,7 @@ export const getAddressParts = (fullAddress?: string | null) => {
   };
 };
 
-function EditProfile( {profile, setAction} : {profile: ProfileData, setAction: SetAction} ) {
+function EditProfile( {profile, setAction} : {profile: Profile, setAction: SetAction} ) {
 
   const formatDateForInput = (dateInput?: string | Date | null) => {
     if (!dateInput) return "";
@@ -357,7 +358,7 @@ function EditProfile( {profile, setAction} : {profile: ProfileData, setAction: S
   );
 }
 
-function ChangePassword({ profile, setAction }: { profile: ProfileData; setAction: SetAction }) {
+function ChangePassword({ profile, setAction }: { profile: Profile; setAction: SetAction }) {
   const [loading, setLoading] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -701,8 +702,8 @@ function RequesRole({ setAction }: { setAction: SetAction }) {
   );
 }
 
-function ViewTabs({ profile, setAction }: { profile: ProfileData; setAction: SetAction }) {
-  return <UserTab profile={profile} />;
+function ViewTabs({ profile, setAction }: { profile: Profile; setAction: SetAction }) {
+  return <UserTab profile={ profile } />;
 }
 
 export default function UserAction({
@@ -710,7 +711,7 @@ export default function UserAction({
   action,
   setAction,
 }: {
-  profile: ProfileData;
+  profile: Profile;
   action: string;
   setAction: SetAction;
 }) {

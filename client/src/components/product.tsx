@@ -45,6 +45,18 @@ export const calculateTimeRemaining = (endTimeStr: string | null | undefined): s
   return 'Ending soon';
 };
 
+export const calculateTimeRemainingForPosted = (endTimeStr: string | null | undefined): string => {
+  if (!endTimeStr) return 'N/A';
+
+  const endDate = new Date(endTimeStr);
+
+  return endDate.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+};
+
 export type Product = {
   id?: string | number;
   name: string;
@@ -146,7 +158,7 @@ export const MemoProductCard = memo(({ product }: { product: Product }) => {
             </h3>
           </div>
 
-          <div className="h-[52px] mb-3 flex flex-col justify-between">
+          <div className="h-13 mb-3 flex flex-col justify-between">
             <div className="flex justify-between items-end">
               <span className="text-gray-600 text-xs">Current Price</span>
               <p className="font-bold text-[#8D0000] text-lg leading-none">
@@ -156,9 +168,9 @@ export const MemoProductCard = memo(({ product }: { product: Product }) => {
             <p className="text-gray-400 text-xs">Posted: {formatDate(created_at)}</p>
           </div>
 
-          <div className="h-[50px] bg-gray-50 p-2 rounded-md mb-2 flex flex-col justify-center">
+          <div className="h-auto bg-gray-50 p-2 rounded-md mb-2 flex flex-col justify-center">
             <span className="text-gray-500 text-xs block mb-1">Highest Bidder</span>
-            <p className="font-medium text-gray-800 text-sm truncate">
+            <p className="font-medium text-gray-800 text-sm truncate leading-snug">
               {highest_bidder_name || 'No bids yet'}
             </p>
           </div>

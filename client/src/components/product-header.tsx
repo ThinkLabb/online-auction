@@ -1,6 +1,6 @@
-import { Star, User } from 'lucide-react';
+import { Heart, Star, ThumbsUp, User } from 'lucide-react';
 import { Product } from '../lib/type';
-import { calculateTimeRemaining, formatCurrency } from './product';
+import { calculateTimeRemaining, calculateTimeRemainingForPosted, formatCurrency } from './product';
 
 export const ProductHeaderInfo = ({ product }: { product: Product }) => (
   <>
@@ -8,7 +8,9 @@ export const ProductHeaderInfo = ({ product }: { product: Product }) => (
     <div className="flex justify-between text-xs text-gray-500 mb-6">
       <div>
         Posted: <br />
-        <span className="text-gray-900 font-medium">{product.postedDate}</span>
+        <span className="text-gray-900 font-medium">
+          {calculateTimeRemainingForPosted(product.postedDate)}
+        </span>
       </div>
       <div className="text-right">
         Ends in: <br />
@@ -46,7 +48,7 @@ export const UserCard = ({
       <div>
         <p className="text-sm font-bold text-gray-900">{user.name}</p>
         <div className="flex items-center text-xs text-yellow-500">
-          <Star size={12} fill="currentColor" className="mr-1" />
+          <ThumbsUp size={12} fill="currentColor" className="mr-1" />
           <span className="font-medium text-gray-700 mr-1">{user.rating}</span>
           <span className="text-gray-400">({user.reviews} reviews)</span>
         </div>

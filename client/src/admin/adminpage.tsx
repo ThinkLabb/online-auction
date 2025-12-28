@@ -1,22 +1,8 @@
-import React, { useState, useEffect, JSX, use } from 'react';
-import {
-  Package,
-  FolderTree,
-  Users,
-  UserCheck,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  ChevronDown,
-  Trash2,
-  Eye,
-  Shield,
-  Edit,
-} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useUser } from '../UserContext';
-import { includes } from 'zod';
+import React, { useState, useEffect, JSX, use } from "react";
+import { Package, FolderTree, Users, UserCheck, Settings, LogOut, Menu, X, ChevronDown, Trash2, Eye, Shield, Edit, Save } from "lucide-react";
+import { useUser } from "../UserContext";
+import { includes } from "zod";
 
 // --- Helpers ---
 const cn = (...classes: (string | boolean | undefined)[]): string =>
@@ -32,10 +18,11 @@ interface SidebarItem {
 }
 
 const API_ENDPOINTS = {
-  categories: '/api/admin/categories',
-  products: '/api/admin/products',
-  users: '/api/admin/users',
-  upgradeRequests: '/api/admin/upgradeRequests',
+    categories: '/api/admin/categories',
+    products: '/api/admin/products',
+    users: '/api/admin/users',
+    upgradeRequests: '/api/admin/upgradeRequests',
+    settings: '/api/admin/settings',
 };
 
 interface Category {
@@ -72,11 +59,11 @@ interface UpgradeRequest {
 }
 
 const ADMIN_SIDEBAR_ITEMS: SidebarItem[] = [
-  { id: 'categories', label: 'Category Management', icon: FolderTree },
-  { id: 'products', label: 'Product Management', icon: Package },
-  { id: 'users', label: 'User Management', icon: Users },
-  { id: 'upgrade-requests', label: 'Upgrade Approval', icon: UserCheck },
-  // { id: 'settings', label: 'System Settings', icon: Settings },
+    { id: 'categories', label: 'Category Management', icon: FolderTree },
+    { id: 'products', label: 'Product Management', icon: Package },
+    { id: 'users', label: 'User Management', icon: Users },
+    { id: 'upgrade-requests', label: 'Upgrade Approval', icon: UserCheck },
+    { id: 'settings', label: 'System Settings', icon: Settings },
 ];
 
 const fetchData = async <T,>(
@@ -981,28 +968,184 @@ const UpgradeRequestsManagement: React.FC = () => {
   );
 };
 
+const SettingsManagement: React.FC = () => {
+    // 1. CHANGED: Use string state to avoid hardcoding defaults and allow empty inputs
+    const [windowMinutes, setWindowMinutes] = useState<string>("");
+    const [durationMinutes, setDurationMinutes] = useState<string>("");
+    
+    const [loading, setLoading] = useState<boolean>(true);
+    const [saving, setSaving] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+    const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+    // Fetch initial settings
+    useEffect(() => {
+        const fetchSettings = async () => {
+            setLoading(true);
+            try {
+                const res = await fetch(API_ENDPOINTS.settings, { credentials: 'include' });
+                const result = await res.json();
+                
+                if (res.ok && result.isSuccess) {
+                    // 2. CHANGED: Convert DB numbers to strings for the inputs
+                    setWindowMinutes(String(result.data.extend_window_minutes));
+                    setDurationMinutes(String(result.data.extend_duration_minutes));
+                } else {
+                    setError(result.message || "Failed to load settings");
+                }
+            } catch (err) {
+                setError("Network error loading settings");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchSettings();
+    }, []);
+
+    const handleSave = async () => {
+        // 3. ADDED: Basic validation before sending
+        const windowVal = parseInt(windowMinutes);
+        const durationVal = parseInt(durationMinutes);
+
+        if (isNaN(windowVal) || isNaN(durationVal) || windowVal < 1 || durationVal < 1) {
+            setError("Please enter valid positive numbers for both fields.");
+            return;
+        }
+
+        setSaving(true);
+        setError(null);
+        setSuccessMsg(null);
+
+        try {
+            const res = await fetch(API_ENDPOINTS.settings, {
+                method: "PUT",
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    // 4. CHANGED: Convert strings back to numbers for the DB
+                    extend_window_minutes: windowVal,
+                    extend_duration_minutes: durationVal
+                })
+            });
+
+            const result = await res.json();
+            
+            if (res.ok && result.isSuccess) {
+                setSuccessMsg("Configuration saved successfully!");
+                setTimeout(() => setSuccessMsg(null), 3000);
+            } else {
+                setError(result.message || "Failed to save settings");
+            }
+        } catch (err) {
+            setError("Network error saving settings");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (loading) return <div className="text-center py-8">Loading Settings...</div>;
+
+    return (
+        <div className="max-w-2xl flex flex-col gap-6 bg-white p-8 rounded-lg shadow-sm border border-gray-200">
+            <div>
+                <h2 className="text-2xl font-bold text-gray-800">System Configuration</h2>
+                <p className="text-gray-500 text-sm mt-1">Configure global rules for automatic auction extensions.</p>
+            </div>
+
+            {error && <div className="p-3 bg-red-50 text-red-700 rounded-md border border-red-200 text-sm">{error}</div>}
+            {successMsg && <div className="p-3 bg-green-50 text-green-700 rounded-md border border-green-200 text-sm">{successMsg}</div>}
+
+            <div className="space-y-6">
+                {/* Window Input */}
+                <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                        Extension Trigger Window (Minutes)
+                    </label>
+                    <p className="text-xs text-gray-500">
+                        If a bid is placed within this many minutes before the auction ends...
+                    </p>
+                    <div className="flex items-center gap-3">
+                        <input
+                            type="number"
+                            min="1"
+                            className={getInputClasses("max-w-[150px]")}
+                            value={windowMinutes}
+                            onChange={(e) => setWindowMinutes(e.target.value)} // No Number() casting here
+                            placeholder="e.g. 5"
+                        />
+                        <span className="text-sm text-gray-600">minutes</span>
+                    </div>
+                </div>
+
+                <div className="border-t border-gray-100"></div>
+
+                {/* Duration Input */}
+                <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                        Extension Duration (Minutes)
+                    </label>
+                    <p className="text-xs text-gray-500">
+                        ...the auction end time will be extended by this amount.
+                    </p>
+                    <div className="flex items-center gap-3">
+                        <input
+                            type="number"
+                            min="1"
+                            className={getInputClasses("max-w-[150px]")}
+                            value={durationMinutes}
+                            onChange={(e) => setDurationMinutes(e.target.value)} // No Number() casting here
+                            placeholder="e.g. 10"
+                        />
+                        <span className="text-sm text-gray-600">minutes</span>
+                    </div>
+                </div>
+
+                <div className="pt-4">
+                    <button
+                        className={getButtonClasses('primary', 'default', "w-full sm:w-auto flex justify-center items-center gap-2")}
+                        onClick={handleSave}
+                        disabled={saving}
+                    >
+                        {saving ? (
+                            <>Processing...</>
+                        ) : (
+                            <>
+                                <Save className="w-4 h-4" /> Save Changes
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+            
+            <div className="mt-4 p-4 bg-yellow-50 rounded-md border border-yellow-200">
+                <div className="flex gap-2">
+                    <Shield className="w-5 h-5 text-yellow-600 shrink-0" />
+                    <div>
+                        <h4 className="text-sm font-bold text-yellow-800">Important Note</h4>
+                        <p className="text-xs text-yellow-700 mt-1">
+                            Changes affect active auctions immediately. If an active auction receives a new bid after you save these settings, the new rules will apply.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- Admin Page ---
 const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AdminTabId>('categories');
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
-  let MainContent: JSX.Element;
-  switch (activeTab) {
-    case 'categories':
-      MainContent = <CategoryManagement />;
-      break;
-    case 'products':
-      MainContent = <ProductManagement />;
-      break;
-    case 'users':
-      MainContent = <UserManagement setActiveTab={setActiveTab} />;
-      break;
-    case 'upgrade-requests':
-      MainContent = <UpgradeRequestsManagement />;
-      break;
-    default:
-      MainContent = <div>Settings Page (Coming Soon)</div>;
-  }
+    let MainContent: JSX.Element;
+    switch (activeTab) {
+        case 'categories': MainContent = <CategoryManagement />; break;
+        case 'products': MainContent = <ProductManagement />; break;
+        case 'users': MainContent = <UserManagement setActiveTab={setActiveTab} />; break;
+        case 'upgrade-requests': MainContent = <UpgradeRequestsManagement />; break;
+        case 'settings': MainContent = <SettingsManagement />; break; // Added this line
+        default: MainContent = <div>Page Not Found</div>;
+    }
 
   return (
     <div className="flex">

@@ -1,341 +1,210 @@
 import { Request, Response, NextFunction } from "express";
 import { PrismaClient } from '@prisma/client';
-import { ProductStatus, OrderStatus } from "@prisma/client";
+import { ProductStatus, OrderStatus, UserRole } from "@prisma/client";
 import { errorResponse, successResponse } from "../utils/response";
 import { UserServices } from "../services/user.services";
+import { calculateRating} from "./product.controllers.ts";
+import { number } from "zod";
 
 const prisma = new PrismaClient();
 
-export type Profile = {
-  name: string;
+export interface Profile {
+  role: UserRole;
   email: string;
-  address: string;
-  birthdate: string;
-  role: string;
+  name: string;
+  address: string | null;
+  birthdate: string | null;
   created_at: string;
-  total_bids: number;
-  bids_this_week: number;
-  total_wins: number;
-  win_rate: number;
-  watchlist_count: number;
-  rating: number;
-  rating_label: string;
+  plus_review: number;
+  minus_review: number;
+  // total_bids: number;
+  // bids_this_week: number;
+  // total_wins: number;
+  // win_rate: number;
+  // watchlist_count: number;
+  // rating: number;
+  // rating_label: string;
 };
 
-export interface TabContent {
-  /* ===== PRODUCT CORE ===== */
-  product_id: number;
+export interface ProductCard {
+  product_id: string; 
   name: string;
-  status?: ProductStatus;
+  thumbnail_url: string;
 
-  current_price?: number;
-  buy_now_price?: number;
+  category: {
+    category_id: string;
+    category_name_level_1: string;
+    category_name_level_2: string;
+  };
 
-  bid_count?: number;
-  end_time?: string;
+  current_price: number; // giá cuối cùng đối với sản phẩm đã bán
+  bid_count: number;
+  end_time: string;
+}
 
-  auto_extend?: boolean;
-  review_needed?: boolean;
-
-  seller?: {
+export interface UserProduct extends ProductCard {
+  seller: {
     user_id: string;
     name: string;
   }
+}
 
-  category: {
-    category_id: number;
-    category_name_level_1: string;
-    category_name_level_2?: string | null;
-  }
+export interface FollowingProduct extends UserProduct {
+  status: ProductStatus;
+  buy_now_price: number;
+  current_highest_bidder: {
+    user_id: string;
+    name: string;
+  } | null;
+  reviews_count: number;
+}
 
-  current_highest_bidder?: {
-    user_id?: string;
-    name?: string;
-  },
+export interface BiddingProduct extends FollowingProduct {
+  bid_at: string;
+  bid_amount: number;
+}
 
-  image_url: string;
-  bid_time?: string;
-  q_and_a_count?: number;
-  reviews_count?: number;
+export interface BiddingProducts {
+  products: BiddingProduct[];
+}
 
-  order?: {
-    order_id: number;
-    final_price?: number;
-    status?: OrderStatus;
+export interface WatchlistProducts {
+  products: FollowingProduct[];
+}
 
+export interface WonProduct extends UserProduct {
+  order: {
+    order_id: string;
+    final_price: number;
+    status: OrderStatus;
+    created_at: string;
+  };
+  review_needed: boolean;
+  review: {
+    review_id: string;
+    is_positive: boolean;
+    comment: string | null;
+    created_at: string;
+  } | null;
+}
+
+export interface WonProducts {
+  products: WonProduct[];
+}
+
+export interface SellingProduct extends ProductCard {
+  start_price: number;
+  buy_now_price: number;
+
+  highest_bidder: {
+    user_id: string;
+    name: string;
+  } | null;
+
+  auto_extend: boolean;
+  editable: boolean; // True nếu chưa có ai bid
+  reviews_count: number;
+}
+
+export interface SellingProducts {
+  products: SellingProduct[];
+}
+
+export interface SoldProduct extends ProductCard {
+  order: {
+    order_id: string;
+    order_status: OrderStatus;
     created_at: string;
     updated_at: string;
 
-    buyer?: {
-      user_id?: string;
-      name?: string;
-    },
-  }
+    buyer: {
+      user_id: string;
+      name: string;
+    };
 
-  buyer_review?: {
-    review_id: number;
+    my_review: {
+      review_id: string;
+      is_positive: boolean;
+      comment: string | null;
+      created_at: string;
+    } | null;
+  } | null;
 
-    reviewer_id?: string;
-    reviewer_name?: string;
-
-    is_positive?: boolean;
-    comment?: string | null;
-    created_at?: string;
-  };
-
-  seller_review?: {
-    review_id: number;
-
-    reviewer_id?: string;
-    reviewer_name?: string;
-
-    is_positive?: boolean;
-    comment?: string | null;
-    created_at?: string;
-  }
-};
-
-type BiddingProduct = {
-  product_id: number,
-  name: string,
-  image_url: string,
-  status: ProductStatus,
-  max_bid: number,
-  buy_now_price?: number,
-  current_price: number,
-  bid_count: number,
-  end_time: string,
-
-  seller_name: string,
-  category_name: string,
-  current_highest_bidder_name?: string
+  can_cancel: boolean;
 }
 
-type WonProduct = {
-  product_id: number;
-  name: string;
-  image_url: string;
-  final_price: number;
-  won_at: string;
-  order_status: OrderStatus;
-  seller_name: string;
-  category_name: string;
-  can_review: boolean;
-  order_id: number;
-};
+export interface SoldProducts {
+  products: SoldProduct[];
+}
 
-type WatchlistItem = {
-  product_id: number;
-  name: string;
-  image_url: string;
-  current_highest_bidder_name?: string,
-  current_price: number;
-  buy_now_price?: number;
-  bid_count: number;
-  end_time: string;
-  seller_name: string;
-  category_name: string;
-};
+export interface Review {
+  review_id: string;
+  reviewer: {
+    user_id: string;
+    name: string;
+  }
+  
+  product: {
+    product_id: string;
+    product_name: string;
+    category: {
+      category_id: string;
+      category_name_level_1: string;
+      category_name_level_2: string;
+    };
+    thumbnail_url: string;
+  }
 
-type ReviewReceived = {
-  review_id: number;
-  reviewer_name: string;
   is_positive: boolean;
   comment: string | null;
   created_at: string;
-  product_name: string;
-  product_id: number;
-};
+}
+
+export interface Reviews {
+  reviews: Review[];
+}
+
+export interface CreateReviewRequest {
+  is_positive: boolean;
+  comment: string;
+}
+
+export interface CreateReviewResponse {
+  success: boolean;
+  review_id: string;
+}
+
+// Request body rỗng hoặc chứa lý do (nhưng logic "auto -1" được fix cứng ở Backend)
+export interface CancelOrderRequest {
+  reason?: string; // Optional, nhưng requirement bảo fix cứng nội dung
+}
+
+export interface CancelOrderResponse {
+  success: boolean;
+  message: string;
+  review_created_id: string; // ID của review tiêu cực vừa tạo tự động
+}
 
 export const getMyProfile = async (req: Request, res: Response) => {
   try {
-    const userID = res.locals.user.id;
-    if (!userID) return res.status(401).json({ message: "Unauthorized" });
+    const user_id = res.locals.user.id;
+    if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
-    const user = await prisma.user.findUnique({
-      where: { user_id: userID },
-      select: {
-        name: true,
-        email: true,
-        birthdate: true,
-        address: true,
-        role: true,
-        created_at: true,
-        plus_review: true,
-        minus_review: true
-      }
-    });
+    const user = await UserServices.getUser(user_id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const [
-      totalBids, bidsThisWeek, totalWins, watchlistCount,
-    ] = await Promise.all([
-      prisma.bidHistory.count({ where: { bidder_id: userID } }),
-      prisma.bidHistory.count({
-        where: {
-          bidder_id: userID,
-        },
-
-      }),
-      prisma.order.count({ where: { buyer_id: userID, status: "completed" } }),
-      prisma.watchlist.count({ where: { user_id: userID } }),
-    ]);
-
-    const rating = user.plus_review - user.minus_review;
-    const ratingLabel =
-      rating >= 10 ? "Very Reliable" :
-      rating >= 5 ? "Reliable" :
-      rating >= 0 ? "Neutral" : "Unreliable";
-
-    const winRate = totalBids > 0 ? Math.floor((totalWins / totalBids) * 100) : 0;
-
-    const rawBiddingProducts = await prisma.bidHistory.findMany({
-      where: { 
-        bidder_id: userID,
-        product: { status: "open" },
-      },
-      select: {
-        bid_amount: true,          // 👈 THÊM DÒNG NÀY
-        bid_time: true,            // (nếu cần)
-        product_id: true,          // (nên lấy để biết thuộc product nào)
-        product: {
-          include: {
-            seller: { select: { name: true } },
-            category: {
-              select: {
-                name_level_1: true,
-                name_level_2: true,
-              },
-            },
-            images: {
-              take: 1,
-              select: { image_url: true },
-            },
-            current_highest_bidder: {
-              select: { name: true },
-            },
-          },
-        },
-      },
-      distinct: ["product_id"],
-      orderBy: { bid_time: "desc" },
-    });
-
-
-    const biddingProducts: BiddingProduct[] = rawBiddingProducts.map((item) => ({
-      product_id: Number (item.product_id),
-      name: item.product.name,
-      image_url: item.product.images[0]?.image_url,
-      status: item.product.status,
-      max_bid: Number(item.bid_amount),
-      buy_now_price: item.product.buy_now_price ? Number(item.product.buy_now_price) : undefined,
-      current_price: Number(item.product.current_price),
-      bid_count: item.product.bid_count,
-      end_time: item.product.end_time? new Date(item.product.end_time).toDateString() : "",
-
-      seller_name: item.product.seller.name,
-      category_name: `${item.product.category.name_level_1} > ${item.product.category.name_level_2}`,
-      current_highest_bidder_name: item.product.current_highest_bidder?.name
-    }));
-
-    const rawWonProducts = await prisma.order.findMany({
-      where: { buyer_id: userID},
-      include: {
-        product: {
-          include: {
-            seller: { select: { name: true }},
-            category: {
-              select: {
-                name_level_1: true,
-                name_level_2: true
-              }
-            },
-            images: { take: 1, select: {image_url: true }},
-          }
-        }
-      },
-      orderBy: { created_at: "desc" }
-    });
-
-    const wonProducts: WonProduct[] = rawWonProducts.map((item) => ({
-      product_id: Number(item.product.product_id),
-      name: item.product.name,
-      image_url: item.product.images[0]?.image_url,
-      final_price: Number(item.final_price),
-      won_at: item.created_at? new Date(item.created_at).toLocaleDateString() : "",
-      order_status: item.status,
-      seller_name: item.product.seller.name,
-      category_name: `${item.product.category.name_level_1} > ${item.product.category.name_level_2}`,
-      can_review: !item.buyer_review_id,
-      order_id: Number(item.order_id)
-    }));
-
-    const rawWatchlist = await prisma.watchlist.findMany({
-      where: { user_id: userID },
-      include: {
-        product: {
-          include: {
-            seller: { select: { name: true } },
-            category: true,
-            images: { take: 1, select: { image_url: true } },
-            current_highest_bidder: { select: { name: true } }
-          },
-        },
-      },
-      orderBy: { product: { end_time: "desc" } },
-    });
-
-    const myWatchlist: WatchlistItem[] = rawWatchlist.map((item) => ({
-      product_id: Number(item.product.product_id),
-      name: item.product.name,
-      image_url: item.product.images[0]?.image_url,
-      current_price: Number(item.product.current_price),
-      buy_now_price: item.product.buy_now_price ? Number(item.product.buy_now_price) : undefined,
-      bid_count: item.product.bid_count,
-      end_time: item.product.end_time? new Date(item.product.end_time).toDateString() : "",
-      seller_name: item.product.seller.name,
-      category_name: `${item.product.category.name_level_1} > ${item.product.category.name_level_2}`,
-      current_highest_bidder_name: item.product.current_highest_bidder?.name
-    }));
-
-    const rawRatings = await prisma.reviews.findMany({
-      where: { reviewee_id: userID },
-      include: {
-        reviewer: { select: { name: true } },
-        product: { select: { name: true, product_id: true } },
-      },
-      orderBy: { created_at: "desc" },
-    });
-
-    const myRatings: ReviewReceived[] = rawRatings.map((item) => ({
-      review_id: Number(item.review_id),
-      reviewer_name: item.reviewer.name,
-      is_positive: item.is_positive,
-      comment: item.comment,
-      created_at: item.created_at ? new Date(item.created_at).toDateString() : "",
-      product_name: item.product.name,
-      product_id: Number(item.product.product_id),
-    }));
-
-    res.json({
-      name: user.name,
-      email: user.email,
-      birthdate: user.birthdate? new Date(user.birthdate).toLocaleDateString() : "",
-      address: user.address,
+    const payload: Profile = {
       role: user.role,
-      created_at: user.created_at ? new Date(user.created_at).toLocaleDateString() : "",
-      total_bids: totalBids,
-      bids_this_week: bidsThisWeek,
-      total_wins: totalWins,
-      win_rate: winRate,
-      watchlist_count: watchlistCount,
-      rating,
-      rating_label: ratingLabel,
-      bidding_products: biddingProducts,
-      won_products: wonProducts,
-      watchlist: myWatchlist,
-      ratings: myRatings
-    });
+      email: user.email,
+      name: user.name,
+      address: user.address,
+      birthdate: user.birthdate ? user.birthdate.toISOString() : null,
+      created_at: user.created_at.toISOString(),
+      plus_review: user.plus_review,
+      minus_review: user.minus_review,
+    }
+
+    res.status(200).json(successResponse(user, "Get profile successfully"));
 
   } catch (err) {
     console.error(err);
@@ -346,9 +215,7 @@ export const getMyProfile = async (req: Request, res: Response) => {
 // API: PATCH /api/users/profile
 export const editUserProfile = async (req: Request, res: Response) => {
   try {
-    console.log("Gọi thành công")
     const userId = res.locals.user.id;
-    console.log(`Lấy id ${userId} thành công`)
 
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized: Can't find user" });
@@ -430,54 +297,6 @@ export const editUserProfile = async (req: Request, res: Response) => {
     console.log("Failed rồi\n")
     return res.status(500).json(errorResponse(e));  }
 };
-
-export const getSellerProducts = async (req: Request, res: Response) => {
-  try {
-    const userID = res.locals.user.id;
-    if (!userID) return res.status(401).json({ message: "Unauthorized: Can't find user" });
-
-    const products = await prisma.product.findMany({
-      where: {
-        seller_id: userID,
-        status: ProductStatus.open,
-        end_time: { gt: new Date() }
-      },
-      include: {
-        images: true,
-        category: true,
-        current_highest_bidder: {
-          select: { name: true }
-        }
-      },
-      orderBy: { created_at: 'desc' }
-    })
-
-    const formattedProducts = products.map((product) => ({
-      product_id: product.product_id.toString(),
-      product_name: product.name,
-      image_url: product.images[0]?.image_url || "",
-      category_name: `${product.category.name_level_1} > ${product.category.name_level_2}`,
-      start_price: Number(product.start_price),     // Convert Decimal sang Number
-      current_price: Number(product.current_price),
-      buy_now_price: Number(product.buy_now_price),
-      
-      bid_count: product.bid_count,
-      created_at: product.created_at ? new Date(product.created_at).toLocaleDateString() : "",
-      end_time: product.end_time ? new Date(product.end_time).toLocaleDateString() : "",
-      
-      highest_bidder_name: product.current_highest_bidder?.name || "None"
-    }));
-
-    // 4. Trả về kết quả
-    return res.json(successResponse(formattedProducts, "Get seller products list failed"));
-
-  } catch (e) {
-    console.error("Get seller products error:", e);
-    // Xử lý lỗi BigInt serialize nếu chưa cấu hình global
-    const message = e instanceof Error ? e.message : String(e);
-    return res.status(500).json(errorResponse(message));
-  }
-}
 
 export const deleteWatchlistProduct = async (req: Request, res: Response) => {
   try {
@@ -622,14 +441,18 @@ export const UserControllers = {
 
         const products = await UserServices.BidderServices.getBiddingProducts(user_id);
 
-        const payload: TabContent[] = products.map((product) => ({
-          product_id: Number(product.product.product_id),
+        const payload: BiddingProduct[] = products.map((product) => ({
+          product_id: product.product.product_id.toString(),
           name: product.product.name,
-          status: product.product.status,
+          thumbnail_url: product.product.images[0].image_url,
 
-          current_price: Number(product.product.current_price),
-          buy_now_price: Number(product.product.buy_now_price),
+          category: {
+            category_id: product.product.category.category_id.toString(),
+            category_name_level_1: product.product.category.name_level_1,
+            category_name_level_2: product.product.category.name_level_2 ? product.product.category.name_level_2 : "" 
+          },
 
+          current_price: Number(product.product.current_price), // giá cuối cùng đối với sản phẩm đã bán
           bid_count: product.product.bid_count,
           end_time: new Date(product.product.end_time).toLocaleDateString(),
 
@@ -638,21 +461,18 @@ export const UserControllers = {
             name: product.product.seller.name
           },
 
-          category: {
-            category_id: product.product.category.category_id,
-            category_name_level_1: product.product.category.name_level_1,
-            category_name_level_2: product.product.category.name_level_2
-          },
+          status: product.product.status,
+          buy_now_price: Number(product.product.buy_now_price),
+          current_highest_bidder: product.product.current_highest_bidder
+            ? {
+              user_id: product.product.current_highest_bidder.user_id,
+              name: product.product.current_highest_bidder.name
+            }
+            : null,
 
-
-          current_highest_bidder: {
-            user_id: product.product.current_highest_bidder?.user_id,
-            name: product.product.current_highest_bidder?.name
-          },
-
-          image_url: product.product.images[0].image_url,
-          bid_time: new Date(product.bid_time).toLocaleDateString(),
-          reviews_count: product.product._count.reviews
+          reviews_count: product.product._count.reviews,
+          bid_at: new Date(product.bid_time).toLocaleDateString(),
+          bid_amount: Number(product.bid_amount)
         }))
 
         return res.status(200).json(
@@ -676,38 +496,40 @@ export const UserControllers = {
 
         const products = await UserServices.BidderServices.getWonProducts(user_id);
 
-        const payload: TabContent[] = products.map((product) => ({
-          product_id: Number(product.product.product_id),
+        const payload: WonProduct[] = products.map((product) => ({
+          product_id: product.product.product_id.toString(),
           name: product.product.name,
+          thumbnail_url: product.product.images[0].image_url,
 
+          category: {
+            category_id: product.product.category.category_id.toString(),
+            category_name_level_1: product.product.category.name_level_1,
+            category_name_level_2: product.product.category.name_level_2 ? product.product.category.name_level_2 : "" 
+          },
+
+          current_price: Number(product.product.current_price),
           bid_count: product.product.bid_count,
           end_time: new Date(product.product.end_time).toLocaleDateString(),
 
-          review_needed: product.product.review_needed,
-
           seller: {
             user_id: product.product.seller.user_id,
-            name: product.product.seller.name
+            name: product.product.seller.name,
           },
-
-          category: {
-            category_id: product.product.category.category_id,
-            category_name_level_1: product.product.category.name_level_1,
-            category_name_level_2: product.product.category.name_level_2
-          },
-
-
-          image_url: product.product.images[0].image_url,
-          reviews_count: product.product._count.reviews,
 
           order: {
-            order_id: Number(product.order_id),
+            order_id: product.order_id.toString(),
             final_price: Number(product.final_price),
             status: product.status,
-
             created_at: new Date(product.created_at).toLocaleDateString(),
-            updated_at: new Date(product.updated_at).toLocaleDateString()
-          }
+          },
+
+          review_needed: product.product.review_needed,
+          review: product.buyer_review ? {
+            review_id: product.buyer_review.review_id.toString(),
+            is_positive: product.buyer_review.is_positive,
+            comment: product.buyer_review.comment,
+            created_at: new Date(product.buyer_review.created_at).toLocaleDateString()
+          } : null
         }))
 
         return res.status(200).json(
@@ -731,14 +553,18 @@ export const UserControllers = {
 
         const products = await UserServices.BidderServices.getWatchlistProducts(user_id);
 
-        const payload: TabContent[] = products.map((product) => ({
-          product_id: Number(product.product.product_id),
+        const payload: FollowingProduct[] = products.map((product) => ({
+          product_id: product.product.product_id.toString(),
           name: product.product.name,
-          status: product.product.status,
+          thumbnail_url: product.product.images[0].image_url,
 
-          current_price: Number(product.product.current_price),
-          buy_now_price: Number(product.product.buy_now_price),
+          category: {
+            category_id: product.product.category.category_id.toString(),
+            category_name_level_1: product.product.category.name_level_1,
+            category_name_level_2: product.product.category.name_level_2 ? product.product.category.name_level_2 : "" 
+          },
 
+          current_price: Number(product.product.current_price), // giá cuối cùng đối với sản phẩm đã bán
           bid_count: product.product.bid_count,
           end_time: new Date(product.product.end_time).toLocaleDateString(),
 
@@ -747,19 +573,16 @@ export const UserControllers = {
             name: product.product.seller.name
           },
 
-          category: {
-            category_id: product.product.category.category_id,
-            category_name_level_1: product.product.category.name_level_1,
-            category_name_level_2: product.product.category.name_level_2
-          },
+          status: product.product.status,
+          buy_now_price: Number(product.product.buy_now_price),
+          current_highest_bidder: product.product.current_highest_bidder
+            ? {
+              user_id: product.product.current_highest_bidder.user_id,
+              name: product.product.current_highest_bidder.name
+            }
+            : null,
 
-          current_highest_bidder: {
-            user_id: product.product.current_highest_bidder?.user_id,
-            name: product.product.current_highest_bidder?.name
-          },
-
-          image_url: product.product.images[0].image_url,
-          reviews_count: product.product._count.reviews
+          reviews_count: product.product._count.reviews,
         }))
 
         return res.status(200).json(
@@ -776,33 +599,34 @@ export const UserControllers = {
         return res.status(500).json(errorResponse("Internal server error"));
       }
     },
-    getRatingsFromBuyers: async (req: Request, res: Response) => {
+    getReviewsFromBuyers: async (req: Request, res: Response) => {
       try {
         const user_id = res.locals.user.id;
         if (!user_id) return res.status(401).json(errorResponse("Unauthorized"));
 
-        const products = await UserServices.BidderServices.getRatingsFromBuyers(user_id);
+        const reviews = await UserServices.BidderServices.getReviewsFromBuyers(user_id);
 
-        const payload: TabContent[] = products.map((product) => ({
-          product_id: Number(product.product.product_id),
-          name: product.product.name,
-
-          category: {
-            category_id: product.product.category.category_id,
-            category_name_level_1: product.product.category.name_level_1,
-            category_name_level_2: product.product.category.name_level_2
+        const payload: Review[] = reviews.map((review) => ({
+          review_id: review.review_id.toString(),
+          reviewer: {
+            user_id: review.reviewer.user_id,
+            name: review.reviewer.name,
+          },
+          
+          product: {
+            product_id: review.product.product_id.toString(),
+            product_name: review.product.name,
+            category: {
+              category_id: review.product.category.category_id.toString(),
+              category_name_level_1: review.product.category.name_level_1,
+              category_name_level_2: review.product.category.name_level_2 ? review.product.category.name_level_2 : ""
+            },
+            thumbnail_url: review.product.images[0].image_url,
           },
 
-          image_url: product.product.images[0].image_url,
-
-          buyer_review: {
-            review_id: Number(product.review_id),
-            reviewer_id: product.reviewer.user_id,
-            reviewer_name: product.reviewer.name,
-            is_positive: product.is_positive,
-            comment: product.comment,
-            created_at: new Date(product.created_at).toLocaleDateString()
-          }
+          is_positive: review.is_positive,
+          comment: review.comment,
+          created_at: new Date(review.created_at).toLocaleDateString()
         }))
 
         return res.status(200).json(
@@ -819,33 +643,34 @@ export const UserControllers = {
         return res.status(500).json(errorResponse("Internal server error"));
       }
     },
-    getRatingsFromSellers: async (req: Request, res: Response) => {
+    getReviewsFromSellers: async (req: Request, res: Response) => {
       try {
         const user_id = res.locals.user.id;
         if (!user_id) return res.status(401).json(errorResponse("Unauthorized"));
 
-        const products = await UserServices.BidderServices.getRatingsFromSellers(user_id);
+        const reviews = await UserServices.BidderServices.getReviewsFromSellers(user_id);
 
-        const payload: TabContent[] = products.map((product) => ({
-          product_id: Number(product.product.product_id),
-          name: product.product.name,
-
-          category: {
-            category_id: product.product.category.category_id,
-            category_name_level_1: product.product.category.name_level_1,
-            category_name_level_2: product.product.category.name_level_2
+        const payload: Review[] = reviews.map((review) => ({
+          review_id: review.review_id.toString(),
+          reviewer: {
+            user_id: review.reviewer.user_id,
+            name: review.reviewer.name,
+          },
+          
+          product: {
+            product_id: review.product.product_id.toString(),
+            product_name: review.product.name,
+            category: {
+              category_id: review.product.category.category_id.toString(),
+              category_name_level_1: review.product.category.name_level_1,
+              category_name_level_2: review.product.category.name_level_2 ? review.product.category.name_level_2 : ""
+            },
+            thumbnail_url: review.product.images[0].image_url,
           },
 
-          image_url: product.product.images[0].image_url,
-
-          buyer_review: {
-            review_id: Number(product.review_id),
-            reviewer_id: product.reviewer.user_id,
-            reviewer_name: product.reviewer.name,
-            is_positive: product.is_positive,
-            comment: product.comment,
-            created_at: new Date(product.created_at).toLocaleDateString()
-          }
+          is_positive: review.is_positive,
+          comment: review.comment,
+          created_at: new Date(review.created_at).toLocaleDateString()
         }))
 
         return res.status(200).json(
@@ -865,6 +690,56 @@ export const UserControllers = {
   },
 
   SellerControllers: {
+    getSellerProducts: async (req: Request, res: Response) => {
+    try {
+      const user_id = res.locals.user.id;
+      if (!user_id) return res.status(401).json({ message: "Unauthorized: Can't find user" });
+
+      const products = await UserServices.SellerServices.getSellingProducts(user_id);
+
+      const payload: SellingProduct[] = products.map((product) => ({
+        product_id: product.product_id.toString(),
+        name: product.name,
+        thumbnail_url: product.images[0].image_url,
+
+        category: {
+          category_id: product.category.category_id.toString(),
+          category_name_level_1: product.category.name_level_1,
+          category_name_level_2: product.category.name_level_2 ? product.category.name_level_2 : "" 
+        },
+
+        current_price: Number(product.current_price),
+        bid_count: product.bid_count,
+        end_time: new Date(product.end_time).toLocaleDateString(),
+
+        start_price: Number(product.start_price),
+        buy_now_price: Number(product.buy_now_price),
+
+        highest_bidder: product.current_highest_bidder
+          ? {
+            user_id: product.current_highest_bidder.user_id,
+            name: product.current_highest_bidder.name
+          }
+          : null,
+
+        auto_extend: product.auto_extend,
+        editable: product.bids.length === 0,
+        reviews_count: product._count.reviews,
+      }))
+
+      // 4. Trả về kết quả
+      return res.json(successResponse(payload, payload.length 
+        ? "Get seller products list successfully"
+        : "Get seller products list failed"
+      ));
+
+    } catch (e) {
+      console.error("Get seller products error:", e);
+      // Xử lý lỗi BigInt serialize nếu chưa cấu hình global
+      const message = e instanceof Error ? e.message : String(e);
+      return res.status(500).json(errorResponse(message));
+    }
+  },
     getProductsWithWinner: async (req: Request, res: Response) => {
       try {
         const seller_id = res.locals.user.id;
@@ -875,44 +750,41 @@ export const UserControllers = {
 
         const products = await UserServices.SellerServices.getProductsWithWinner(seller_id);
 
-        const payload: TabContent[] = products.map((product) => ({
-          product_id: Number(product.product_id),
+        const payload: SoldProduct[] = products.map((product) => ({
+          product_id: product.product_id.toString(),
           name: product.name,
+          thumbnail_url: product.images[0].image_url,
 
+          category: {
+            category_id: product.category.category_id.toString(),
+            category_name_level_1: product.category.name_level_1,
+            category_name_level_2: product.category.name_level_2 ? product.category.name_level_2 : ""
+          },
+
+          current_price: Number(product.current_price),
           bid_count: product.bid_count,
           end_time: new Date(product.end_time).toLocaleDateString(),
 
-          review_needed: product.review_needed,
-
-          image_url: product.images[0].image_url,
-          category: {
-            category_id: product.category.category_id,
-            category_name_level_1: product.category.name_level_1,
-            category_name_level_2: product.category.name_level_2
-          },
-
-          reviews_count: product._count.reviews,
-
-          order: {
-            order_id: Number(product.order?.order_id),
-            final_price: Number(product.order?.final_price),
-            status: product.order?.status,
-            created_at: new Date(product.order?.created_at|| Date.now()).toLocaleDateString(),
-            updated_at: new Date(product.order?.updated_at||Date.now()).toLocaleDateString(),
+          order: product.order ? {
+            order_id: product.order.order_id.toString(),
+            order_status: product.order.status,
+            created_at: new Date(product.order.created_at).toLocaleDateString(),
+            updated_at: new Date(product.order.updated_at).toLocaleDateString(),
 
             buyer: {
-              user_id: product.order?.buyer.user_id,
-              name: product.order?.buyer.name,
-            }
-          },
-          buyer_review: {
-            review_id: Number(product.order?.buyer_review?.review_id),
-            reviewer_id: product.order?.buyer.user_id,
-            reviewer_name: product.order?.buyer.name,
-            is_positive: product.order?.buyer_review?.is_positive,
-            comment: product.order?.buyer_review?.comment,
-            created_at: new Date(product.order?.buyer_review?.created_at|| Date.now()).toLocaleDateString()
-          }
+              user_id: product.order.buyer.user_id,
+              name: product.order.buyer.name
+            },
+
+            my_review: product.order.seller_review ? {
+              review_id: product.order.seller_review.review_id.toString(),
+              is_positive: product.order.seller_review.is_positive,
+              comment: product.order.seller_review.comment,
+              created_at: new Date(product.order.seller_review.created_at).toLocaleDateString()
+            } : null,
+          } : null,
+
+          can_cancel: product.order?.status === 'pending_payment',
         }))
 
         return res.status(200).json(

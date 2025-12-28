@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useState, useRef, useEffect } from 'react';
-import { Resolver, useForm, Controller } from 'react-hook-form'; // Added Controller
+import { Resolver, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +8,7 @@ import { ClipLoader } from 'react-spinners';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
-// 1. Schema (Kept mostly same, but noted that description now contains HTML)
+// 1. Schema
 const productUploadSchema = z
   .object({
     productName: z
@@ -22,10 +22,9 @@ const productUploadSchema = z
     description: z
       .string()
       .min(1, 'Description is required')
-      // Note: Quill adds HTML tags, so 10 chars is very easy to hit.
-      // You might want to strip tags for length validation if strictness is needed.
       .min(10, 'Description must be at least 10 characters'),
     autoRenewal: z.boolean().default(false),
+    isRequiredReview: z.boolean().default(false),allowUnratedBidders: z.boolean().default(true),
     auctionEndTime: z.coerce.date().refine((val) => val > new Date(), {
       message: 'Auction end time must be in the future',
     }),
@@ -62,16 +61,14 @@ export default function ProductUploadForm() {
 
   const {
     register,
-    control, // Destructure 'control' to use with Controller
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
-    reset,
   } = useForm<ProductUploadFormData>({
     resolver: zodResolver(productUploadSchema) as Resolver<ProductUploadFormData>,
     mode: 'onBlur',
   });
 
-  // Quill Toolbar Configuration
   const modules = {
     toolbar: [
       [{ header: [1, 2, false] }],
@@ -138,6 +135,7 @@ export default function ProductUploadForm() {
       }
       const base64Images = await Promise.all(uploadedImages.map(toBase64));
 
+      // data now includes 'isRequiredReview' automatically
       const payload = { ...data, images: base64Images };
       console.log('Submitting Payload:', payload);
 
@@ -236,12 +234,11 @@ export default function ProductUploadForm() {
                     {categories &&
                       categories.map(
                         (cat) =>
-                          // Check if name_level_2 exists
                           cat.name_level_2 ? (
                             <option key={cat.category_id} value={cat.category_id}>
                               {cat.name_level_2} ({cat.name_level_1})
                             </option>
-                          ) : null // Return null to render nothing for this item
+                          ) : null
                       )}
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
@@ -353,7 +350,7 @@ export default function ProductUploadForm() {
                 )}
               </div>
 
-              {/* REPLACED: Description with ReactQuill via Controller */}
+              {/* Description */}
               <div className="flex-1 flex flex-col">
                 <label
                   htmlFor="description"
@@ -372,7 +369,7 @@ export default function ProductUploadForm() {
                         value={field.value || ''}
                         onChange={field.onChange}
                         modules={modules}
-                        className="bg-white rounded-lg h-64 mb-12" // mb-12 accounts for the toolbar height so it doesn't overlap next elements
+                        className="bg-white rounded-lg h-64 mb-12"
                       />
                     </div>
                   )}
@@ -386,7 +383,6 @@ export default function ProductUploadForm() {
 
             {/* Right Side: Images */}
             <div className="flex flex-col space-y-4">
-              {/* ... (Image Upload logic remains exactly the same as previous) ... */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">Upload image</label>
                 <div
@@ -496,6 +492,39 @@ export default function ProductUploadForm() {
                   <span className="text-sm text-gray-700 font-medium">Auto renewal</span>
                 </label>
               </div>
+
+              <div className="flex items-center gap-3">
+                <label htmlFor="isRequiredReview" className="flex items-center gap-3 cursor-pointer">
+                  <div className="relative">
+                    <input
+                      id="isRequiredReview"
+                      type="checkbox"
+                      {...register('isRequiredReview')}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </div>
+                  <span className="text-sm text-gray-700 font-medium">Required review</span>
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3">
+                  <label htmlFor="allowUnratedBidders" className="flex items-center gap-3 cursor-pointer">
+                    <div className="relative">
+                      <input
+                        id="allowUnratedBidders"
+                        type="checkbox"
+                        {...register('allowUnratedBidders')}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm text-gray-700 font-medium">Allow unrated bidders</span>
+                      <span className="text-xs text-gray-500">Allow users with 0 ratings to bid</span>
+                    </div>
+                  </label>
+                </div>
 
               <div className="flex gap-8 justify-end mt-auto pt-4">
                 <button

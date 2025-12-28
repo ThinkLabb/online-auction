@@ -41,7 +41,9 @@ export const uploadProducts = async (req: Request, res: Response) => {
         step_price: productData.stepPrice,
         current_price: productData.startingPrice,
         auto_extend: productData.autoRenewal,
+        review_needed: productData.isRequiredReview,
         end_time: new Date(productData.auctionEndTime),
+        allow_unrated_bidder: productData.allowUnratedBidders,
         description_history: {
           create: {
             description: productData.description,
@@ -224,10 +226,10 @@ const bigIntReplacer = (key: string, value: any) => {
   return value;
 };
 
-const calculateRating = (plus: number, minus: number) => {
+export const calculateRating = (plus: number, minus: number) => {
   const total = plus + minus;
   if (total === 0) return 0;
-  return Number(((plus / total) * 5).toFixed(1));
+  return Number(((plus / total) * 10).toFixed(1));
 };
 
 export const getProduct = async (req: Request, res: Response) => {

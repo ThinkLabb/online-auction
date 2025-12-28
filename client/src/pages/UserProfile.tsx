@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import userIcon from '../assets/user.png'
 import { useUser } from '../UserContext'
-import { ProfileData } from "../components/user-profile/types"
+import { Profile } from "../components/user-profile/interfaces"
 import UserAction from "../components/user-profile/user-profile"
 import { Link } from "react-router-dom"
 import { ClipLoader } from "react-spinners"
@@ -12,7 +12,7 @@ export default function UserProfile() {
   const [action, setAction] = useState('view-tabs');
   const [loading, setLoading] = useState(true);
   const { user, setUser } = useUser();
-  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
 
   const handleLogout = async () => {
     try {
@@ -37,9 +37,8 @@ export default function UserProfile() {
         });
 
         if (res.ok) {
-          const data = await res.json();
-          console.log(data);
-          setProfile(data);
+          const jsonResult = await res.json();
+          setProfile(jsonResult.data);
         }
       } catch (err) {
         console.error(err);
@@ -66,7 +65,7 @@ export default function UserProfile() {
       </h1>
 
       {/* DASHBOARD */}
-      <div className="flex flex-col sm:flex-row gap-6 mx-auto mt-10">
+      {/* <div className="flex flex-col sm:flex-row gap-6 mx-auto mt-10">
         <div className="flex-1 min-w-0 flex flex-col grow gap-2 px-6 py-3 ring ring-gray-200 rounded-sm shadow-sm shadow-stone-300">
           <h2 className="text-xl font-bold">Total bids</h2>
           <p className="text-3xl font-bold text-[#8D0000]">{profile.total_bids}</p>
@@ -87,7 +86,7 @@ export default function UserProfile() {
           <p className="text-3xl font-bold text-[#8D0000]">{profile.rating}</p>
           <p>{profile.rating_label}</p>
         </div>
-      </div>
+      </div> */}
 
       {/* PROFLE INFO */}
 
@@ -188,7 +187,7 @@ export default function UserProfile() {
         </div>
 
         {/* TABS */}
-        <UserAction profile={profile} action={action} setAction={setAction} />
+        <UserAction profile={ profile }action={action} setAction={setAction} />
       </div>
     </div>
   );

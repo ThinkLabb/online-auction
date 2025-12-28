@@ -1,19 +1,52 @@
 import { useEffect, useState } from 'react';
-import { Profile, TabProduct } from './types';
-import { SetTab } from './types';
+import { Profile, BiddingProduct, WonProduct, FollowingProduct, Review, SellingProduct, SoldProduct } from './interfaces';
+import { SetTab } from './interfaces';
 import { Loader2, ThumbsDown, ThumbsUp, Trash } from 'lucide-react';
 import { calculateTimeRemaining, formatCurrency, formatDate } from '../product';
 import { Link } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
+;
 
-function BiddingTab({ profile }: { profile: TabProduct }) {
+function BiddingTab() {
+  const [products, setProducts] = useState<BiddingProduct[]>([])
+  const [loading, setLoading] = useState(false);
+
+  const fetchBiddingProducts = async() => {
+    try {
+      setLoading(true);
+
+      const res = await fetch('/api/profile/biddings', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const result = await res.json();
+      if (res.ok) setProducts(result.data);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchBiddingProducts();
+  }, []);
+
   return (
-    <div className="flex flex-col gap-5">
+    loading 
+    ? <div className="min-h-[50vh] w-full flex flex-col justify-center items-center">
+      <ClipLoader size={50} color="#8D0000" />
+    </div>
+    : <div className="flex flex-col gap-5">
       <p className="text-gray-500">
-        Bidding {profile.bidding_products.length} product
-        {profile.bidding_products.length > 1 ? 's' : ''}
+        Bidding {products.length} product
+        {products.length > 1 ? 's' : ''}
       </p>
-      {profile.bidding_products.map((product, index) => {
+      {products.map((product, index) => {
         return (
           <div
             key={index}
@@ -28,7 +61,7 @@ function BiddingTab({ profile }: { profile: TabProduct }) {
               className="hover:text-[#8D0000] cursor-pointer w-50 h-full"
             >
               <img
-                src={`/api/assets/${product.image_url}`}
+                src={`/api/assets/${product.thumbnail_url}`}
                 className="rounded-sm w-auto h-full object-contain"
               />
             </Link>
@@ -41,7 +74,9 @@ function BiddingTab({ profile }: { profile: TabProduct }) {
                   >
                     {product.name}
                   </Link>
-                  <div className="text-md text-gray-400">{product.category_name}</div>
+                  <Link to={`/products/${product.category.category_name_level_1}/${product.category.category_name_level_2}`} className="text-md text-gray-400">
+                    {`${product.category.category_name_level_1} > ${product.category.category_name_level_2}`}
+                  </Link>
                 </div>
                 <div className="flex flex-col place-items-end">
                   <Trash />
@@ -52,16 +87,16 @@ function BiddingTab({ profile }: { profile: TabProduct }) {
               </div>
               <div className="flex flex-row gap-5">
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-lg">{product.seller_name}</div>
+                  <div className="font-medium text-lg">{product.seller.name}</div>
                   <div>Bid counts: {product.bid_count}</div>
                 </div>
                 <div className="flex-2 min-w-0">
                   <label className="font-medium text-lg">Highest bidder</label>
                   <div className="font-medium text-xl text-[#8D0000] mb-2">
-                    {product.current_highest_bidder_name}
+                    {product.current_highest_bidder?.name}
                   </div>
                   <label className="font-medium">My price</label>
-                  <div>{formatCurrency(product.max_bid?.toString())}</div>
+                  <div>{formatCurrency(product.bid_amount?.toString())}</div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <label className="font-medium">Buy now price:</label>
@@ -78,13 +113,42 @@ function BiddingTab({ profile }: { profile: TabProduct }) {
   );
 }
 
-function WonTab({ profile }: { profile: Profile }) {
+function WonTab() {
+  const [products, setProducts] = useState<WonProduct[]>([]);
+  const [loading, setLoading] = useState(false);
+  const fetchWonProducts = async() => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/profile/won-products', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const result = await res.json();
+      if (res.ok) setProducts(result.data);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchWonProducts();
+  }, []);
+
   return (
-    <div className="flex flex-col gap-5 hover:scale-101">
+    loading ? <div className="min-h-[50vh] w-full flex flex-col justify-center items-center">
+      <ClipLoader size={50} color="#8D0000" />
+    </div>
+    : <div className="flex flex-col gap-5 hover:scale-101">
       <p className="text-gray-500">
-        Won {profile.won_products.length} product{profile.won_products.length > 1 ? 's' : ''}
+        Won {products.length} product{products.length > 1 ? 's' : ''}
       </p>
-      {profile.won_products.map((product, index) => {
+      {products.map((product, index) => {
         return (
           <div
             key={index}
@@ -99,7 +163,7 @@ function WonTab({ profile }: { profile: Profile }) {
               className="hover:text-[#8D0000] cursor-pointer w-50 h-full"
             >
               <img
-                src={`/api/assets/${product.image_url}`}
+                src={`/api/assets/${product.thumbnail_url}`}
                 className="rounded-sm w-auto h-full object-contain"
               />
             </Link>
@@ -111,21 +175,23 @@ function WonTab({ profile }: { profile: Profile }) {
                 >
                   {product.name}
                 </Link>
-                <div className="text-md text-gray-400">{product.category_name}</div>
+                <Link to={`/products/${product.category.category_name_level_1}/${product.category.category_name_level_2}`} className="text-md text-gray-400">
+                  {`${product.category.category_name_level_1} > ${product.category.category_name_level_2}`}
+                </Link>
               </div>
               <div className="flex flex-row gap-5">
                 <div className="flex-1 min-w-0">
-                  <div className="flex-1 font-medium text-lg">{product.seller_name}</div>
+                  <div className="flex-1 font-medium text-lg">{product.seller.name}</div>
                   <label className="font-medium ">Won price</label>
                   <div className="font-medium text-xl text-[#8D0000] mb-2">
-                    {formatCurrency(product.final_price.toString())}
+                    {formatCurrency(product.order.final_price.toString())}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <label className="font-medium">Order Status</label>
-                  <div>{product.order_status?.toString()}</div>
+                  <div>{product.order.status.toString()}</div>
                   <label className="font-medium">Won date:</label>
-                  <div>{formatDate(product.won_at)}</div>
+                  <div>{formatDate(product.order.created_at)}</div>
                 </div>
               </div>
             </div>
@@ -136,12 +202,39 @@ function WonTab({ profile }: { profile: Profile }) {
   );
 }
 
-function WatchlistTab({ profile }: { profile: Profile }) {
-  const [localWatchlist, setLocalWatchlist] = useState(profile.watchlist);
+function WatchlistTab(){
+  const [watchlist, setWatchlist] = useState<FollowingProduct[]>([]);
+  const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<number | bigint | string | null>(null);
+  
+  const fetchWatchlist = async() => {
+    try {
+      setLoading(true);
+
+      const res = await fetch('/api/profile/watchlist', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const result = await res.json();
+      if (res.ok) setWatchlist(result.data);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    setLocalWatchlist(profile.watchlist);
-  }, [profile.watchlist]);
+    fetchWatchlist();
+  }, []);
+  
+  useEffect(() => {
+    setWatchlist(watchlist);
+  }, [watchlist]);
 
   const handleRemoveFromWatchlist = async (producID: number | bigint | string) => {
     if (!window.confirm('Confirm to delete this product from watchlist?')) return;
@@ -157,8 +250,7 @@ function WatchlistTab({ profile }: { profile: Profile }) {
 
       if (res.ok) {
         // Xóa thành công -> Cập nhật state để loại bỏ item khỏi giao diện ngay lập tức
-        setLocalWatchlist((prev) => prev.filter((item) => item.product_id !== producID));
-        profile.watchlist_count -= 1;
+        setWatchlist((prev) => prev.filter((item) => item.product_id !== producID));
       } else {
         const errorData = await res.json();
         alert(errorData.message || "Can't remove product from watchlist");
@@ -171,16 +263,19 @@ function WatchlistTab({ profile }: { profile: Profile }) {
   };
 
   return (
-    <div className="flex flex-col gap-5">
+    loading? <div className="min-h-[50vh] w-full flex flex-col justify-center items-center">
+      <ClipLoader size={50} color="#8D0000" />
+    </div>
+    : <div className="flex flex-col gap-5">
       <p className="text-gray-500">
-        Following {profile.watchlist.length} product{profile.watchlist.length > 1 ? 's' : ''}
+        Following {watchlist.length} product{watchlist.length > 1 ? 's' : ''}
       </p>
 
-      {localWatchlist.length === 0 && (
+      {watchlist.length === 0 && (
         <div className="text-center py-10 text-gray-400">You haven't follow any product yet.</div>
       )}
 
-      {localWatchlist.map((product, index) => {
+      {watchlist.map((product, index) => {
         const isDeleting = deletingId === product.product_id;
         return (
           <div
@@ -196,7 +291,7 @@ function WatchlistTab({ profile }: { profile: Profile }) {
               className="hover:text-[#8D0000] cursor-pointer w-50 h-full"
             >
               <img
-                src={`/api/assets/${product.image_url}`}
+                src={`/api/assets/${product.thumbnail_url}`}
                 className="rounded-sm w-auto h-full object-contain"
               />
             </Link>
@@ -209,7 +304,9 @@ function WatchlistTab({ profile }: { profile: Profile }) {
                   >
                     {product.name}
                   </Link>
-                  <div className="text-md text-gray-400">{product.category_name}</div>
+                  <Link to={`/products/${product.category.category_name_level_1}/${product.category.category_name_level_2}`} className="text-md text-gray-400">
+                    {`${product.category.category_name_level_1} > ${product.category.category_name_level_2}`}
+                  </Link>
                 </div>
                 <div className="flex flex-col place-items-end">
                   <button
@@ -234,13 +331,13 @@ function WatchlistTab({ profile }: { profile: Profile }) {
               </div>
               <div className="flex flex-row gap-5">
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-lg">{product.seller_name}</div>
+                  <div className="font-medium text-lg">{product.seller.name}</div>
                   <div>Bid counts: {product.bid_count}</div>
                 </div>
                 <div className="flex-2 min-w-0">
                   <label className="font-medium text-lg">Highest bidder</label>
                   <div className="font-medium text-xl text-[#8D0000] mb-2">
-                    {product.current_highest_bidder_name}
+                    {product.current_highest_bidder?.name ?? "No bids yet"}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -258,13 +355,43 @@ function WatchlistTab({ profile }: { profile: Profile }) {
   );
 }
 
-function RatingsTab({ profile }: { profile: Profile }) {
+function ReviewsTab() {
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchReviews = async() => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/profile/reviews', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const result = await res.json();
+      if (res.ok) setReviews(result.data);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
   return (
-    <div className="flex flex-col gap-5">
+    loading ? <div className="min-h-[50vh] w-full flex flex-col justify-center items-center">
+      <ClipLoader size={50} color="#8D0000" />
+    </div>
+    : <div className="flex flex-col gap-5">
       <p className="text-gray-500">
-        Received {profile.ratings.length} rating{profile.ratings.length > 1 ? 's' : ''}
+        Received {reviews.length} rating{reviews.length > 1 ? 's' : ''}
       </p>
-      {profile.ratings.map((rating, index) => {
+      {reviews.map((review, index) => {
         return (
           <div
             key={index}
@@ -275,18 +402,18 @@ function RatingsTab({ profile }: { profile: Profile }) {
             "
           >
             <div className="flex flex-row justify-between">
-              <div className="text-lg font-bold">{rating.reviewer_name}</div>
-              <div className="text-gray-400">{rating.created_at}</div>
+              <div className="text-lg font-bold">{review.reviewer.name}</div>
+              <div className="text-gray-400">{review.created_at}</div>
             </div>
             <div className="flex flex-row gap-10">
               <Link
-                to={`/product/${rating.product_id}`}
+                to={`/product/${review.product.product_id}`}
                 className="hover:text-[#8D0000] cursor-pointer flex-2 font-medium"
               >
-                {rating.product_name}
+                {review.product.product_name}
               </Link>
-              <div className="flex-5">{rating.comment}</div>
-              {rating.is_positive ? (
+              <div className="flex-5">{review.comment}</div>
+              {review.is_positive ? (
                 <ThumbsUp className="flex-1" color="#8D0000" />
               ) : (
                 <ThumbsDown className="flex-1" color="#8D0000" />
@@ -299,15 +426,15 @@ function RatingsTab({ profile }: { profile: Profile }) {
   );
 }
 
-function ProductsTab() {
-  const [products, setProducts] = useState<ProductItem[]>([]);
+function SellingsTab() {
+  const [products, setProducts] = useState<SellingProduct[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const fetch_products = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/profile/seller/products', {
+      const res = await fetch('/api/profile/sellings', {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -356,15 +483,11 @@ function ProductsTab() {
     }
   };
 
-  if (loading)
-    return (
-      <div className="min-h-[50vh] w-full flex flex-col justify-center items-center">
-        <ClipLoader size={50} color="#8D0000" />
-      </div>
-    );
-
   return (
-    <div className="flex flex-col gap-5">
+    loading ? <div className="min-h-[50vh] w-full flex flex-col justify-center items-center">
+      <ClipLoader size={50} color="#8D0000" />
+    </div>
+    : <div className="flex flex-col gap-5">
       <p className="text-gray-500">
         You posted {products.length} product{products.length > 1 ? 's' : ''}
       </p>
@@ -373,7 +496,7 @@ function ProductsTab() {
         <div className="text-center py-10 text-gray-400">Not uploaded yet.</div>
       )}
 
-      {products.map((product: ProductItem, index) => {
+      {products.map((product, index) => {
         const isDeleting = deletingId === product.product_id;
         return (
           <div
@@ -389,7 +512,7 @@ function ProductsTab() {
               className="hover:text-[#8D0000] cursor-pointer w-50 h-full"
             >
               <img
-                src={`/api/assets/${product.image_url}`}
+                src={`/api/assets/${product.thumbnail_url}`}
                 className="rounded-sm w-auto h-full object-contain"
               />
             </Link>
@@ -400,9 +523,11 @@ function ProductsTab() {
                     to={`/product/${product.product_id}`}
                     className="hover:text-[#8D0000] cursor-pointer text-2xl font-bold"
                   >
-                    {product.product_name}
+                    {product.name}
                   </Link>
-                  <div className="text-md text-gray-400">{product.category_name}</div>
+                  <Link to={`/products/${product.category.category_name_level_1}/${product.category.category_name_level_2}`} className="text-md text-gray-400">
+                    {`${product.category.category_name_level_1} > ${product.category.category_name_level_2}`}
+                  </Link>
                 </div>
                 <div className="flex flex-col place-items-end">
                   <button
@@ -433,7 +558,7 @@ function ProductsTab() {
                 <div className="flex-2 min-w-0">
                   <label className="font-medium text-lg">Highest bidder</label>
                   <div className="font-medium text-xl text-[#8D0000] mb-2">
-                    {product.highest_bidder_name}
+                    {product.highest_bidder?.name ?? "No bids yet"}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -452,13 +577,13 @@ function ProductsTab() {
 }
 
 function ProductsWithWinnerTab() {
-  const [products, setProducts] = useState<TabProduct[]>([]);
+  const [products, setProducts] = useState<SoldProduct[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetch_products = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/profile/seller/productswinner', {
+      const res = await fetch('/api/profile/solds', {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -481,15 +606,11 @@ function ProductsWithWinnerTab() {
     fetch_products();
   }, []);
 
-  if (loading)
-    return (
-      <div className="min-h-[50vh] w-full flex flex-col justify-center items-center">
-        <ClipLoader size={50} color="#8D0000" />
-      </div>
-    );
-
   return (
-    <div className="flex flex-col gap-5">
+    loading ? <div className="min-h-[50vh] w-full flex flex-col justify-center items-center">
+      <ClipLoader size={50} color="#8D0000" />
+    </div>
+    : <div className="flex flex-col gap-5">
       <p className="text-gray-500">
         There are {products.length} product{products.length > 1 ? 's' : ''} won by buyers.
       </p>
@@ -498,7 +619,7 @@ function ProductsWithWinnerTab() {
         <div className="text-center py-10 text-gray-400">No product yet.</div>
       )}
 
-      {products.map((product: TabProduct, index) => {
+      {products.map((product, index) => {
         return (
           <div
             key={index}
@@ -513,7 +634,7 @@ function ProductsWithWinnerTab() {
               className="hover:text-[#8D0000] cursor-pointer w-50 h-full"
             >
               <img
-                src={`/api/assets/${product.image_url}`}
+                src={`/api/assets/${product.thumbnail_url}`}
                 className="rounded-sm w-auto h-full object-contain"
               />
             </Link>
@@ -524,29 +645,11 @@ function ProductsWithWinnerTab() {
                     to={`/product/${product.product_id}`}
                     className="hover:text-[#8D0000] cursor-pointer text-2xl font-bold"
                   >
-                    {product.product_name}
+                    {product.name}
                   </Link>
-                  <div className="text-md text-gray-400">{product.category_name}</div>
-                </div>
-                <div className="flex flex-col place-items-end">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleRemoveFromProducts(product.product_id);
-                    }}
-                    disabled={isDeleting}
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors group"
-                    title="Unfollow"
-                  >
-                    {isDeleting ? (
-                      <Loader2 className="animate-spin text-gray-400 w-5 h-5" />
-                    ) : (
-                      <Trash className="text-gray-500 hover:text-[#8D0000] transition-colors duration-200" />
-                    )}
-                  </button>
-                  <div className="font-medium text-[#8D0000]">
-                    {calculateTimeRemaining(product.end_time)}
-                  </div>
+                  <Link to={`/products/${product.category.category_name_level_1}/${product.category.category_name_level_2}`} className="text-md text-gray-400">
+                    {`${product.category.category_name_level_1} > ${product.category.category_name_level_2}`}
+                  </Link>
                 </div>
               </div>
               <div className="flex flex-row gap-5">
@@ -555,15 +658,13 @@ function ProductsWithWinnerTab() {
                   <div>Bid counts: {product.bid_count}</div>
                 </div>
                 <div className="flex-2 min-w-0">
-                  <label className="font-medium text-lg">Highest bidder</label>
+                  <label className="font-medium text-lg">Buyer</label>
                   <div className="font-medium text-xl text-[#8D0000] mb-2">
-                    {product.highest_bidder_name}
+                    {product.order?.buyer.name}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <label className="font-medium">Buy now price:</label>
-                  <div>{formatCurrency(product.buy_now_price?.toString())}</div>
-                  <label className="font-medium">Current price:</label>
+                  <label className="font-medium">Final price:</label>
                   <div>{formatCurrency(product.current_price.toString())}</div>
                 </div>
               </div>
@@ -575,22 +676,22 @@ function ProductsWithWinnerTab() {
   );
 }
 
-export default function UserTab({ profile }: { profile: Profile }) {
+export default function UserTab( { profile }: { profile: Profile } ) {
   const tabs = ['Bidding', 'Won Products', 'Watchlist', 'Ratings', 'My products'];
   const [activeTab, setActiveTab] = useState('bidding');
 
   const renderTab = () => {
     switch (activeTab) {
       case 'bidding':
-        return <BiddingTab profile={profile} />;
+        return <BiddingTab />;
       case 'won-products':
-        return <WonTab profile={profile} />;
+        return <WonTab />;
       case 'watchlist':
-        return <WatchlistTab profile={profile} />;
+        return <WatchlistTab />;
       case 'ratings':
-        return <RatingsTab profile={profile} />;
+        return <ReviewsTab />;
       case 'my-products':
-        return <ProductsTab />;
+        return <SellingsTab />;
       default:
         return <h1 className="text-3xl text-red-500">Invalid Tab!</h1>;
     }

@@ -1,9 +1,12 @@
 import { count } from "console";
 import db from "./database.ts";
 import { ProductStatus, OrderStatus } from "@prisma/client";
-import { getSellerProducts } from "../controllers/user.controllers.ts";
 
 export const UserServices = {
+  getUser: async (user_id: string) => {
+    return db.prisma.user.findUnique({ where: { user_id: user_id } });
+  },
+
   BidderServices: {
     getBiddingProducts: async (user_id: string) => {
       return db.prisma.bidHistory.findMany({
@@ -12,6 +15,7 @@ export const UserServices = {
           product: { status: "open" },
         },
         select: {
+          bid_amount: true,
           bid_time: true,
           product: {
             select: {
@@ -65,11 +69,21 @@ export const UserServices = {
           created_at: true,
           updated_at: true,
 
+          buyer_review: {
+            select: {
+              review_id: true,
+              is_positive: true,
+              comment: true,
+              created_at: true,
+            }
+          },
+
           product: {
             select: {
               product_id: true,
               name: true,
               
+              current_price: true,
               bid_count: true,
               end_time: true,
 
@@ -108,34 +122,34 @@ export const UserServices = {
             select: {
               product_id: true,
               name: true,
-              status: true,
+              images: { take: 1, select: { image_url: true } },
+              category: {
+                  select: {
+                    category_id: true,
+                    name_level_1: true,
+                    name_level_2: true,
+                  },
+                },
 
               current_price: true,
-              buy_now_price: true,
-
               bid_count: true,
               end_time: true,
-
               seller: { 
                 select: {
                   user_id: true,
                   name: true,
                 }
               },
-              category: {
-                select: {
-                  category_id: true,
-                  name_level_1: true,
-                  name_level_2: true,
-                },
-              },
+
+              status: true,
+              buy_now_price: true,
+ 
               current_highest_bidder: {
                 select: { 
                   user_id: true,
                   name: true
                 },
               },
-              images: { take: 1, select: { image_url: true },},
               _count: { select: { reviews: true } }
             },
           }
@@ -145,7 +159,7 @@ export const UserServices = {
       })
     },
 
-    getRatingsFromBuyers: async (user_id: string) => {
+    getReviewsFromBuyers: async (user_id: string) => {
       return db.prisma.reviews.findMany({
         where: { 
           reviewee_id: user_id,
@@ -183,7 +197,7 @@ export const UserServices = {
       })
     },
 
-    getRatingsFromSellers: async (user_id: string) => {
+    getReviewsFromSellers: async (user_id: string) => {
       return db.prisma.reviews.findMany({
         where: { 
           reviewee_id: user_id,
@@ -227,7 +241,7 @@ export const UserServices = {
       return db.prisma.product.findMany({where: { seller_id: seller_id }});
     },
 
-    getSellerProducts: async (seller_id: string) => {
+    getSellingProducts: async (seller_id: string) => {
       return db.prisma.product.findMany({
         where: {
           seller_id: seller_id,
@@ -237,14 +251,7 @@ export const UserServices = {
         select: {
           product_id: true,
           name: true,
-          status: true,
-
-          current_price: true,
-          buy_now_price: true,
-
-          bid_count: true,
-          end_time: true,
-
+          images: { take: 1, select: { image_url: true },},
           category: {
             select: {
               category_id: true,
@@ -252,13 +259,22 @@ export const UserServices = {
               name_level_2: true,
             },
           },
+          current_price: true,
+          bid_count: true,
+          end_time: true,
+
+          start_price: true,
+          buy_now_price: true,
+
           current_highest_bidder: {
             select: { 
               user_id: true,
               name: true
             },
           },
-          images: { take: 1, select: { image_url: true },},
+
+          auto_extend: true,
+          bids: true,
           _count: { select: { reviews: true } }
         },
       })
@@ -274,10 +290,10 @@ export const UserServices = {
           product_id: true,
           name: true,
 
-          bid_count: true,
-          end_time: true,
-
-          review_needed: true,
+          images: {
+            take: 1,
+            select: { image_url: true }
+          },
 
           category: {
             select: {
@@ -287,12 +303,9 @@ export const UserServices = {
             }
           },
 
-          images: {
-            take: 1,
-            select: { image_url: true }
-          },
-
-          _count: { select: {reviews: true } },
+          current_price: true,
+          bid_count: true,
+          end_time: true,
 
           order: {
             select: {
@@ -310,7 +323,7 @@ export const UserServices = {
                 }
               },
 
-              buyer_review: {
+              seller_review: {
                 select: {
                   review_id: true,
 
