@@ -8,17 +8,18 @@ type OrderStatus = 'pending_payment' | 'payment_confirmed' | 'shipped' | 'comple
 interface Order {
   order_id: string;
   product_name: string;
-  partner_name: string;
-  partner_id: string;
   final_price: number;
   status: OrderStatus;
   shipping_address: string | null;
-  isReviewed: boolean;
   product_id: string;
   is_seller: boolean;
   cur_user_id: string;
   is_reviewed: boolean;
+  partner_name: string;
+  partner_id: string;
   cur_name: string;
+  payment_proof_url: string;
+  shipping_proof_url: string;
 }
 
 export default function Payment() {
@@ -43,7 +44,6 @@ export default function Payment() {
         }
 
         setOrder(result.data);
-
         setLoading(true);
       } catch (err) {
         setError(String(err));
