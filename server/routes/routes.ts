@@ -32,6 +32,7 @@ import {
 import { banBidder, getBidHistory, placeBid } from '../controllers/bid.controller.ts';
 import { addChat, addReview, changeOrder, getChat, getOrder } from '../controllers/payment.controller.ts';
 import { ReviewController } from '../controllers/review.controller.ts';
+import { OrderController } from '../controllers/order.controller.ts';
 
 const router = express.Router();
 
@@ -256,21 +257,22 @@ router.post(
   userControllers.requestRole
 );
 
-// ===== REVIEWS' APIS =====
-
-router.post(
-  '/review',
-  ReviewController.create
-),
-
 router.post(
   '/rate',
+  authController.getAuthentication,
   ReviewController.rate
 ),
 
 router.post(
   '/comment',
+  authController.getAuthentication,
   ReviewController.comment
+)
+
+router.post(
+  '/order/cancel/:id',
+  authController.getSellerAuthentication,
+  OrderController.cancel
 )
 
 // =========================

@@ -1,13 +1,15 @@
-import z, { json } from "zod";
 import { useState, useEffect } from "react";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
-import { UserRole } from "@prisma/client";
+import { OrderStatus, UserRole } from "@prisma/client";
 
 export default function ReviewBox(
   {
     order_id,
     review,
-    role
+    role,
+    autoComment,
+    orderStatus,
+    onCancelSuccess
   } : {
     order_id: string,
     review: {
@@ -16,7 +18,10 @@ export default function ReviewBox(
       comment: string | null;
       created_at: string;
     } | null,
-    role: UserRole
+    role: UserRole,
+    autoComment: boolean,
+    orderStatus: OrderStatus,
+    onCancelSuccess?: () => void
   }
 ) {
   const [comment, setComment] = useState(review?.comment || "");
@@ -57,7 +62,6 @@ export default function ReviewBox(
 
   const sendComment = async() => {
     try {
-
       setError("");
       if (comment == "") {
         setError("Please type your comment");
@@ -93,8 +97,30 @@ export default function ReviewBox(
     }
   }
 
+  const cancelOrder = async() => {
+    try {
+      const result = await fetch(
+        `/api/order/cancel/${order_id}`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {'Content-Type': 'application/json'},
+        }
+      )
+
+      const jsonResult = await result.json();
+      if (!result.ok) throw new Error(jsonResult.message);
+
+      if (onCancelSuccess) {
+        onCancelSuccess(); 
+      }
+    } catch(e) {
+      console.log(e);
+    }
+  }
+
   return (
-    <div className="text-sm rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 p-4">
+    <div className="text-sm rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 p-2">
       <div className="flex flex-row justfiy-between gap-3">
         <div className="w-full">
           <label className="block text-sm font-medium mb-2">Comment (optional)</label>
@@ -129,14 +155,23 @@ export default function ReviewBox(
 
           <button
             onClick={sendComment}
-            className="px-4 py-1 bg-black text-white rounded hover:border hover:bg-white hover:text-black"
+            className="w-full px-4 py-1 bg-black text-white rounded hover:border hover:bg-white hover:text-black"
           >
-            {review && review.comment ? "Update\nComment" : "Submit\nComment"}
+            Submit
           </button>
-        </div>
-      </div>
+
+          {autoComment && orderStatus == 'pending_payment' &&
+            <button
+              onClick={cancelOrder}
+              className="mt-1 w-full px-4 py-1 bg-black text-white rounded hover:border hover:bg-white hover:text-black"
+            >
+              Cancel
+            </button>
+          }
 
       {error && <div className="text-[#8D0000] mt-2">{error}</div>}
+        </div>
+      </div>
     </div>
   );
 }

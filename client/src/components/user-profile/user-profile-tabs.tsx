@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Profile, BiddingProduct, WonProduct, FollowingProduct, Review, SellingProduct, SoldProduct } from './interfaces';
-import { SetTab } from './interfaces';
 import { Loader2, ThumbsDown, ThumbsUp, Trash } from 'lucide-react';
 import { calculateTimeRemaining, formatCurrency, formatDate } from '../product';
 import { Link } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import ReviewBox from './review';
-import { UserRole } from '@prisma/client';
+import { OrderStatus, UserRole } from '@prisma/client';
 
 function BiddingTab({ profile }: { profile: Profile }) {
   const [products, setProducts] = useState<BiddingProduct[]>([])
@@ -226,7 +225,7 @@ function WonTab({profile} : {profile: Profile}) {
               </div>
             </div>
             
-            {<ReviewBox order_id={product.order.order_id} review={product.review} role={profile.role}/>}
+            {<ReviewBox order_id={product.order.order_id} review={product.review} role={profile.role} autoComment={false} orderStatus={'completed'}/>}
           </div>
         );
       })}
@@ -608,7 +607,7 @@ function SellingsTab() {
   );
 }
 
-function ProductsWithWinnerTab() {
+function ProductsWithWinnerTab({profile} : {profile: Profile}) {
   const [products, setProducts] = useState<SoldProduct[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -638,69 +637,97 @@ function ProductsWithWinnerTab() {
     fetch_products();
   }, []);
 
+  const handleOrderCancelled = (productId: string) => {
+    setProducts(currentProducts => 
+      currentProducts.map(product => {
+        // Tìm sản phẩm có id trùng khớp
+        if (product.product_id === productId && product.order) {
+          return {
+            ...product,
+            order: {
+              ...product.order,
+              order_status: 'cancelled' as OrderStatus // Cập nhật trạng thái
+            }
+          };
+        }
+        return product;
+      })
+    );
+  };
+
   return (
-    loading ? <div className="min-h-[50vh] w-full flex flex-col justify-center items-center">
+    loading 
+    ? <div className="min-h-[50vh] w-full flex flex-col justify-center items-center">
       <ClipLoader size={50} color="#8D0000" />
     </div>
     : <div className="flex flex-col gap-5">
       <p className="text-gray-500">
-        There are {products.length} product{products.length > 1 ? 's' : ''} won by buyers.
+        Bidding {products.length} product
+        {products.length > 1 ? 's' : ''}
       </p>
-
-      {products.length === 0 && (
-        <div className="text-center py-10 text-gray-400">No product yet.</div>
-      )}
-
       {products.map((product, index) => {
         return (
           <div
             key={index}
-            className="
+            className={`
               hover:scale-101 transition duration-150 ease-in-out
-              flex bg-white flex-row p-5 gap-5
+              flex bg-white flex-col p-2 gap-1
               rounded-sm ring ring-gray-200 shadow-sm shadow-black-300
-            "
+            `}
           >
-            <Link
-              to={`/product/${product.product_id}`}
-              className="hover:text-[#8D0000] cursor-pointer w-50 h-full"
-            >
-              <img
-                src={`/api/assets/${product.thumbnail_url}`}
-                className="rounded-sm w-auto h-full object-contain"
-              />
-            </Link>
-            <div className="flex flex-col gap-5 flex-grow">
-              <div className="flex flex-row gap-5 justify-between">
-                <div>
-                  <Link
-                    to={`/product/${product.product_id}`}
-                    className="hover:text-[#8D0000] cursor-pointer text-2xl font-bold"
-                  >
-                    {product.name}
-                  </Link>
-                  <Link to={`/products/${product.category.category_name_level_1}/${product.category.category_name_level_2}`} className="text-md text-gray-400">
-                    {`${product.category.category_name_level_1} > ${product.category.category_name_level_2}`}
-                  </Link>
-                </div>
-              </div>
-              <div className="flex flex-row gap-5">
-                <div className="flex-1 min-w-0">
-                  {/* <div className="font-medium text-lg">{product.seller_name}</div> */}
-                  <div>Bid counts: {product.bid_count}</div>
-                </div>
-                <div className="flex-2 min-w-0">
-                  <label className="font-medium text-lg">Buyer</label>
-                  <div className="font-medium text-xl text-[#8D0000] mb-2">
-                    {product.order?.buyer.name}
+            <div className='flex flex-col md:items-center text-sm md:flex-row gap-5'> 
+              <Link
+                to={`/product/${product.product_id}`}
+                className="hover:text-[#8D0000] cursor-pointer w-50 h-full"
+              >
+                <img
+                  src={
+                    product.thumbnail_url 
+                    ? `/api/assets/${product.thumbnail_url}`
+                    : 'https://placehold.co/600x400?text=No+Image'
+                  }
+                  className="rounded-sm w-auto h-full object-contain"
+                />
+              </Link>
+              <div className="flex flex-col gap-2 flex-grow">
+                <div className="flex flex-col md:flex-row gap-2 md:items-center justify-between">
+                  <div className='flex flex-col'>
+                    <Link
+                      to={`/product/${product.product_id}`}
+                      className="w-fit hover:text-[#8D0000] cursor-pointer text-lg font-bold"
+                    >
+                      {product.name}
+                    </Link>
+
+                    <Link to={`/products/${product.category.category_name_level_1}/${product.category.category_name_level_2}`} className="text-md text-gray-400">
+                      {`${product.category.category_name_level_1} > ${product.category.category_name_level_2}`}
+                    </Link>
                   </div>
+                  <div ><span className='font-medium'>Ended at: </span> {product.end_time}</div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <label className="font-medium">Final price:</label>
-                  <div>{formatCurrency(product.current_price.toString())}</div>
+                <div className="flex flex flex-col md:flex-row gap-2 md:gap-5">
+                  <div className="md:flex-2 min-w-0">
+                    <div><span className="font-medium">Final price: </span>{formatCurrency(product.current_price.toString())}</div>
+                    <div><span className="font-medium">Created at: </span>{product.order?.created_at}</div>
+                  </div>
+                  <div className="md:flex-2 min-w-0">
+                    <div className="text-black font-medium">Order status: </div>
+                    <div className='font-bold text-base text-[#8D0000]'>{product.order?.order_status.toString().toUpperCase()}</div>
+                  </div>
+                  <div className="md:flex-1 min-w-0 flex flex-col md:items-end">
+                    <div><span className="font-medium">Bid count: </span>{product.bid_count?.toString() ?? 0}</div>
+                  </div>
                 </div>
               </div>
             </div>
+            
+            {<ReviewBox 
+              order_id={product.order?.order_id||""}
+              review={product.order?.my_review || null}
+              role={profile.role} autoComment={true} 
+              orderStatus={product.order?.order_status || 'completed'} 
+              onCancelSuccess={() => handleOrderCancelled(product.product_id)}/>
+            }
           </div>
         );
       })}
@@ -709,8 +736,8 @@ function ProductsWithWinnerTab() {
 }
 
 export default function UserTab( { profile }: { profile: Profile } ) {
-  const tabs = ['Bidding', 'Won Products', 'Watchlist', 'Ratings', 'My products'];
-  const filteredTabs = tabs.filter(tab => !(profile.role === 'bidder' && tab === 'My products'));
+  const tabs = ['Bidding', 'Won Products', 'Watchlist', 'Ratings', 'My products', 'Sold Products'];
+  const filteredTabs = tabs.filter(tab => !(profile.role === 'bidder' && (tab === 'My products' || tab === 'Sold Products')));
   const [activeTab, setActiveTab] = useState('bidding');
 
   const renderTab = () => {
@@ -725,6 +752,8 @@ export default function UserTab( { profile }: { profile: Profile } ) {
         return <ReviewsTab />;
       case 'my-products':
         return <SellingsTab />;
+      case 'sold-products':
+        return <ProductsWithWinnerTab profile={profile} />;
       default:
         return <h1 className="text-3xl text-red-500">Invalid Tab!</h1>;
     }
