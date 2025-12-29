@@ -254,6 +254,9 @@ export const getOrderByUserID = async (userId: BigInt) => {
   try {
     const ordersFromDB = await db.prisma.order.findMany({
       where: {
+        status: {
+          not: 'cancelled',
+        },
         OR: [
           {
             seller_id: String(userId),

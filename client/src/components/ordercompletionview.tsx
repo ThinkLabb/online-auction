@@ -116,7 +116,6 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
       }
     }
   };
-
   const handleShippingInvoiceChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -146,6 +145,11 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
   };
 
   const handleSubmit = async (shipping_address_arg: string | null, status: OrderStatus) => {
+    if (status === 'cancelled') {
+      setLikeStatus('dislike')
+      handleSubmitReview()
+    }
+    
     if (status === 'payment_confirmed' && (!paymentInvoice || !shippingAddress)) {
       alert('Need to add shipping address and payment invoice');
       return;
@@ -217,6 +221,7 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
   };
 
   const handleSubmitReview = async () => {
+    console.log("hello");
     if (!likeStatus) {
       alert('Need to choose like or dislike!');
       return;
