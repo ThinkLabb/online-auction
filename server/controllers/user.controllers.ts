@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { ProductStatus, OrderStatus, UserRole } from "@prisma/client";
-import { errorResponse, successResponse } from "../utils/response";
+import { ProductStatus, OrderStatus, UserRole } from '@prisma/client';
+import { errorResponse, successResponse } from '../utils/response';
 import { UserServices } from "../services/user.services";
 import { calculateRating} from "./product.controllers.ts";
 import { number } from "zod";
@@ -208,7 +208,7 @@ export const getMyProfile = async (req: Request, res: Response) => {
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -231,13 +231,13 @@ export const editUserProfile = async (req: Request, res: Response) => {
 
     // 3. Validate cơ bản
     if (!name && !email && !address && !birthdate) {
-      return res.status(400).json({ message: "No personal data to change" });
+      return res.status(400).json({ message: 'No personal data to change' });
     }
 
     const updateData: any = {};
 
     if (name) {
-      if (name.trim().length < 2) return res.status(400).json({ message: "Name is too short" });
+      if (name.trim().length < 2) return res.status(400).json({ message: 'Name is too short' });
       updateData.name = name.trim();
     }
 
@@ -246,18 +246,18 @@ export const editUserProfile = async (req: Request, res: Response) => {
     }
 
     if (address) {
-      updateData.address = address.trim() === "" ? null : address.trim();
+      updateData.address = address.trim() === '' ? null : address.trim();
     }
 
     if (birthdate) {
       const date = new Date(birthdate);
       if (isNaN(date.getTime())) {
-        return res.status(400).json({ message: "Invalid birthdate format" });
+        return res.status(400).json({ message: 'Invalid birthdate format' });
       }
       updateData.birthdate = date;
     }
 
-    console.log(updateData)
+    console.log(updateData);
 
     const updatedUser = await prisma.user.update({
       where: { user_id: userId },
@@ -268,34 +268,33 @@ export const editUserProfile = async (req: Request, res: Response) => {
         email: true,
         address: true,
         birthdate: true,
-        updated_at: true
+        updated_at: true,
       },
     });
 
-    console.log(updatedUser)
+    console.log(updatedUser);
 
     return res.status(200).json({
-      message: "Cập nhật hồ sơ thành công!",
+      message: 'Cập nhật hồ sơ thành công!',
       user: {
         ...updatedUser,
-        birthdate: updatedUser.birthdate
-          ? updatedUser.birthdate.toISOString().split("T")[0] 
-          : null,
+        birthdate: updatedUser.birthdate ? updatedUser.birthdate.toISOString().split('T')[0] : null,
       },
     });
   } catch (e: any) {
     // Xử lý lỗi Prisma
     if (e.code === 'P2025') {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: 'User not found' });
     }
 
     // P2002: Unique constraint violation (Lỗi trùng Email)
     if (e.code === 'P2002' && e.meta?.target?.includes('email')) {
-      return res.status(409).json({ message: "Email already exists" });
+      return res.status(409).json({ message: 'Email already exists' });
     }
 
-    console.log("Failed rồi\n")
-    return res.status(500).json(errorResponse(e));  }
+    console.log('Failed rồi\n');
+    return res.status(500).json(errorResponse(e));
+  }
 };
 
 export const deleteWatchlistProduct = async (req: Request, res: Response) => {
@@ -305,36 +304,34 @@ export const deleteWatchlistProduct = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Unauthorized: Can't find user" });
     }
 
-    const {product_id} = req.params;
+    const { product_id } = req.params;
     if (!product_id) {
-        return res.status(400).json({ message: "Product ID is required" });
+      return res.status(400).json({ message: 'Product ID is required' });
     }
-
 
     const result = await prisma.watchlist.deleteMany({
       where: {
         user_id: user_id,
-        product_id: BigInt(product_id)
-      }
-    })
+        product_id: BigInt(product_id),
+      },
+    });
 
     if (result.count === 0) {
-      return res.status(404).json({ message: "Product not found in your watchlist" });
+      return res.status(404).json({ message: 'Product not found in your watchlist' });
     }
 
-    return res.status(200).json({ message: "Removed product from watchlist successfully" });
-
+    return res.status(200).json({ message: 'Removed product from watchlist successfully' });
   } catch (error) {
-    console.error("Delete watchlist error:", error);
-    
+    console.error('Delete watchlist error:', error);
+
     // Xử lý lỗi convert BigInt nếu user gửi id linh tinh (vd: "abc")
-    if (error instanceof SyntaxError || (error as any).code === 'P2002') { 
-      return res.status(400).json({ message: "Invalid Product ID format" });
+    if (error instanceof SyntaxError || (error as any).code === 'P2002') {
+      return res.status(400).json({ message: 'Invalid Product ID format' });
     }
 
     return res.status(500).json(errorResponse(String(error)));
   }
-}
+};
 
 export const deleteSellerlistProduct = async (req: Request, res: Response) => {
   try {
@@ -343,39 +340,37 @@ export const deleteSellerlistProduct = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Unauthorized: Can't find user" });
     }
 
-    const {product_id} = req.params;
+    const { product_id } = req.params;
     if (!product_id) {
-        return res.status(400).json({ message: "Product ID is required" });
+      return res.status(400).json({ message: 'Product ID is required' });
     }
-
 
     const result = await prisma.product.updateMany({
       where: {
         seller_id: user_id,
-        product_id: BigInt(product_id)
+        product_id: BigInt(product_id),
       },
       data: {
-        status: ProductStatus.removed
-      }
-    })
+        status: ProductStatus.removed,
+      },
+    });
 
     if (result.count === 0) {
-      return res.status(404).json({ message: "Product not found in your watchlist" });
+      return res.status(404).json({ message: 'Product not found in your watchlist' });
     }
 
-    return res.status(200).json({ message: "Removed product from watchlist successfully" });
-
+    return res.status(200).json({ message: 'Removed product from watchlist successfully' });
   } catch (error) {
-    console.error("Delete seller list error:", error);
-    
+    console.error('Delete seller list error:', error);
+
     // Xử lý lỗi convert BigInt nếu user gửi id linh tinh (vd: "abc")
-    if (error instanceof SyntaxError || (error as any).code === 'P2002') { 
-      return res.status(400).json({ message: "Invalid Product ID format" });
+    if (error instanceof SyntaxError || (error as any).code === 'P2002') {
+      return res.status(400).json({ message: 'Invalid Product ID format' });
     }
 
     return res.status(500).json(errorResponse(String(error)));
   }
-}
+};
 
 export const requestRole = async (req: Request, res: Response) => {
   try {
@@ -384,49 +379,150 @@ export const requestRole = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Unauthorized: Can't find user" });
     }
 
-    const { message } = req.body as {
-      message: string
+    const { message, request_type } = req.body as {
+      message: string;
+      request_type?: string;
     };
 
+    // Validate request_type
+    const validRequestType = request_type === 'temporary' ? 'temporary' : 'permanent';
+
     const existingRequest = await prisma.sellerUpgradeRequest.findUnique({
-      where: { user_id: user_id }
+      where: { user_id: user_id },
     });
 
     // Nếu đã có record
     if (existingRequest) {
       // Trường hợp 1: Đã là Seller hoặc đã được duyệt
       if (existingRequest.is_approved) {
-        return res.status(400).json({ message: "You are already a Seller" });
+        return res.status(400).json({ message: 'You are already a Seller' });
       }
 
       // Trường hợp 2: Đang chờ duyệt (Chưa duyệt và chưa bị từ chối)
       if (!existingRequest.is_approved && !existingRequest.is_denied) {
-        return res.status(409).json({ message: "Request is pending approval" });
+        return res.status(409).json({ message: 'Request is pending approval' });
       }
-      
+
       // Trường hợp 3: Đã bị từ chối trước đó -> Cho phép gửi lại (UPDATE record cũ)
       // Reset is_denied = false, cập nhật message và thời gian gửi
       const updatedResult = await prisma.sellerUpgradeRequest.update({
         where: { user_id: user_id },
         data: {
-            message: message,
-            is_denied: false,       // Reset trạng thái từ chối
-            is_approved: false,     // Đảm bảo chưa duyệt
-            requested_at: new Date() // Cập nhật lại thời gian gửi
-        }
+          message: message,
+          request_type: validRequestType,
+          is_denied: false, // Reset trạng thái từ chối
+          is_approved: false, // Đảm bảo chưa duyệt
+          requested_at: new Date(), // Cập nhật lại thời gian gửi
+        },
       });
 
-      return res.json(successResponse(null, updatedResult.message ? updatedResult.message : "Re-submitted request successfully"));
+      return res.json(
+        successResponse(
+          null,
+          updatedResult.message ? updatedResult.message : 'Re-submitted request successfully'
+        )
+      );
     }
 
     const result = await prisma.sellerUpgradeRequest.create({
       data: {
         user_id: user_id,
-        message: message
-      }
-    })
+        message: message,
+        request_type: validRequestType,
+      },
+    });
 
-    return res.json(successResponse(null, result.message? result.message : "Success"))
+    return res.json(successResponse(null, result.message ? result.message : 'Success'));
+  } catch (error) {
+    return res.status(500).json(errorResponse(String(error)));
+  }
+};
+
+export const getSellerStatus = async (req: Request, res: Response) => {
+  try {
+    const user_id = res.locals.user.id;
+    if (!user_id) {
+      return res.status(401).json({ message: "Unauthorized: Can't find user" });
+    }
+
+    // Get user role
+    const user = await prisma.user.findUnique({
+      where: { user_id: user_id },
+      select: { role: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // If user is a seller, check if they have an expiration date
+    if (user.role === 'seller') {
+      const upgradeRequest = await prisma.sellerUpgradeRequest.findUnique({
+        where: { user_id: user_id },
+        select: {
+          expires_at: true,
+          is_approved: true,
+          request_type: true,
+        },
+      });
+
+      if (upgradeRequest && upgradeRequest.is_approved) {
+        // Temporary seller (has expiration date)
+        if (upgradeRequest.request_type === 'temporary' && upgradeRequest.expires_at) {
+          const now = new Date();
+          const daysRemaining = Math.ceil(
+            (upgradeRequest.expires_at.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+          );
+
+          return res.json(
+            successResponse(
+              {
+                role: 'seller',
+                requestType: 'temporary',
+                isTemporary: true,
+                expiresAt: upgradeRequest.expires_at.toISOString(),
+                daysRemaining: Math.max(0, daysRemaining),
+              },
+              'Seller status retrieved'
+            )
+          );
+        }
+
+        // Permanent seller
+        return res.json(
+          successResponse(
+            {
+              role: 'seller',
+              requestType: 'permanent',
+              isTemporary: false,
+            },
+            'Seller status retrieved'
+          )
+        );
+      }
+
+      // Permanent seller (no expiration)
+      return res.json(
+        successResponse(
+          {
+            role: 'seller',
+            isTemporary: false,
+          },
+          'Seller status retrieved'
+        )
+      );
+    }
+
+    // Not a seller
+    return res.json(
+      successResponse(
+        {
+          role: user.role,
+          isTemporary: false,
+        },
+        'User status retrieved'
+      )
+    );
   } catch (error) {
     return res.status(500).json(errorResponse(String(error)));
   }

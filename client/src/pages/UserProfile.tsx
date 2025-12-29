@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+// import userIcon from '@/assets/user.png';
 import userIcon from '../assets/user.png'
+// const userIcon = require('./assets/user.png'); // ! WTF?
 import { useUser } from '../UserContext'
 import { Profile } from "../components/user-profile/interfaces"
 import UserAction from "../components/user-profile/user-profile"
 import { Link } from "react-router-dom"
 import { ClipLoader } from "react-spinners"
+import { SellerStatus } from '../components/user-profile/seller-status';
 
 export default function UserProfile() {
   const navigate = useNavigate();
@@ -113,6 +116,13 @@ export default function UserProfile() {
           </div>
 
           <div className="flex flex-col gap-3 text-base my-10">
+            {/* Seller Status Display */}
+            {profile.role === 'seller' && (
+              <div className="mb-3">
+                <SellerStatus />
+              </div>
+            )}
+
             <button
               onClick={() => setAction('edit-profile')}
               className="

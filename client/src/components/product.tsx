@@ -29,8 +29,8 @@ export const calculateTimeRemaining = (endTimeStr: string | null | undefined): s
 
   if (days >= 3) {
     return endDate.toLocaleDateString('vi-VN', {
-      day: '2-digit',
       month: '2-digit',
+      day: '2-digit',
       year: 'numeric',
     });
   }

@@ -59,7 +59,7 @@ export const updateCategory = async (req: Request, res: Response) => {
   try {
     const newCategory = req.body.newCategory;
 
-    console.log(newCategory)
+    console.log(newCategory);
 
     if (newCategory.parent_name === null) {
       return res.status(500).json(errorResponse('Can not set parent null'));
@@ -170,6 +170,7 @@ export const getUpgradeRequest = async (req: Request, res: Response) => {
       select: {
         request_id: true,
         message: true,
+        request_type: true,
         requested_at: true,
 
         user: {
@@ -187,6 +188,7 @@ export const getUpgradeRequest = async (req: Request, res: Response) => {
         user_id: String(up.user.user_id),
         name: up.user.name,
         message: up.message,
+        request_type: up.request_type,
         request_at: up.requested_at.toISOString().split('T')[0],
       };
     });
@@ -206,14 +208,35 @@ export const responseUpgradeRequest = async (req: Request, res: Response) => {
     const content = req.body;
 
     if (content.answer === 'approve') {
+      // Get the request to check its type
+      const request = await db.prisma.sellerUpgradeRequest.findUnique({
+        where: { request_id: content.id },
+        select: { request_type: true },
+      });
+
+      if (!request) {
+        return res.status(404).json(errorResponse('Request not found'));
+      }
+
+      // Only set expiration for temporary requests
+      const updateData: any = {
+        is_approved: true,
+        processed_at: new Date(),
+      };
+
+      if (request.request_type === 'temporary') {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+        updateData.expires_at = expiresAt;
+      }
+
       await db.prisma.sellerUpgradeRequest.update({
-        data: {
-          is_approved: true,
-        },
+        data: updateData,
         where: {
           request_id: content.id,
         },
       });
+
       await db.prisma.user.update({
         data: {
           role: 'seller',
@@ -226,6 +249,7 @@ export const responseUpgradeRequest = async (req: Request, res: Response) => {
       await db.prisma.sellerUpgradeRequest.update({
         data: {
           is_denied: true,
+          processed_at: new Date(),
         },
         where: {
           request_id: content.id,
@@ -240,53 +264,64 @@ export const responseUpgradeRequest = async (req: Request, res: Response) => {
 };
 
 export const getAuctionConfig = async (req: Request, res: Response) => {
-    try {
-        // Always fetch the first record, assuming ID 1 is the main config
-        let config = await db.prisma.auctionConfig.findFirst({
-            where: { id: 1 }
-        });
+  try {
+    // Always fetch the first record, assuming ID 1 is the main config
+    let config = await db.prisma.auctionConfig.findFirst({
+      where: { id: 1 },
+    });
 
-        // If not exists, return defaults
-        if (!config) {
-            config = { id: 1, extend_window_minutes: 5, extend_duration_minutes: 10, updated_at: new Date() };
-        }
-
-        return res.status(200).json({ isSuccess: true, data: config });
-    } catch (error) {
-        console.error("Get Config Error:", error);
-        return res.status(500).json({ isSuccess: false, message: "Internal Server Error" });
+    // If not exists, return defaults
+    if (!config) {
+      config = {
+        id: 1,
+        extend_window_minutes: 5,
+        extend_duration_minutes: 10,
+        updated_at: new Date(),
+      };
     }
+
+    return res.status(200).json({ isSuccess: true, data: config });
+  } catch (error) {
+    console.error('Get Config Error:', error);
+    return res.status(500).json({ isSuccess: false, message: 'Internal Server Error' });
+  }
 };
 
 export const updateAuctionConfig = async (req: Request, res: Response) => {
-    try {
-        const { extend_window_minutes, extend_duration_minutes } = req.body;
+  try {
+    const { extend_window_minutes, extend_duration_minutes } = req.body;
 
-        // Validation
-        const window = Number(extend_window_minutes);
-        const duration = Number(extend_duration_minutes);
+    // Validation
+    const window = Number(extend_window_minutes);
+    const duration = Number(extend_duration_minutes);
 
-        if (isNaN(window) || isNaN(duration) || window < 1 || duration < 1) {
-            return res.status(400).json({ isSuccess: false, message: "Values must be positive numbers." });
-        }
-
-        // Upsert guarantees we either update ID 1 or create it if missing
-        const updatedConfig = await db.prisma.auctionConfig.upsert({
-            where: { id: 1 },
-            update: {
-                extend_window_minutes: window,
-                extend_duration_minutes: duration,
-            },
-            create: {
-                id: 1,
-                extend_window_minutes: window,
-                extend_duration_minutes: duration,
-            },
-        });
-
-        return res.status(200).json({ isSuccess: true, data: updatedConfig, message: "Configuration updated successfully." });
-    } catch (error) {
-        console.error("Update Config Error:", error);
-        return res.status(500).json({ isSuccess: false, message: "Internal Server Error" });
+    if (isNaN(window) || isNaN(duration) || window < 1 || duration < 1) {
+      return res
+        .status(400)
+        .json({ isSuccess: false, message: 'Values must be positive numbers.' });
     }
+
+    // Upsert guarantees we either update ID 1 or create it if missing
+    const updatedConfig = await db.prisma.auctionConfig.upsert({
+      where: { id: 1 },
+      update: {
+        extend_window_minutes: window,
+        extend_duration_minutes: duration,
+      },
+      create: {
+        id: 1,
+        extend_window_minutes: window,
+        extend_duration_minutes: duration,
+      },
+    });
+
+    return res.status(200).json({
+      isSuccess: true,
+      data: updatedConfig,
+      message: 'Configuration updated successfully.',
+    });
+  } catch (error) {
+    console.error('Update Config Error:', error);
+    return res.status(500).json({ isSuccess: false, message: 'Internal Server Error' });
+  }
 };

@@ -263,6 +263,11 @@ router.post(
   authController.getAuthentication,
   userControllers.requestRole
 );
+router.get(
+  '/profile/seller-status',
+  authController.getAuthentication,
+  userControllers.getSellerStatus
+);
 
 router.post(
   '/rate',

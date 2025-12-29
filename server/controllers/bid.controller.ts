@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import db from '../services/database.ts';
 import type { Request, Response } from 'express';
+import { sendNewBidEmail, sendBidRejectedEmail } from '../services/mail.service.ts';
 
 export const getBidHistory = async (req: Request, res: Response) => {
   try {
@@ -96,11 +97,8 @@ export const banBidder = async (req: Request, res: Response) => {
       // 3. Lấy danh sách bid còn lại (Dữ liệu lúc này ĐÃ SẠCH vì trigger đã chạy xong)
       const remainingBids = await tx.bidHistory.findMany({
         where: { product_id: prodIdBigInt },
-        orderBy: [
-          { bid_amount: 'desc' }, 
-          { bid_time: 'asc' },   
-        ],
-        take: 2, 
+        orderBy: [{ bid_amount: 'desc' }, { bid_time: 'asc' }],
+        take: 2,
       });
 
       // 4. Tính toán lại giá (Logic Proxy Bidding)
@@ -117,14 +115,14 @@ export const banBidder = async (req: Request, res: Response) => {
         // Còn 1 người -> Về giá khởi điểm (hoặc giữ nguyên bid của họ tùy luật)
         // Thông thường nếu không còn đối thủ, giá sẽ là Start Price
         newHighestBidderId = remainingBids[0].bidder_id;
-        newCurrentPrice = Number(product.start_price); 
+        newCurrentPrice = Number(product.start_price);
       } else {
         // Còn >= 2 người -> Logic Proxy: Giá nhì + Step
         const winnerMaxBid = Number(remainingBids[0].bid_amount);
         const secondMaxBid = Number(remainingBids[1].bid_amount);
-        
+
         newHighestBidderId = remainingBids[0].bidder_id;
-        
+
         // Công thức: Giá người thứ 2 + Bước giá
         let calculatedPrice = secondMaxBid + stepPrice;
 
@@ -154,26 +152,47 @@ export const banBidder = async (req: Request, res: Response) => {
       return { deniedBidder, updatedProduct };
     });
 
+    // Send email notification to banned bidder
+    try {
+      const bannedUser = await db.prisma.user.findUnique({
+        where: { user_id: bidderId },
+        select: { email: true, name: true },
+      });
+
+      const product = await db.prisma.product.findUnique({
+        where: { product_id: prodIdBigInt },
+        select: { name: true },
+      });
+
+      if (bannedUser && product) {
+        const productLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/product/${productId}`;
+        await sendBidRejectedEmail(bannedUser.email, product.name, productLink);
+      }
+    } catch (emailError) {
+      // Log email error but don't fail the ban operation
+      console.error('Failed to send bid rejection email:', emailError);
+    }
+
     return res.status(200).json({
       message: 'User banned and auction state recalculated successfully.',
       data: {
         bannedUser: {
-            ...result.deniedBidder,
-            // CHUYỂN ĐỔI Ở ĐÂY:
-            product_id: result.deniedBidder.product_id.toString(), 
+          ...result.deniedBidder,
+          // CHUYỂN ĐỔI Ở ĐÂY:
+          product_id: result.deniedBidder.product_id.toString(),
         },
         newProductState: {
-            current_price: result.updatedProduct.current_price,
-            current_highest_bidder_id: result.updatedProduct.current_highest_bidder_id,
-            bid_count: result.updatedProduct.bid_count
-        }
+          current_price: result.updatedProduct.current_price,
+          current_highest_bidder_id: result.updatedProduct.current_highest_bidder_id,
+          bid_count: result.updatedProduct.bid_count,
+        },
       },
     });
   } catch (error: any) {
-    console.error("Ban Bidder Error: ", error);
+    console.error('Ban Bidder Error: ', error);
     // Bắt lỗi trigger trả về (ví dụ nếu trigger lỗi)
-    if (error.code === 'P2010' || error.message.includes('trigger')) { 
-        return res.status(500).json({ message: 'Database trigger failed.', error: error.message });
+    if (error.code === 'P2010' || error.message.includes('trigger')) {
+      return res.status(500).json({ message: 'Database trigger failed.', error: error.message });
     }
     return res.status(500).json({ message: 'Internal server error.', error: error.message });
   }
@@ -290,15 +309,64 @@ export const placeBid = async (req: Request, res: Response) => {
             current_highest_bidder_id: newHighestBidderId,
             bid_count: { increment: 1 },
           },
+          include: {
+            seller: {
+              select: { email: true, name: true },
+            },
+          },
         });
 
-        return { newBid, updatedProduct };
+        return {
+          newBid,
+          updatedProduct,
+          productName: product.name,
+          previousBidderId: currentTopBid?.bidder_id,
+        };
       },
       {
         maxWait: 5000,
         timeout: 20000,
       }
     );
+
+    // Send email notifications for successful bid
+    try {
+      const bidder = await db.prisma.user.findUnique({
+        where: { user_id: user.id },
+        select: { email: true, name: true },
+      });
+
+      let oldBidderEmail: string | undefined = undefined;
+
+      // Get the previous highest bidder's email if there was one
+      if (result.previousBidderId && result.previousBidderId !== user.id) {
+        const previousBidder = await db.prisma.user.findUnique({
+          where: { user_id: result.previousBidderId },
+          select: { email: true },
+        });
+        oldBidderEmail = previousBidder?.email;
+      }
+
+      const productLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/product/${productId}`;
+      const formattedPrice = new Intl.NumberFormat('vi-VN').format(
+        Number(result.updatedProduct.current_price)
+      );
+
+      // Send emails to seller, bidder, and previous bidder
+      if (result.updatedProduct.seller && bidder) {
+        await sendNewBidEmail(
+          result.productName,
+          formattedPrice,
+          productLink,
+          result.updatedProduct.seller.email,
+          bidder.email,
+          oldBidderEmail
+        );
+      }
+    } catch (emailError) {
+      // Log email error but don't fail the bid
+      console.error('Failed to send bid notification emails:', emailError);
+    }
 
     return res.status(200).json({
       message: 'Bid placed successfully!',

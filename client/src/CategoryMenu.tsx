@@ -1,5 +1,5 @@
 import { JSX, useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { CategoryContext } from './UserContext';
 
 interface Category {
@@ -35,6 +35,18 @@ export default function CategoryMenu(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
 
   const { activeLevel1, setActiveLevel1 } = useContext(CategoryContext);
+
+  const { level1: urlLevel1 } = useParams<{ level1: string }>(); // Lay param level1 tu thanh url hien tai
+  useEffect(() => {
+    // Neu url la /products/all/... hoat khong co category
+    if (!urlLevel1 || urlLevel1 === 'all' || urlLevel1 === '*') {
+      setActiveLevel1('');
+    }
+    // Nếu URL có category cụ thể -> Highlight category đó
+    else {
+      setActiveLevel1(urlLevel1);
+    }
+  }, [urlLevel1, setActiveLevel1]);
 
   useEffect(() => {
     const fetchCategories = async () => {

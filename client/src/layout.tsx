@@ -48,7 +48,8 @@ function Layout() {
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && keyword.trim()) {
-      navigate(`/search?keyword=${encodeURIComponent(keyword.trim())}`);
+      // navigate(`/search?keyword=${encodeURIComponent(keyword.trim())}`);
+      navigate(`/products/all/all?keyword=${encodeURIComponent(keyword.trim())}`); // Khong chon category nao ca
       setIsSearchOpen(false);
     }
   };
