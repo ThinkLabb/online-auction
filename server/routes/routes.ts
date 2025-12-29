@@ -30,7 +30,14 @@ import {
   appendProductDescription,
 } from '../controllers/product.controllers.ts';
 import { banBidder, getBidHistory, placeBid } from '../controllers/bid.controller.ts';
-import { addChat, addReview, changeOrder, getChat, getOrder } from '../controllers/payment.controller.ts';
+import {
+  addChat,
+  addReview,
+  changeOrder,
+  getChat,
+  getOrder,
+  getOrderImage,
+} from '../controllers/payment.controller.ts';
 import { ReviewController } from '../controllers/review.controller.ts';
 import { OrderController } from '../controllers/order.controller.ts';
 
@@ -293,38 +300,18 @@ router.post(
   appendProductDescription
 );
 
-
-//============================ 
+//============================
 // Payment
-router.get(
-  '/payment/:orderid',
-  authController.getAuthentication,
-  getOrder
-)
+router.get('/payment/:orderid', authController.getAuthentication, getOrder);
 
-router.put(
-  '/payment/:orderid',
-  authController.getAuthentication,
-  changeOrder
-)
+router.put('/payment/:orderid', authController.getAuthentication, changeOrder);
 
-router.post(
-  '/payment-review/:orderid',
-  authController.getAuthentication,
-  addReview
-)
+router.post('/payment-review/:orderid', authController.getAuthentication, addReview);
 
-router.post(
-  '/chat/:orderid',
-  authController.getAuthentication,
-  addChat
-)
+router.get('/assets/orders/:key', getOrderImage);
 
+router.post('/chat/:orderid', authController.getAuthentication, addChat);
 
-router.get(
-  '/chat/:orderid',
-  authController.getAuthentication,
-  getChat
-)
+router.get('/chat/:orderid', authController.getAuthentication, getChat);
 
 export default router;
