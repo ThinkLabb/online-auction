@@ -97,14 +97,14 @@ export default function UserProfile() {
             <img src={userIcon} alt="User icon" className="w-auto h-12" />
             <div className="min-w-0">
               <h3 className="text-lg font-bold truncate">{profile.name}</h3>
-              <p className="text-md text-gray-300 truncate">{profile.email}</p>
+              <p className="text-base text-gray-300 truncate">{profile.email}</p>
             </div>
           </div>
 
           <hr className="border-[#8D0000]" />
 
-          <div className="my-5 grid grid-cols-5 gap-2 min-w-0">
-            <p className="font-bold col-span-2 col-start-1">Account type</p>
+          <div className="my-5 text-base grid grid-cols-5 gap-2 min-w-0">
+            <p className="font-bold col-span-2 col-start-1">Role</p>
             <p className="text-right col-span-3 col-start-3">{profile.role}</p>
             <p className="font-bold col-span-2 col-start-1">Join date</p>
             <p className="text-right col-span-3 col-start-3">
@@ -112,7 +112,7 @@ export default function UserProfile() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 my-10">
+          <div className="flex flex-col gap-3 text-base my-10">
             <button
               onClick={() => setAction('edit-profile')}
               className="
@@ -120,7 +120,7 @@ export default function UserProfile() {
                 hover:bg-[#760000] hover:scale-101
                 active:scale-95 
                 transition-all duration-200 hover:shadow-md
-                text-white rounded-sm shadow-sm shadow-stone-300 font-medium p-2
+                text-white rounded-sm shadow-sm shadow-stone-300 font-medium p-1
               "
             >
               My Profile
@@ -133,7 +133,7 @@ export default function UserProfile() {
               hover:bg-[#5C5C5C] hover:scale-101
               active:scale-95 
               transition-all duration-200 hover:shadow-md
-              rounded-sm shadow-sm shadow-stone-300 font-medium p-2
+              rounded-sm shadow-sm shadow-stone-300 font-medium p-1
             "
             >
               Change password
@@ -143,11 +143,11 @@ export default function UserProfile() {
               <button
                 onClick={() => setAction('request-role')}
                 className="
-              cursor-pointer bg-yellow-300 text-black-800
-              hover:bg-yellow-400 hover:scale-101
+              cursor-pointer bg-gray-300 text-black-800
+              hover:bg-gray-400 hover:scale-101
               active:scale-95 
               transition-all duration-200 hover:shadow-md 
-              rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 font-medium p-2
+              rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 font-medium p-1
             "
               >
                 Let me sell
@@ -161,7 +161,7 @@ export default function UserProfile() {
               hover:bg-yellow-400 hover:scale-101
               active:scale-95 
               transition-all duration-200 hover:shadow-md 
-              rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 font-medium p-2
+              rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 font-medium p-1
             "
               >
                 Add product
@@ -174,7 +174,7 @@ export default function UserProfile() {
                 hover:bg-[#F0EEEE] hover:scale-101
                 active:scale-95 
                 transition-all duration-200 hover:shadow-md 
-                rounded-sm ring ring-gray-200 shadow-sm shadow-black-300 font-medium p-2
+                rounded-sm ring ring-gray-100 shadow-sm shadow-black-300 font-medium p-1
               "
               onClick={() => {
                 handleLogout();

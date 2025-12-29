@@ -31,6 +31,7 @@ import {
 } from '../controllers/product.controllers.ts';
 import { banBidder, getBidHistory, placeBid } from '../controllers/bid.controller.ts';
 import { addChat, addReview, changeOrder, getChat, getOrder } from '../controllers/payment.controller.ts';
+import { ReviewController } from '../controllers/review.controller.ts';
 
 const router = express.Router();
 
@@ -249,12 +250,30 @@ router.delete(
   userControllers.deleteSellerlistProduct
 );
 
-router.post('/profile/role',
+router.post(
+  '/profile/role',
   authController.getAuthentication,
   userControllers.requestRole
 );
 
-// ===============================
+// ===== REVIEWS' APIS =====
+
+router.post(
+  '/review',
+  ReviewController.create
+),
+
+router.post(
+  '/rate',
+  ReviewController.rate
+),
+
+router.post(
+  '/comment',
+  ReviewController.comment
+)
+
+// =========================
 
 router.get('/admin/upgradeRequests', getUpgradeRequest);
 
