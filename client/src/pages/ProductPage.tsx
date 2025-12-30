@@ -99,7 +99,7 @@ const ProductPage = () => {
 
   if (!product) {
     return (
-      <div className="min-h-[50vh] w-full flex flex-col justify-center items-center bg-gray-50">
+      <div className="min-h-[50vh] w-full flex flex-col justify-center items-center">
         <ClipLoader size={40} color="#8D0000" />
         <p className="mt-4 text-gray-500 text-sm font-medium">Loading product details...</p>
       </div>
@@ -107,7 +107,7 @@ const ProductPage = () => {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen py-8 font-sans text-black">
+    <div className="min-h-screen py-8 font-sans text-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <div className="text-sm breadcrumbs mb-6 text-gray-500 flex items-center gap-2">
