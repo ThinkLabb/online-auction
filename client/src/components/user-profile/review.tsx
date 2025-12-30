@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Trash, UndoIcon } from "lucide-react";
 import { OrderStatus, UserRole } from "@prisma/client";
+import { formatDate } from "../product";
 
 export default function ReviewBox(
   {
@@ -28,35 +29,15 @@ export default function ReviewBox(
   const [isPositive, setIsPositive] = useState<boolean | null>(review ? review.is_positive : null);
   const [isReviewing, setIsReviewing] = useState(false)
   const [error, setError] = useState("");
+  const [localReview, setLocalReview] = useState(review);
 
   useEffect(() => {
+    setLocalReview(review);
     if (review) {
       setComment(review.comment || "");
       setIsPositive(review.is_positive);
     }
   }, [review]);
-
-  // const rate = async(rateValue: boolean) => {
-  //   try {
-  //     const result = await fetch('/api/rate', {
-  //       method: 'POST',
-  //       credentials: 'include',
-  //       headers: {'Content-Type': 'application/json'},
-  //       body: JSON.stringify({
-  //         order_id: order_id,
-  //         review_id: review ? review.review_id : null,
-  //         is_positive: rateValue,
-  //         role: role
-  //       }),
-  //     });
-
-  //     const jsonResult = await result.json();
-  //     if (!result.ok) throw new Error(jsonResult.message);
-      
-  //   } catch(e) {
-  //     console.log(e);
-  //   }
-  // }
 
   const submitReview = async() => {
     try {
@@ -66,12 +47,12 @@ export default function ReviewBox(
         return;
       }
 
-      if (!review && isPositive === null) {
+      if (!localReview && isPositive === null) {
         setError("Please provide rating");
         return
       }
       
-      if (!review) {
+      if (!localReview) {
         const result = await fetch(`/api/review/create`, {
           method: 'POST',
           credentials: 'include',
@@ -86,7 +67,18 @@ export default function ReviewBox(
 
         const jsonResult = await result.json();
         if (!result.ok) throw new Error(jsonResult.message);
-        setIsReviewing(false)
+
+        setLocalReview({
+          review_id: jsonResult.data.review_id,
+          is_positive: jsonResult.data.is_positive,
+          comment: jsonResult.data.comment,
+          created_at: jsonResult.data.created_at
+        })
+
+        setComment(jsonResult.data.comment || "");
+        setIsPositive(jsonResult.data.is_positive);
+        
+        setIsReviewing(false);
         return
       }
 
@@ -95,7 +87,7 @@ export default function ReviewBox(
         credentials: 'include',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-          review_id: review?.review_id,
+          review_id: localReview?.review_id,
           comment: comment,
           is_positive: isPositive,
         }),
@@ -103,10 +95,22 @@ export default function ReviewBox(
 
       const jsonResult = await result.json();
       if (!result.ok) throw new Error(jsonResult.message);
-      setIsReviewing(false)
+
+      setLocalReview({
+        review_id: jsonResult.data.review_id,
+        is_positive: jsonResult.data.is_positive,
+        comment: jsonResult.data.comment,
+        created_at: jsonResult.data.created_at
+      })
+      setComment(jsonResult.data.comment || "");
+      setIsPositive(jsonResult.data.is_positive);
       
+      setIsReviewing(false);
+
     } catch(e) {
       console.log(e);
+    } finally {
+      setIsReviewing(false)
     }
   }
 
@@ -157,8 +161,7 @@ export default function ReviewBox(
             <div className="flex flex-col gap-2 items-center">
               <button
                 onClick={submitReview}
-                disabled = {!isReviewing}
-                className={`w-full px-4 py-1 rounded text-white ${isReviewing ? 'bg-[#8D0000]  hover:border hover:bg-white hover:text-[#8D0000]' : 'bg-gray-400'}`}
+                className={`w-full px-4 py-1 rounded text-white bg-[#8D0000]  hover:border hover:bg-white hover:text-[#8D0000]`}
               >
                 Submit
               </button>
@@ -174,28 +177,31 @@ export default function ReviewBox(
           </div>
           {error && <div className="text-[#8D0000] mt-2">{error}</div>}
         </div>
-        :
-        <div>
-          <div className="flex gap-5 items-center">
-            <label className={`block text-base font-medium`}>My Review</label>
-            <div className="flex gap-2 items-center">
-              <ThumbsUp
-                className={`w-5 h-5 text-[#8D0000] ${isPositive !== null && isPositive ? 'fill-[#8D0000]' : ''}`}
-              />
-              <ThumbsDown
-                className={`w-5 h-5 text-[#8D0000] ${isPositive !== null && !isPositive ? 'fill-[#8D0000]' : ''}`}
-              />
+        : <div>
+          {localReview !== undefined && localReview !== null
+          ? <div>
+            <div className="flex justify-between">
+              <div className="flex gap-2 items-center mb-2">
+                <label className={`block text-base font-medium`}>My Review</label>
+                {localReview.is_positive === true 
+                  ? <ThumbsUp className={`w-5 h-5 text-[#8D0000] fill-[#8D0000]`}/>
+                  : <ThumbsDown className={`w-5 h-5 text-[#8D0000] fill-[#8D0000]`}/>
+                }
+                  
+              </div>
+              <div className="text-sm">{formatDate(localReview.created_at)}</div>
             </div>
 
-          </div>
 
-          {review && <p className="my-2 text-sm p-1 w-full bg-white p-2 border border-gray-300 rounded">{comment}</p>}
+            {localReview.comment && <p className="mb-2 text-sm p-1 w-full bg-white p-2 border border-gray-300 rounded">{localReview.comment}</p>}
+          </div>
+          : <p className="mb-2">No review yet</p>}
 
           <button
             onClick={() => setIsReviewing(true)}
             className={`w-full px-4 py-1 rounded text-white bg-black hover:border hover:bg-white hover:text-black hover:scale-101`}
           >
-            Review
+            {localReview ? 'Edit' : 'Review'}
           </button>
         </div>}
       </div>

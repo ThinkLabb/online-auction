@@ -93,6 +93,7 @@ export interface SellingProduct extends ProductCard {
     name: string;
   } | null;
 
+  created_at: string,
   auto_extend: boolean;
   editable: boolean; // True nếu chưa có ai bid
   reviews_count: number;

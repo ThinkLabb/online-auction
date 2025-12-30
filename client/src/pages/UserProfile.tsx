@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-// import userIcon from '@/assets/user.png';
-import userIcon from '../assets/user.png'
-// const userIcon = require('./assets/user.png'); // ! WTF?
 import { useUser } from '../UserContext'
 import { Profile } from "../components/user-profile/interfaces"
 import UserAction from "../components/user-profile/user-profile"
 import { Link } from "react-router-dom"
 import { ClipLoader } from "react-spinners"
 import { SellerStatus } from '../components/user-profile/seller-status';
+import { User2 } from "lucide-react"
 
 export default function UserProfile() {
   const navigate = useNavigate();
@@ -63,7 +61,7 @@ export default function UserProfile() {
   return (
     <div className="w-[90%] max-w-8xl justify-between mx-auto">
       {/* TITLE */}
-      <h1 className="text-center text-5xl font-bold text-[#8D0000] mt-10">
+      <h1 className="text-center text-4xl font-bold text-[#8D0000] mt-10">
         Welcome, {profile.name}!
       </h1>
 
@@ -96,8 +94,10 @@ export default function UserProfile() {
       <div className="my-10 flex flex-col md:flex-row gap-5">
         {/* PROFILE CARD - LEFT */}
         <div className="max-w-2xl flex-1 min-w-0 px-5 pt-10 rounded-sm ring ring-gray-200 shadow-sm shadow-stone-300">
-          <div className="flex flex-row gap-5 mb-5">
-            <img src={userIcon} alt="User icon" className="w-auto h-12" />
+          <div className="flex flex-row items-center gap-3 mb-5">
+            <div className='bg-[#FAE5E5] rounded-full w-10 h-10 flex items-center justify-center p-1'>
+              <User2 className='fill-[#8D0000] stroke-none w-full h-full'/>
+            </div>
             <div className="min-w-0">
               <h3 className="text-lg font-bold truncate">{profile.name}</h3>
               <p className="text-base text-gray-300 truncate">{profile.email}</p>

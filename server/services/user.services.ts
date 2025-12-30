@@ -299,6 +299,7 @@ export const UserServices = {
           current_price: true,
           bid_count: true,
           end_time: true,
+          created_at: true,
 
           start_price: true,
           buy_now_price: true,

@@ -101,6 +101,7 @@ export interface SellingProduct extends ProductCard {
     name: string;
   } | null;
 
+  created_at: string,
   auto_extend: boolean;
   editable: boolean; // True nếu chưa có ai bid
   reviews_count: number;
@@ -867,6 +868,7 @@ export const UserControllers = {
         auto_extend: product.auto_extend,
         editable: product.bids.length === 0,
         reviews_count: product._count.reviews,
+        created_at: new Date(product.created_at).toLocaleDateString()
       }))
 
       // 4. Trả về kết quả
