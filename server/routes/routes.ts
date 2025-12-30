@@ -323,6 +323,12 @@ router.post(
   appendProductDescription
 );
 
+// Get bids of a product
+router.get(
+  '/products/:id/bids',
+  productController.getProductBids
+)
+
 //============================
 // Payment
 router.get('/payment/:orderid', authController.getAuthentication, getOrder);

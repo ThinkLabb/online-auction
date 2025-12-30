@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { BidHistoryItem } from '../lib/type';
 import { formatCurrency } from './product';
 
-const formatTimeAgo = (dateString: string) => {
+export const formatTimeAgo = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);

@@ -913,3 +913,41 @@ export const appendProductDescription = async (req: Request, res: Response) => {
     return res.status(500).json({ error: String(error) });
   }
 };
+
+interface BidHistoryItem {
+  id: string;
+  bidderId: string;
+  bidderName: string;
+  amount: number;
+  time: string;
+}
+
+export const getProductBids = async (req: Request, res: Response) => {
+  try {
+    const {id} = req.params;
+    if (!id) return res.status(400).json(errorResponse("No product's id found"));
+
+    const result = await productService.getProductBids(Number(id));
+
+    if (!result) return res.status(200).json(successResponse([], "No bid yet"));
+
+    const bids = result.bids;
+
+    const return_data: BidHistoryItem[] = bids.map((bid) => ({
+      id: bid.bid_id.toString(),
+      amount: Number(bid.bid_amount),
+      time : new Date(bid.bid_time).toLocaleDateString(),
+      bidderId : bid.bidder.user_id,
+      bidderName: bid.bidder.name
+    }))
+
+    res.status(200).json(successResponse(
+      return_data, return_data.length 
+      ? "Found product's bids successfully" 
+      : "No bid yet"
+    ));
+
+  } catch(e: any) {
+    return res.status(500).json(errorResponse(e.message));
+  }
+}

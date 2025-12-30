@@ -110,3 +110,25 @@ export const getAdminCategories = async () => {
     return { success: false, message: String(e)};
   }
 };
+
+export const getProductBids = async (product_id: number) => {
+  return await db.prisma.product.findUnique({
+    where: {product_id: product_id},
+    select: { 
+      bids: {
+        orderBy: { bid_time: 'desc'},
+        select: {
+          bidder: {
+            select: {
+              user_id: true,
+              name: true,
+            }
+          },
+          bid_amount: true,
+          bid_time: true,
+          bid_id: true
+        }
+      }
+    }
+  })
+}
