@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client';
 
 // import nodemailer from 'nodemailer';
 import * as mailService from '../services/mail.service.ts';
+import { getOrderByProductID } from '../services/payment.services.ts'
 
 export const uploadProducts = async (req: Request, res: Response) => {
   try {
@@ -337,6 +338,14 @@ export const getProduct = async (req: Request, res: Response) => {
         date: new Date(productData.created_at).toLocaleDateString(),
       });
 
+    let orderId = null
+    const isSeller = user ? user.id === productData.seller.user_id : false
+    const isWinner = user ? user.id === productData.current_highest_bidder_id : false
+    if (productData.end_time < new Date() && (isSeller || isWinner)) {
+      orderId = await getOrderByProductID(Number(productData.product_id))
+      console.log("order id", orderId)
+    }
+
     const responseData = {
       id: productData.product_id,
       title: productData.name,
@@ -345,7 +354,8 @@ export const getProduct = async (req: Request, res: Response) => {
         day: 'numeric',
         year: 'numeric',
       }),
-      endsIn: productData.end_time,
+      endsIn: productData.end_time, 
+      orderId: orderId,
       currentBid: Number(productData.current_price),
       bidsPlaced: productData.bid_count,
       buyNowPrice: productData.buy_now_price ? Number(productData.buy_now_price) : 0,
@@ -393,7 +403,7 @@ export const getProduct = async (req: Request, res: Response) => {
       })),
       
       // Flags
-      isSeller: user ? user.id === productData.seller.user_id : false,
+      isSeller: isSeller,
       isWatchlisted: isWatchlisted, // NEW FIELD
 
       relatedProducts: relatedProducts,

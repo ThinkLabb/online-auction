@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Share2, Heart, ChevronRight, Plus, Pencil } from 'lucide-react'; // Removed unused imports
 import { ClipLoader } from 'react-spinners';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import ReactQuill from 'react-quill-new'; // Import Quill
 import 'react-quill-new/dist/quill.snow.css'; // Import Styles
 
@@ -9,6 +9,7 @@ import { SellerSidebar } from '../components/seller-sidebar';
 import { BidderSidebar } from '../components/bidder-sidebar';
 import { ProductQA } from '../components/productQA';
 import { Product } from '../lib/type';
+import { calculateTimeRemaining } from '../components/product';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('vi-VN', {
@@ -34,6 +35,8 @@ const ProductPage = () => {
   const [newDesc, setNewDesc] = useState('');
   const [isSavingDesc, setIsSavingDesc] = useState(false);
 
+  const navigate = useNavigate();
+
   // 1. Fetch dữ liệu
   const fetchProduct = async () => {
     try {
@@ -47,6 +50,10 @@ const ProductPage = () => {
       setProduct(data);
       if (data.images && data.images.length > 0) {
         setActiveImage(data.images[0]);
+      }
+      
+      if (data.orderId !== null) {
+        navigate(`/payment/${data.orderId}`)
       }
     } catch (error) {
       console.error('Error fetching product:', error);

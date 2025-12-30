@@ -60,6 +60,7 @@ export interface Product {
   isSeller: boolean;
   relatedProducts?: RelatedProduct[];
   isWatchlisted: boolean;
+  orderId: number;
 }
 
 export interface BidHistoryItem {
