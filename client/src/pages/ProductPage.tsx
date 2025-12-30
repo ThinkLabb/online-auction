@@ -4,6 +4,7 @@ import { ClipLoader } from 'react-spinners';
 import { useNavigate, useParams } from 'react-router-dom';
 import ReactQuill from 'react-quill-new'; // Import Quill
 import 'react-quill-new/dist/quill.snow.css'; // Import Styles
+import { MemoProductCard } from '../components/product';
 
 import { SellerSidebar } from '../components/seller-sidebar';
 import { BidderSidebar } from '../components/bidder-sidebar';
@@ -286,7 +287,9 @@ const ProductPage = () => {
             </div>
           </div>
 
-          <div className="lg:col-span-4">
+          {/* right col */}
+          <div className="lg:col-span-4 space-y-4">
+            {/* place bid and buy now */}
             {product.isSeller ? (
               <SellerSidebar product={product} onBidSuccess={fetchProduct} />
             ) : (
@@ -300,35 +303,23 @@ const ProductPage = () => {
           <ProductQA product={product} onRefresh={fetchProduct} />
         </div>
 
-        {/* Related Products - Logic Hidden to save space as it was unchanged */}
         {product.relatedProducts && product.relatedProducts.length > 0 && (
-          <div className="mt-16 mb-12">
-            {/* ... (Existing related products code) ... */}
-            {/* I'm omitting the full render here to keep the answer focused, 
-                   but in your real file, keep the code you had below ProductQA */}
+          <div className="mt-16 mb-12 border-t border-gray-200 pt-10">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Other products</h2>
-              {/* ... */}
+              <h2 className="text-2xl font-bold text-gray-900">Other products you might like</h2>
+              <a
+                href={`/category`}
+                className="text-sm font-bold text-[#8D0000] hover:underline flex items-center gap-1"
+              >
+                View all <ChevronRight size={16} />
+              </a>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
-              {product.relatedProducts.map((prod) => (
-                <a
-                  href={`/product/${prod.id}`}
-                  key={prod.id}
-                  className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col h-full"
-                >
-                  {/* ... Product Card Content ... */}
-                  <div className="p-4 flex flex-col flex-1">
-                    <h3 className="font-bold text-gray-900 text-sm mb-2 line-clamp-2">
-                      {prod.name}
-                    </h3>
-                    <div className="mt-auto pt-2">
-                      <span className="text-[#8D0000] font-bold">
-                        {formatCurrency(prod.price)} VND
-                      </span>
-                    </div>
-                  </div>
-                </a>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {product.relatedProducts.map((prod: any) => (
+                <div key={prod.id} className="h-full">
+                  <MemoProductCard product={prod} />
+                </div>
               ))}
             </div>
           </div>

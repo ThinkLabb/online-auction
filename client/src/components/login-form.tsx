@@ -11,12 +11,9 @@ const strongPasswordRegex =
 
 const schema = z.object({
   email: z.string().email({ message: 'Invalid email format' }),
-  password: z
-    .string()
-    .regex(strongPasswordRegex, {
-      message:
-        'Password must contain uppercase, lowercase, number, and special character (!@#$%^&*)',
-    }),
+  password: z.string().regex(strongPasswordRegex, {
+    message: 'Password must contain uppercase, lowercase, number, and special character (!@#$%^&*)',
+  }),
 });
 
 type Inputs = z.infer<typeof schema>;
@@ -52,7 +49,7 @@ export default function LogIn() {
       const result = await res.json();
 
       if (!res.ok) {
-        if (!result.success) {
+        if (!result.isSuccess) {
           // Xử lý lỗi từ server (Email không tồn tại hoặc sai Password)
           if (result.message?.email) {
             setError('email', { message: result.message.email });

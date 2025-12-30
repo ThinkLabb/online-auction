@@ -2,8 +2,8 @@ import { Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { CategoryContext, UserProvider, useUser } from './UserContext.tsx';
 import CategoryDetail from './CategoryMenu.tsx';
-import { JSX, useEffect, useState } from 'react';
-import { Bell, CreditCard, Truck, CheckCircle, Star } from 'lucide-react';
+import { JSX, useEffect, useState, useRef } from 'react';
+import { Bell, CreditCard, Truck, CheckCircle, Star, User2, Eye, LogOut } from 'lucide-react';
 
 type Order = {
   order_id: string;
@@ -16,6 +16,9 @@ function Layout() {
   const [keyword, setKeyword] = useState('');
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [showOrders, setShowOrders] = useState(false);
+  const [showUser, setShowUser] = useState(false);
+  const bellRef = useRef<HTMLLIElement>(null);
+  const userRef = useRef<HTMLLIElement>(null);
 
   const navigate = useNavigate();
 
@@ -45,7 +48,8 @@ function Layout() {
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && keyword.trim()) {
-      navigate(`/search?keyword=${encodeURIComponent(keyword.trim())}`);
+      // navigate(`/search?keyword=${encodeURIComponent(keyword.trim())}`);
+      navigate(`/products/all/all?keyword=${encodeURIComponent(keyword.trim())}`); // Khong chon category nao ca
       setIsSearchOpen(false);
     }
   };
@@ -72,6 +76,22 @@ function Layout() {
         console.error(e);
       }
     })();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (bellRef.current && !bellRef.current.contains(event.target as Node)) {
+        setShowOrders(false);
+      }
+      if (userRef.current && !userRef.current.contains(event.target as Node)) {
+        setShowUser(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const [activeLevel1, setActiveLevel1] = useState('');
@@ -138,7 +158,7 @@ function Layout() {
                 </>
               ) : (
                 <>
-                  <li className="relative">
+                  <li className="relative" ref={bellRef}>
                     <Bell
                       className="w-6 h-6 hover:cursor-pointer text-gray-700 transition-colors hover:text-[#8D0000]"
                       onClick={() => setShowOrders((prev) => !prev)}
@@ -152,13 +172,14 @@ function Layout() {
                     )}
 
                     {showOrders && orders && orders.length > 0 && (
-                      <ul className="absolute left-0 mt-2 w-64 bg-white border border-gray-200 shadow-lg rounded-lg z-50 max-h-72 overflow-y-auto">
+                      <ul className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 shadow-lg rounded-lg z-50 max-h-72 overflow-y-auto">
                         {orders.map((o) => (
                           <li
                             key={o.order_id}
-                            className="px-4 py-2 hover:bg-gray-100 transition-colors flex justify-between items-center text-sm last:border-b-0 hover:cursor-pointer bg-bl"
+                            className="px-4 py-2 hover:bg-gray-100 transition-colors flex justify-between items-center text-sm last:border-b-0 hover:cursor-pointer"
                             onClick={() => {
-                              (navigate(`/payment/${o.order_id}`), setShowOrders(false));
+                              navigate(`/payment/${o.order_id}`);
+                              setShowOrders(false);
                             }}
                           >
                             <div className="flex flex-col">
@@ -172,17 +193,49 @@ function Layout() {
                     )}
                   </li>
 
-                  <li className="bg-[#8D0000] text-white px-3 py-1 rounded text-sm hidden sm:block">
-                    Welcome, {user.name}
-                  </li>
-                  <li
-                    className="bg-black text-white px-3 py-1 rounded cursor-pointer text-sm"
-                    onClick={(e) => {
-                      handleLogout();
-                      navigate('/');
-                    }}
-                  >
-                    Logout
+                  <li className="relative" ref={userRef}>
+                    <div 
+                      className='bg-[#FAE5E5] rounded-full p-1 hover:cursor-pointer'
+                      onClick={() => setShowUser((prev) => !prev)}
+                    >
+                      <User2 className='fill-[#8D0000] stroke-none w-6 h-6'/>
+                    </div>
+                    
+                    {showUser && (
+                      <ul className="absolute right-0 mt-2 w-max bg-white border border-gray-200 shadow-lg rounded-lg z-50">
+                        <li className="px-4 py-2 flex gap-2 items-center text-sm text-gray-700 border-b border-gray-200">
+                          <div 
+                            className='bg-[#FAE5E5] rounded-full p-1 hover:cursor-pointer'
+                          >
+                            <User2 className='fill-[#8D0000] stroke-none w-6 h-6'/>
+                          </div>
+                          <div className='font-bold text-[#8D0000]'>{user.name}</div>
+                        </li>
+                        <Link to={"/profile"} className='px-4 py-2 flex gap-2 items-center text-sm text-gray-700 hover:bg-gray-100 hover:font-bold cursor-pointer'>
+                          <div 
+                            className='bg-gray-200 rounded-full p-1 hover:cursor-pointer'
+                          >
+                            <Eye className='w-5 h-5'/>
+                          </div>
+                          <div>View Profile</div>
+                        </Link>
+                        <li className='px-4 py-2 flex gap-2 items-center text-sm text-gray-700 hover:bg-gray-100 hover:font-bold cursor-pointer'>
+                          <div 
+                            className='bg-gray-200 rounded-full p-1 hover:cursor-pointer'
+                          >
+                            <LogOut className=' w-5 h-5'/>
+                          </div>
+                          <div
+                            onClick={() => {
+                              handleLogout();
+                              navigate('/');
+                            }}
+                          >
+                            Logout
+                          </div>
+                        </li>
+                      </ul>
+                    )}
                   </li>
                 </>
               )}

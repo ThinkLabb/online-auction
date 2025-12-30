@@ -172,7 +172,7 @@ export default function ProductsPage(): JSX.Element {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [level1, level2, activeSortTab, itemsPerPage]);
+  }, [level1, level2, activeSortTab, itemsPerPage, keyword]);
 
   useEffect(() => {
     let apiUrlWithParams = '';
@@ -185,14 +185,13 @@ export default function ProductsPage(): JSX.Element {
         limit: itemsPerPage.toString(),
       });
       console.log('lvel', level1, level2);
-
+      // *** full-text search
       if (keyword) {
-        // full-text search
         params.append('keyword', keyword);
         apiUrlWithParams = `/api/products/search?${params.toString()}`;
       } else if (!level2 || level2 === '*') {
         console.log('----');
-        if (!level1 || level1 === '*')
+        if (!level1 || level1 === 'all' || level1 === '*')
           apiUrlWithParams = `/api/productsLV/*/*?${params.toString()}`;
         else {
           apiUrlWithParams = `/api/productsLV/${level1}/*?${params.toString()}`;
@@ -200,8 +199,8 @@ export default function ProductsPage(): JSX.Element {
         }
       } else {
         // specific category
-        apiUrlWithParams = `/api/productsLV/${level1}/${level2}?${params.toString()}`;
-        console.log(apiUrlWithParams);
+        const safeLevel2 = level2 === 'all' || !level2 ? '*' : level2;
+        apiUrlWithParams = `/api/productsLV/${level1}/${safeLevel2}?${params.toString()}`;
       }
 
       try {
@@ -224,7 +223,7 @@ export default function ProductsPage(): JSX.Element {
     };
 
     fetchProducts();
-  }, [level1, level2, activeSortTab, currentPage, itemsPerPage]);
+  }, [level1, level2, activeSortTab, currentPage, itemsPerPage, keyword]);
 
   return (
     <div className="w-[95%] sm:w-[90%] max-w-8xl mx-auto py-6 sm:py-8">

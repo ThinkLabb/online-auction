@@ -32,7 +32,7 @@ export default function ForgotPassword() {
     setLoading(false);
 
     if (!res.ok) {
-      if (!result.success) {
+      if (!result.isSuccess) {
         setError(result.message);
       }
     } else {
@@ -60,7 +60,7 @@ export default function ForgotPassword() {
     setLoading(false);
 
     if (!res.ok) {
-      if (!result.success) {
+      if (!result.isSuccess) {
         setError(result.message);
       }
     } else {
@@ -74,12 +74,10 @@ export default function ForgotPassword() {
 
   const schema = z
     .object({
-      password: z
-        .string()
-        .regex(strongPasswordRegex, {
-          message:
-            'Password must contain uppercase, lowercase, number, and special character (!@#$%^&*)',
-        }),
+      password: z.string().regex(strongPasswordRegex, {
+        message:
+          'Password must contain uppercase, lowercase, number, and special character (!@#$%^&*)',
+      }),
       confirmpassword: z.string(),
     })
     .refine((data) => data.password === data.confirmpassword, {
@@ -118,7 +116,7 @@ export default function ForgotPassword() {
       setLoading(false);
       const result = await res.json();
 
-      if (!result.success) {
+      if (!result.isSuccess) {
         setError(result.message);
       } else {
         setError(null);

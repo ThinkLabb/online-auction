@@ -7,7 +7,6 @@ import { BUCKET_NAME, s3Client } from '../config/s3.ts';
 import { Readable } from 'stream'; // <--- 1. Import cái này
 import { Prisma } from '@prisma/client';
 
-// import nodemailer from 'nodemailer';
 import * as mailService from '../services/mail.service.ts';
 import { getOrderByProductID } from '../services/payment.services.ts'
 
@@ -227,7 +226,7 @@ const bigIntReplacer = (key: string, value: any) => {
   return value;
 };
 
-const calculateRating = (plus: number, minus: number) => {
+export const calculateRating = (plus: number, minus: number) => {
   const total = plus + minus;
   if (total === 0) return 0;
   return Number(((plus / total) * 10).toFixed(1));
@@ -242,7 +241,7 @@ export const getProduct = async (req: Request, res: Response) => {
     const productData = await db.prisma.product.findUnique({
       where: { product_id: BigInt(id) },
       include: {
-        seller: { select: { user_id: true, name: true, plus_review: true, minus_review: true } },
+        seller: { select: { user_id: true, name: true, plus_review: true, minus_review: true } }, // seller info
         category: true,
         current_highest_bidder: { select: { name: true, plus_review: true, minus_review: true } },
         images: true,
@@ -348,23 +347,24 @@ export const getProduct = async (req: Request, res: Response) => {
       const timeLeft = days > 0 ? `${days} day${days > 1 ? 's' : ''} left` : `${hours}h left`;
 
       return {
+        // follow the "MemoProductCard" structure
         id: p.product_id.toString(),
         name: p.name,
-        price: Number(p.current_price) > 0 ? Number(p.current_price) : Number(p.start_price),
-        buyNowPrice: p.buy_now_price ? Number(p.buy_now_price) : null,
-        bidCount: p.bid_count,
-        postedDate: new Date(p.created_at).toLocaleDateString('en-GB'),
-        timeLeft: timeLeft,
-        bidderName: p.current_highest_bidder?.name || 'No Bids Yet',
-        image: p.images[0]?.image_url || null,
+        bid_count: p.bid_count,
+        current_price: p.current_price.toString(),
+        buy_now_price: p.buy_now_price ? p.buy_now_price.toString() : null,
+        end_time: p.end_time,
+        created_at: p.created_at,
+        highest_bidder_name: p.current_highest_bidder?.name || null,
+        image_url: p.images[0]?.image_url || null,
       };
     });
 
     const descriptionList = productData.description_history.map((hist) => ({
       text: hist.description,
-      date: new Date(hist.added_at).toLocaleDateString('vi-VN', {
+      date: new Date(hist.added_at).toLocaleDateString('en-GB', {
         year: 'numeric',
-        month: 'short',
+        month: 'numeric',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
@@ -431,7 +431,7 @@ export const getProduct = async (req: Request, res: Response) => {
         responder: qa.answer_text ? `${productData.seller.name} (Seller)` : null,
         time: new Date(qa.question_time).toLocaleDateString(),
       })),
-      
+
       // Flags
       isSeller: isSeller,
       isWatchlisted: isWatchlisted, // NEW FIELD
@@ -476,10 +476,10 @@ export const getProductsLV = async (req: Request, res: Response) => {
     if (level1 && level1 !== '*') {
       whereClause.category = {
         name_level_1: String(level1),
-        ...(level2 && level2 !== '*' ? { name_level_2: String(level2) } : {})
+        ...(level2 && level2 !== '*' ? { name_level_2: String(level2) } : {}),
       };
     }
-    
+
     let orderByClause: any = {};
     const sortField: SortField =
       sortQuery && ['end_time', 'current_price'].includes(sortQuery) ? sortQuery : 'end_time';
@@ -683,19 +683,8 @@ export const createProductQA = async (req: Request, res: Response) => {
 
     // send email to seller
     const productLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/product/${id}`;
+    mailService.sendNewQuestionEmail(product.seller.email, product.name, question, productLink);
 
-    await mailService.sendCustomEmail({
-      to: product.seller.email,
-      subject: `New Question: ${product.name}`,
-      html: `
-        <h3>Hello ${product.seller.name},</h3>
-        <p>User <strong>${user.name}</strong> asked a question about your product (${product.name}):</p>
-        <div style="background:#f3f4f6; padding:15px; border-left:4px solid #8D0000;">
-          "${question}"
-        </div>
-        <p><a href="${productLink}">Reply Now</a></p>
-      `,
-    });
     return res.status(201).json({ message: 'Question sent successfully!' });
   } catch (error) {
     console.error(error);
@@ -717,7 +706,6 @@ export const replyProductQA = async (req: Request, res: Response) => {
       where: { qa_id: BigInt(qaId) },
       include: {
         product: true,
-        questioner: { select: { email: true, name: true } }, // <--- questioner info for emailing
       },
     });
 
@@ -738,22 +726,41 @@ export const replyProductQA = async (req: Request, res: Response) => {
       },
     });
 
-    // send email to questioner
-    const productLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/product/${qa.product_id}`;
-
-    await mailService.sendCustomEmail({
-      to: qa.questioner.email,
-      subject: `Answer for ${qa.product.name}`,
-      html: `
-        <h3>Hello ${qa.questioner.name},</h3>
-        <p>Seller <strong>${user.name}</strong> answered your question about product ${qa.product.name}:</p>
-        <div style="background:#f3f4f6; padding:15px; border-left:4px solid #8D0000;">
-          <p><strong>You asked:</strong> "${qa.question_text}"</p>
-          <p><strong>Answer:</strong> "${answer}"</p
-        </div>
-        <p><a href="${productLink}">Reply Now</a></p>
-      `,
+    // Send email
+    const productData = await db.prisma.product.findUnique({
+      where: { product_id: qa.product_id },
+      include: {
+        bids: {
+          select: { bidder: { select: { email: true } } },
+        },
+        q_and_a: {
+          select: { questioner: { select: { email: true } } },
+        },
+      },
     });
+
+    if (productData) {
+      // Lay danh sach nguoi da hoi va da dat
+      const questionerList = new Set<string>();
+      productData.q_and_a.forEach((q) => questionerList.add(q.questioner.email));
+      productData.bids.forEach((b) => questionerList.add(b.bidder.email));
+
+      questionerList.delete(user.email);
+
+      const recipients = Array.from(questionerList);
+      const productLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/product/${qa.product_id.toString()}`;
+
+      if (recipients.length > 0) {
+        mailService.sendNewAnswerEmail(
+          recipients,
+          qa.product.name,
+          qa.question_text,
+          answer,
+          productLink
+        );
+      }
+    }
+
     return res.status(201).json({ message: 'Answer sent successfully!' });
   } catch (error) {
     console.error(error);

@@ -19,6 +19,7 @@ import {
   updateCategory,
 } from '../controllers/admin.controler.ts';
 import * as userControllers from '../controllers/user.controllers.ts';
+import { UserControllers } from '../controllers/user.controllers.ts';
 import {
   getProduct,
   getProductsEndest,
@@ -37,6 +38,8 @@ import {
   getOrder,
   getOrderImage,
 } from '../controllers/payment.controller.ts';
+import { ReviewController } from '../controllers/review.controller.ts';
+import { OrderController } from '../controllers/order.controller.ts';
 
 const router = express.Router();
 
@@ -177,30 +180,132 @@ router.put(
 );
 
 // ===== PROFILE PAGE'S API =====
-router.get('/profile', authController.getAuthentication, userControllers.getMyProfile);
-router.patch('/profile', authController.getAuthentication, userControllers.editUserProfile);
-router.use('/profile/verifyuser', authController.verifyUser);
-router.post('/watch-list/add', authController.getAuthentication, productController.addToWatchList);
+router.get(
+  '/profile',
+  authController.getAuthentication,
+  userControllers.getMyProfile
+);
+
+router.get(
+  '/profile/biddings',
+  authController.getAuthentication,
+  UserControllers.BidderControllers.getBiddingProducts
+);
+
+router.get(
+  '/profile/won-products',
+  authController.getAuthentication,
+  UserControllers.BidderControllers.getWonProducts
+);
+
+
+router.get(
+  '/profile/watchlist',
+  authController.getAuthentication,
+  UserControllers.BidderControllers.getWatchlistProducts
+);
+
+router.get(
+  '/profile/reviews',
+  authController.getAuthentication,
+  UserControllers.BidderControllers.getReviews
+);
+
+router.get(
+  '/profile/reviews-from-buyers',
+  authController.getAuthentication,
+  UserControllers.BidderControllers.getReviewsFromBuyers
+);
+
+router.get(
+  '/profile/reviews-from-sellers',
+  authController.getAuthentication,
+  UserControllers.BidderControllers.getReviewsFromSellers
+);
+
+router.get(
+  '/profile/sellings',
+  authController.getSellerAuthentication,
+  UserControllers.SellerControllers.getSellerProducts
+);
+
+router.get(
+  '/profile/solds',
+  authController.getSellerAuthentication,
+  UserControllers.SellerControllers.getProductsWithWinner
+)
+
+router.patch(
+  '/profile',
+  authController.getAuthentication,
+  userControllers.editUserProfile
+);
+
+router.use(
+  '/profile/verifyuser',
+  authController.verifyUser
+);
+
+router.post(
+  '/watch-list/add',
+  authController.getAuthentication,
+  productController.addToWatchList
+);
+
 router.delete(
   '/watch-list/:product_id',
   authController.getAuthentication,
   userControllers.deleteWatchlistProduct
 );
+
 router.delete(
   '/seller-list/:product_id',
   authController.getAuthentication,
   userControllers.deleteSellerlistProduct
 );
 
-router.post('/profile/role', authController.getAuthentication, userControllers.requestRole);
-
+router.post(
+  '/profile/role',
+  authController.getAuthentication,
+  userControllers.requestRole
+);
 router.get(
-  '/profile/seller/products',
-  authController.getSellerAuthentication,
-  userControllers.getSellerProducts
+  '/profile/seller-status',
+  authController.getAuthentication,
+  userControllers.getSellerStatus
 );
 
-// ===============================
+router.post(
+  '/review/create',
+  authController.getAuthentication,
+  ReviewController.create
+),
+
+router.put(
+  '/review/update',
+  authController.getAuthentication,
+  ReviewController.update
+),
+
+router.post(
+  '/rate',
+  authController.getAuthentication,
+  ReviewController.rate
+),
+
+router.post(
+  '/comment',
+  authController.getAuthentication,
+  ReviewController.comment
+)
+
+router.post(
+  '/order/cancel/:id',
+  authController.getSellerAuthentication,
+  OrderController.cancel
+)
+
+// =========================
 
 router.get('/admin/upgradeRequests', getUpgradeRequest);
 

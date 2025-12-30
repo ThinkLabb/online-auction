@@ -89,8 +89,7 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
     if (orderProp.likestatus) {
       setLikeStatus(orderProp.likestatus ? 'like' : 'dislike');
     }
-    if (orderProp.review) 
-      setReview(orderProp.review);
+    if (orderProp.review) setReview(orderProp.review);
 
     setShippingAddress(orderProp.shipping_address ?? '');
     setReviewSubmitted(orderProp.is_reviewed);
@@ -150,8 +149,6 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
     if (status === 'cancelled') {
       setLikeStatus('dislike');
       setReview('The winner did not pay.');
-      // Auto-submit review for cancellation logic if needed
-      return;
     }
     if (status === 'payment_confirmed' && (!paymentInvoice || !shippingAddress)) {
       alert('Need to add shipping address and payment invoice');
@@ -177,7 +174,7 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
         payload.shipping_invoice = base64Image;
       }
 
-      setloadingSubmit(true)
+      setloadingSubmit(true);
       const res = await fetch(`/api/payment/${order.order_id}`, {
         method: 'PUT',
         credentials: 'include',
@@ -186,13 +183,13 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
       });
 
       if (!res.ok) {
-        setloadingSubmit(false)
+        setloadingSubmit(false);
         alert('Failed to connect to server');
         return;
       }
 
       const result = await res.json();
-      setloadingSubmit(false)
+      setloadingSubmit(false);
 
       if (!result.isSuccess) {
         alert(result.message);
@@ -235,7 +232,7 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
       if (!res.ok) {
         setloadingSubmit(false);
         return;
-      } 
+      }
 
       const result = await res.json();
       setloadingSubmit(false);
@@ -247,7 +244,7 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
       setReviewSubmitted(true);
       setIsEditingReview(false);
     } catch (e) {
-      alert("Error submitting review");
+      alert('Error submitting review');
     }
   };
 
@@ -258,12 +255,16 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
         <div className="max-w-4xl mx-auto border rounded-xl bg-white shadow-lg">
           <div className="p-6 border-b flex justify-between items-center">
             <h2 className="text-2xl font-semibold">Transaction Cancelled</h2>
-            <span className="rounded-full bg-black text-[#8D0000] px-3 py-1 text-xs font-semibold">Cancelled</span>
+            <span className="rounded-full bg-black text-[#8D0000] px-3 py-1 text-xs font-semibold">
+              Cancelled
+            </span>
           </div>
           <div className="p-6">
             <div className="flex gap-3 items-start border border-[#8D0000] p-4 rounded-lg">
               <XCircle className="h-5 w-5 text-[#8D0000] mt-0.5" />
-              <p className="text-[#8D0000]">This transaction has been cancelled and cannot be continued.</p>
+              <p className="text-[#8D0000]">
+                This transaction has been cancelled and cannot be continued.
+              </p>
             </div>
           </div>
         </div>
@@ -288,8 +289,11 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
             >
               <MessageSquare className="h-4 w-4 mr-2" /> Chat
             </button>
-            {order.is_seller && order.status !== 'completed' && (
-              <button className={`h-10 px-4 rounded-md ${DESTRUCTIVE} self-end`} onClick={() => handleSubmit(null, 'cancelled')}>
+            {order.is_seller && order.status === 'pending_payment' && (
+              <button
+                className={`h-10 px-4 rounded-md ${DESTRUCTIVE} self-end`}
+                onClick={() => handleSubmit(null, 'cancelled')}
+              >
                 Cancel Transaction
               </button>
             )}
@@ -310,7 +314,9 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
               </div>
 
               <div className="flex-1 pb-8 justify-center">
-                <h3 className="font-semibold text-lg">Step {step.number}: {step.title}</h3>
+                <h3 className="font-semibold text-lg">
+                  Step {step.number}: {step.title}
+                </h3>
                 <p className="text-sm text-gray-500 mb-4">{step.description}</p>
 
                 {/* STEP 1 Logic */}
@@ -330,16 +336,34 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
                         <p className="text-gray-500 text-sm">Click to upload payment invoice</p>
                       </div>
                     )}
-                    <input id="paymentInvoiceInput" type="file" accept=".pdf,.jpg,.png" onChange={handlePaymentInvoiceChange} className="hidden" />
+                    <input
+                      id="paymentInvoiceInput"
+                      type="file"
+                      accept=".pdf,.jpg,.png"
+                      onChange={handlePaymentInvoiceChange}
+                      className="hidden"
+                    />
                     {paymentInvoicePreview && (
                       <div className="relative block">
-                        <img src={paymentInvoicePreview} className="mt-2 h-32 object-contain border rounded" alt="Preview" />
-                        <button onClick={handleDeletePaymentInvoice} className="absolute -top-1 -right-1 bg-black text-white rounded-full w-6 h-6 flex items-center justify-center">×</button>
+                        <img
+                          src={paymentInvoicePreview}
+                          className="mt-2 h-32 object-contain border rounded"
+                          alt="Preview"
+                        />
+                        <button
+                          onClick={handleDeletePaymentInvoice}
+                          className="absolute -top-1 -right-1 bg-black text-white rounded-full w-6 h-6 flex items-center justify-center"
+                        >
+                          ×
+                        </button>
                       </div>
                     )}
-                    <button className={`h-10 px-4 mt-2 rounded-md ${PRIMARY} self-end`} onClick={() => handleSubmit(shippingAddress, 'payment_confirmed')}>
+                    <button
+                      className={`h-10 px-4 mt-2 rounded-md ${PRIMARY} self-end`}
+                      onClick={() => handleSubmit(shippingAddress, 'payment_confirmed')}
+                    >
                       {loadingSubmit ? (
-                        <ClipLoader size={20} color='white' />
+                        <ClipLoader size={20} color="white" />
                       ) : (
                         'Submit address & pay'
                       )}
@@ -347,43 +371,70 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
                   </div>
                 )}
                 {step.number === 1 && order.payment_proof_url && (
-                  <img className="mt-2 h-32 object-contain border rounded" src={`/api/assets/${order.payment_proof_url}`} alt="Proof" />
+                  <img
+                    className="mt-2 h-32 object-contain border rounded"
+                    src={`/api/assets/${order.payment_proof_url}`}
+                    alt="Proof"
+                  />
                 )}
 
                 {/* STEP 2 Logic */}
                 {step.number === 2 && order.is_seller && order.status === 'payment_confirmed' && (
                   <div className="space-y-3">
                     {!shippingInvoicePreview && (
-                    <div
-                      onClick={() => document.getElementById('shippingInvoiceInput')?.click()}
-                      className="border-2 border-dashed border-gray-300 rounded-lg h-32 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition"
-                    >
-                      <p className="text-gray-500 text-sm">Upload shipping invoice</p>
-                    </div>)}
-                    <input id="shippingInvoiceInput" type="file" accept=".pdf,.jpg,.png" onChange={handleShippingInvoiceChange} className="hidden" />
-                    {shippingInvoicePreview && (
-                      <div className="relative block">
-                        <img src={shippingInvoicePreview} className="mt-2 h-32 object-contain border rounded" alt="Shipping Preview" />
-                        <button onClick={handleDeleteShippingInvoice} className="absolute -top-1 -right-1 bg-black text-white rounded-full w-6 h-6 flex items-center justify-center">×</button>
+                      <div
+                        onClick={() => document.getElementById('shippingInvoiceInput')?.click()}
+                        className="border-2 border-dashed border-gray-300 rounded-lg h-32 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition"
+                      >
+                        <p className="text-gray-500 text-sm">Upload shipping invoice</p>
                       </div>
                     )}
-                    <button className={`h-10 px-4 rounded-md ${PRIMARY}`} disabled={!shippingInvoice} onClick={() => handleSubmit(null, 'shipped')}>
+                    <input
+                      id="shippingInvoiceInput"
+                      type="file"
+                      accept=".pdf,.jpg,.png"
+                      onChange={handleShippingInvoiceChange}
+                      className="hidden"
+                    />
+                    {shippingInvoicePreview && (
+                      <div className="relative block">
+                        <img
+                          src={shippingInvoicePreview}
+                          className="mt-2 h-32 object-contain border rounded"
+                          alt="Shipping Preview"
+                        />
+                        <button
+                          onClick={handleDeleteShippingInvoice}
+                          className="absolute -top-1 -right-1 bg-black text-white rounded-full w-6 h-6 flex items-center justify-center"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
+                    <button
+                      className={`h-10 px-4 rounded-md ${PRIMARY}`}
+                      disabled={!shippingInvoice}
+                      onClick={() => handleSubmit(null, 'shipped')}
+                    >
                       {/* Confirm shipment */}
-                      {loadingSubmit ? (
-                        <ClipLoader size={20} color='white' />
-                      ) : (
-                        'Confirm shipment'
-                      )}
+                      {loadingSubmit ? <ClipLoader size={20} color="white" /> : 'Confirm shipment'}
                     </button>
                   </div>
                 )}
                 {step.number === 2 && order.shipping_proof_url && (
-                  <img className="mt-2 h-32 object-contain border rounded" src={`/api/assets/${order.shipping_proof_url}`} alt="Shipping Proof" />
+                  <img
+                    className="mt-2 h-32 object-contain border rounded"
+                    src={`/api/assets/${order.shipping_proof_url}`}
+                    alt="Shipping Proof"
+                  />
                 )}
 
                 {/* STEP 3 Logic */}
                 {step.number === 3 && isBuyer && order.status === 'shipped' && (
-                  <button className={`h-10 px-4 rounded-md ${PRIMARY}`} onClick={() => handleSubmit(null, 'completed')}>
+                  <button
+                    className={`h-10 px-4 rounded-md ${PRIMARY}`}
+                    onClick={() => handleSubmit(null, 'completed')}
+                  >
                     Item received
                   </button>
                 )}
@@ -394,7 +445,7 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
                     <div className="flex justify-between items-center">
                       <h4 className="font-semibold">Your Experience</h4>
                       {reviewSubmitted && !isEditingReview && (
-                        <button 
+                        <button
                           onClick={() => setIsEditingReview(true)}
                           className="text-sm font-medium text-[#8D0000] underline"
                         >
@@ -406,10 +457,16 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
                     {reviewSubmitted && !isEditingReview ? (
                       <div className="bg-white p-4 rounded border">
                         <div className="flex items-center gap-2 mb-2">
-                          {likeStatus === 'like' ? <ThumbsUp className="h-4 w-4 text-[#8D0000]" /> : <ThumbsDown className="h-4 w-4 text-red-600" />}
+                          {likeStatus === 'like' ? (
+                            <ThumbsUp className="h-4 w-4 text-[#8D0000]" />
+                          ) : (
+                            <ThumbsDown className="h-4 w-4 text-red-600" />
+                          )}
                           <span className="capitalize font-bold text-sm">{likeStatus}</span>
                         </div>
-                        <p className="text-gray-600 text-sm italic">"{review || 'No comment provided.'}"</p>
+                        <p className="text-gray-600 text-sm italic">
+                          "{review || 'No comment provided.'}"
+                        </p>
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -435,15 +492,21 @@ export function OrderCompletionView({ order: orderProp }: { order: Order }) {
                           onChange={(e) => setReview(e.target.value)}
                         />
                         <div className="flex gap-2">
-                          <button className={`${PRIMARY} h-10 px-6 rounded-md font-medium`} onClick={handleSubmitReview}>
+                          <button
+                            className={`${PRIMARY} h-10 px-6 rounded-md font-medium`}
+                            onClick={handleSubmitReview}
+                          >
                             {loadingSubmit ? (
-                              <ClipLoader size={20} color='white' />
+                              <ClipLoader size={20} color="white" />
                             ) : (
                               'Submit Review'
                             )}
                           </button>
                           {isEditingReview && (
-                            <button className="h-10 px-4 rounded-md border bg-white hover:bg-gray-100" onClick={() => setIsEditingReview(false)}>
+                            <button
+                              className="h-10 px-4 rounded-md border bg-white hover:bg-gray-100"
+                              onClick={() => setIsEditingReview(false)}
+                            >
                               Cancel
                             </button>
                           )}

@@ -74,10 +74,14 @@ model SellerUpgradeRequest {
   user_id             String      @db.Uuid
   // Trường thông báo (message) của người dùng
   message             String?     @db.Text
+  // Loại yêu cầu: permanent (vĩnh viễn) hoặc temporary (7 ngày)
+  request_type        String      @default("permanent") @db.Text
   is_approved         Boolean     @default(false)
   is_denied           Boolean     @default(false)
   requested_at        DateTime    @default(now()) @db.Timestamptz
   processed_at        DateTime?   @db.Timestamptz
+  // Thời gian hết hạn quyền seller (chỉ áp dụng cho temporary)
+  expires_at          DateTime?   @db.Timestamptz
   
   // Relationship
   user                User        @relation(fields: [user_id], references: [user_id], onDelete: Cascade)

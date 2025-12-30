@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import UserTab from './user-profile-tabs';
-import { ProfileData } from './types';
-import { SetAction } from './types';
+import { Profile } from './interfaces';
+import { SetAction } from './interfaces';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,6 +9,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import { LocationOption } from '../register-form';
 import { formatDate } from '../product';
+import { profile } from 'console';
 
 const schema = z.object({
   name: z
@@ -42,7 +43,7 @@ export const getAddressParts = (fullAddress?: string | null) => {
   };
 };
 
-function EditProfile({ profile, setAction }: { profile: ProfileData; setAction: SetAction }) {
+function EditProfile({ profile, setAction }: { profile: Profile; setAction: SetAction }) {
   const formatDateForInput = (dateInput?: string | Date | null) => {
     if (!dateInput) return '';
 
@@ -124,7 +125,7 @@ function EditProfile({ profile, setAction }: { profile: ProfileData; setAction: 
       const result = await res.json();
 
       if (!res.ok) {
-        if (!result.success) {
+        if (!result.isSuccess) {
           if (result.message?.name) setError('name', { message: result.message.name });
           if (result.message?.email) setError('email', { message: result.message.email });
           if (result.message?.birthdate)
@@ -141,6 +142,7 @@ function EditProfile({ profile, setAction }: { profile: ProfileData; setAction: 
       profile.email = data.email;
       profile.address = `${data.homenumber}, ${data.street}, ${data.ward}, ${data.province}`;
       profile.birthdate = data.birthdate ? data.birthdate : '';
+      alert('Edited profile successfully!');
     }
   };
 
@@ -355,7 +357,7 @@ function EditProfile({ profile, setAction }: { profile: ProfileData; setAction: 
   );
 }
 
-function ChangePassword({ profile, setAction }: { profile: ProfileData; setAction: SetAction }) {
+function ChangePassword({ profile, setAction }: { profile: Profile; setAction: SetAction }) {
   const [loading, setLoading] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -406,12 +408,10 @@ function ChangePassword({ profile, setAction }: { profile: ProfileData; setActio
 
   const schema = z
     .object({
-      password: z
-        .string()
-        .regex(strongPasswordRegex, {
-          message:
-            'Password must contain uppercase, lowercase, number, and special character (!@#$%^&*)',
-        }),
+      password: z.string().regex(strongPasswordRegex, {
+        message:
+          'Password must contain uppercase, lowercase, number, and special character (!@#$%^&*)',
+      }),
       confirmpassword: z.string(),
     })
     .refine((data) => data.password === data.confirmpassword, {
@@ -437,7 +437,7 @@ function ChangePassword({ profile, setAction }: { profile: ProfileData; setActio
     try {
       setLoading(true);
       const res = await fetch('/api/changepassword', {
-        method: 'POST',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -454,12 +454,12 @@ function ChangePassword({ profile, setAction }: { profile: ProfileData; setActio
         console.log('Fail full!!!');
         setError(result.message);
       } else {
-        console.log('Success full!!!');
+        alert('Changed password successfully!');
         setError(null);
         setAction('view-tabs');
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      console.error(e.message);
     }
   };
 
@@ -607,6 +607,7 @@ function RequesRole({ setAction }: { setAction: SetAction }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: message,
+          request_type: 'temporary',
         }),
       });
 
@@ -635,9 +636,7 @@ function RequesRole({ setAction }: { setAction: SetAction }) {
 
   return (
     <div className="p-8 border border-gray-200 shadow-lg rounded-lg bg-white flex flex-col gap-4">
-      <h1 className="text-3xl font-bold text-foreground">
-        Let us know why you want to be a seller
-      </h1>
+      <h1 className="text-3xl font-bold text-foreground">Request Seller Access (7 Days)</h1>
 
       <hr />
 
@@ -650,6 +649,21 @@ function RequesRole({ setAction }: { setAction: SetAction }) {
         }}
         className="flex flex-col gap-6"
       >
+        <div className="p-4 border border-blue-300 rounded-lg bg-blue-50">
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <div className="font-semibold text-blue-900 flex items-center gap-2 mb-2">
+                Seller Access (7 Days)
+              </div>
+              <div className="text-sm text-blue-700">
+                You will receive seller permissions for 7 days after approval. During this time, you
+                can create and manage product listings. After 7 days, your seller access will
+                automatically expire, but your existing products will remain active.
+              </div>
+            </div>
+          </div>
+        </div>
+
         <label htmlFor="message" className="text-muted-foreground">
           Your message
         </label>
@@ -662,6 +676,7 @@ function RequesRole({ setAction }: { setAction: SetAction }) {
           }}
           placeholder="Leave your message here..."
           className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
+          rows={4}
         />
 
         <div className="mt-10 flex flex-col md:flex-row md:mx-auto gap-5">
@@ -698,7 +713,7 @@ function RequesRole({ setAction }: { setAction: SetAction }) {
   );
 }
 
-function ViewTabs({ profile, setAction }: { profile: ProfileData; setAction: SetAction }) {
+function ViewTabs({ profile, setAction }: { profile: Profile; setAction: SetAction }) {
   return <UserTab profile={profile} />;
 }
 
@@ -707,7 +722,7 @@ export default function UserAction({
   action,
   setAction,
 }: {
-  profile: ProfileData;
+  profile: Profile;
   action: string;
   setAction: SetAction;
 }) {
