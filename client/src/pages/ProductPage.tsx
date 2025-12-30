@@ -4,6 +4,7 @@ import { ClipLoader } from 'react-spinners';
 import { useNavigate, useParams } from 'react-router-dom';
 import ReactQuill from 'react-quill-new'; // Import Quill
 import 'react-quill-new/dist/quill.snow.css'; // Import Styles
+import { MemoProductCard } from '../components/product';
 
 import { SellerSidebar } from '../components/seller-sidebar';
 import { BidderSidebar } from '../components/bidder-sidebar';
