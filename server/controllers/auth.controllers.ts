@@ -3,6 +3,7 @@ import * as authService from '../services/auth.services.ts';
 import { errorResponse, successResponse } from '../utils/response.ts';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { getOrderByUserID } from './payment.controller.ts';
+import db from "../services/database.ts"
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -118,27 +119,59 @@ export const getAuthentication = function (req: Request, res: Response, next: Ne
   }
 };
 
-export const getSellerAuthentication = function (req: Request, res: Response, next: NextFunction) {
+export const getSellerAuthentication = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const secret = process.env.JWT_SECRET;
     if (!secret) {
       throw new Error('JWT_SECRET is not defined');
     }
-    interface UserPayload extends JwtPayload {
-      id: string;
-      name: string;
-      email: string;
-      role: string;
+
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
     }
-    const payload: UserPayload = jwt.verify(req.cookies.token, secret) as UserPayload;
-    if (payload.role !== 'seller') {
+
+    const decoded = jwt.verify(token, secret) as JwtPayload;
+    
+    const user = await db.prisma.user.findUnique({
+      where: { user_id: decoded.id },
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    if (user.role !== 'seller') {
       return res.sendStatus(403);
     }
-    res.locals.user = payload;
+
+    const newPayload = {
+      id: user.user_id,
+      name: user.name, 
+      email: user.email,
+      role: user.role, 
+    };
+
+    const newToken = jwt.sign(
+      { id: user.user_id, name: user.name, email: user.email, role: user.role },
+      secret,
+      { expiresIn: '1h' }
+    );
+
+    res.cookie('token', newToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1000 * 60 * 60,
+    });
+
+    res.locals.user = newPayload;
     res.locals.authenticated = true;
+    
     next();
+
   } catch (e) {
-    return res.status(500).json(errorResponse(String(e)));
+    console.error("Auth Middleware Error:", e);
+    return res.status(403).json({ success: false, message: 'Session expired or invalid' });
   }
 };
 
