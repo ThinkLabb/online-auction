@@ -210,7 +210,7 @@ export const BidderSidebar = ({
         </div>
       </div>
 
-      {/* User Info Cards (Seller & Top Bidder) */}
+      {/* User Info Cards */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 divide-y divide-gray-100">
         {/* Seller Info */}
         <div className="pb-4">
@@ -224,7 +224,7 @@ export const BidderSidebar = ({
       </div>
 
       {/* Bid history table */}
-      <GeneralBidHistory id={product.id}/>
+      <GeneralBidHistory id={product.id} />
     </div>
   );
 };
