@@ -57,6 +57,56 @@ export const UserServices = {
         orderBy: { bid_time: "desc" },
       });
     },
+
+    getBiddedProducts: async (user_id: string) => {
+      return db.prisma.bidHistory.findMany({
+        where: { 
+          bidder_id: user_id,
+          product: { status: "sold" },
+        },
+        select: {
+          bid_amount: true,
+          bid_time: true,
+          product: {
+            select: {
+              product_id: true,
+              name: true,
+              status: true,
+
+              current_price: true,
+              buy_now_price: true,
+
+              bid_count: true,
+              end_time: true,
+
+              seller: { 
+                select: {
+                  user_id: true,
+                  name: true,
+                }
+              },
+              category: {
+                select: {
+                  category_id: true,
+                  name_level_1: true,
+                  name_level_2: true,
+                },
+              },
+              current_highest_bidder: {
+                select: { 
+                  user_id: true,
+                  name: true
+                },
+              },
+              images: { take: 1, select: { image_url: true },},
+              _count: { select: {reviews: true } }
+            },
+          }
+        },
+        distinct: ["product_id"],
+        orderBy: { bid_time: "desc" },
+      });
+    },
     
     getWonProducts: async (user_id: string) => {
       return db.prisma.order.findMany({

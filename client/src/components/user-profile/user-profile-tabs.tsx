@@ -257,6 +257,7 @@ function BiddingTab({ profile }: { profile: Profile }) {
 
 function WonTab({profile} : {profile: Profile}) {
   const [products, setProducts] = useState<WonProduct[]>([]);
+  const [biddeds, setBiddes] = useState<BiddingProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const fetchWonProducts = async() => {
     try {
@@ -278,7 +279,28 @@ function WonTab({profile} : {profile: Profile}) {
     }
   }
 
+  const fetchBiddedProducts = async() => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/profile/biddeds', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const result = await res.json();
+      if (res.ok) setBiddes(result.data);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
+    fetchBiddedProducts();
     fetchWonProducts();
   }, []);
 
@@ -289,10 +311,28 @@ function WonTab({profile} : {profile: Profile}) {
       </div>
     : <div className="flex flex-col gap-2 h-full">
         
-        {/* 1. Header Count - Đứng yên */}
         <p className="text-gray-500 font-medium ml-1 shrink-0">
           Won {products.length} product{products.length > 1 ? 's' : ''}
         </p>
+
+        {biddeds.length > 0 && products.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
+             {/* Card 1: Tổng đang tham gia */}
+             <div className="bg-white p-3 rounded border border-gray-200 shadow-sm flex flex-col">
+                <span className="text-xs text-gray-500 uppercase font-semibold">Bidded</span>
+                <span className="text-2xl font-bold text-gray-800">{biddeds.length}</span>
+             </div>
+
+             {/* Card 2: Đang dẫn đầu (Quan trọng nhất -> Màu nổi) */}
+             <div className="bg-green-50 p-3 rounded border border-green-200 shadow-sm flex flex-col">
+                <span className="text-xs text-green-700 uppercase font-semibold">Won</span>
+                <div className="flex items-end gap-2">
+                  <span className="text-2xl font-bold text-green-700">{products.length}</span>
+                  <span className="text-sm text-green-600 mb-1">({((products.length / biddeds.length)*100).toFixed(2)}%)</span>
+                </div>
+             </div>
+          </div>
+        )}
 
         {/* 2. List Container - Vùng cuộn dọc */}
         {products.length > 0 && <div className="
@@ -637,103 +677,135 @@ function ReviewsTab() {
     fetchReviews();
   }, []);
 
-return (
-  loading 
-  ? <div className="min-h-[50vh] w-full flex flex-col justify-center items-center">
-      <ClipLoader size={50} color="#8D0000" />
-    </div>
-  : <div className="flex flex-col gap-2 h-full">
-      
-      {/* Header Count */}
-      <p className="text-gray-500 font-medium ml-1 shrink-0">
-        Received {reviews.length} review{reviews.length > 1 ? 's' : ''}
-      </p>
+  const positiveCount = useMemo(() => reviews.filter(r => r.is_positive).length, [reviews]);
+  const negativeCount = reviews.length - positiveCount;
+  const percent = ((positiveCount / reviews.length) * 100);
 
-      {/* Scrollable Container */}
-      <div className="
-        border rounded-md
-        flex flex-col gap-4 max-h-[80vh] overflow-y-auto p-2
-        scrollbar-custom
-      ">
-        {reviews.map((review, index) => {
+  return (
+    loading 
+    ? <div className="min-h-[50vh] w-full flex flex-col justify-center items-center">
+        <ClipLoader size={50} color="#8D0000" />
+      </div>
+    : <div className="flex flex-col gap-2 h-full">
+        
+        {/* Header Count */}
+        <p className="text-gray-500 font-medium ml-1 shrink-0">
+          Received {reviews.length} review{reviews.length > 1 ? 's' : ''}
+        </p>
+
+        {reviews.length > 0 && (() => {
+          const isHighRating = percent >= 80;
+          const ratingColorClass = isHighRating 
+            ? "bg-blue-50 border-blue-200 text-blue-700" 
+            : "bg-yellow-50 border-yellow-200 text-yellow-700";
+
           return (
-            <div
-              key={index}
-              className="
-                relative flex flex-col sm:flex-row p-4 gap-4 bg-white
-                rounded-md border border-gray-200 shadow-sm transition-all duration-200
-                shrink-0
-                hover:shadow-md hover:border-black
-              "
-            >
-              <div className="flex sm:hidden justify-between items-center pb-2 border-b border-gray-100 mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400">From:</span>
-                  <UserContainer user_id={review.reviewer.user_id} user_name={review.reviewer.name} isLarge={false}/>
-                </div>
-                <span className="text-xs text-gray-400">{formatDate(review.created_at)}</span>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-2">
+              <div className="bg-green-50 p-3 rounded border border-green-200 shadow-sm flex flex-col">
+                <span className="text-xs text-green-700 uppercase font-semibold">Positive</span>
+                <span className="text-2xl font-bold text-green-700">{positiveCount}</span>
               </div>
 
-              <div className="shrink-0 w-full sm:w-24 md:w-32 aspect-square bg-gray-50 rounded overflow-hidden border border-gray-100 self-center sm:self-start">
-                <div className="w-full h-full flex items-center justify-center">
-                  <ImageContainer
-                    product_id={review.product.product_id}
-                    product_name={review.product.product_name}
-                    url={review.product.thumbnail_url}
-                  />
-                </div>
+              <div className="bg-red-50 p-3 rounded border border-red-200 shadow-sm flex flex-col">
+                <span className="text-xs text-red-700 uppercase font-semibold">Negative</span>
+                <span className="text-2xl font-bold text-red-700">{negativeCount}</span>
               </div>
 
-              <div className="flex-grow flex flex-col min-w-0 gap-2">
-                
-                <div className="flex flex-col justify-between items-start gap-1">
-                  <div className="flex justify-between w-full">
-                    <ProductContainer 
-                      product_id={review.product.product_id}
-                      product_name={review.product.product_name}
-                      category={review.product.category}
-                    />
-                    <span className="hidden sm:block text-xs text-gray-400 shrink-0 mt-1">
-                      {formatDate(review.created_at)}
-                    </span>
-                  </div>
+              <div className={`p-3 rounded border shadow-sm flex flex-col col-span-2 md:col-span-1 ${ratingColorClass}`}>
+                <span className="text-xs uppercase font-semibold">Rating</span>
+                <div className="flex items-end gap-1">
+                  <span className="text-2xl font-bold">{percent.toFixed(2)}%</span>
+                  <span className="text-xs mb-1 opacity-80 font-medium">
+                    {isHighRating ? 'Good' : 'Bad'}
+                  </span>
                 </div>
-
-                {/* C.2 Reviewer & Rating Badge */}
-                <div className="flex items-center gap-4 mt-1">
-                  <div className="hidden sm:flex items-center gap-2 text-sm">
-                    <span className="text-gray-500">From:</span>
-                    <UserContainer user_id={review.reviewer.user_id} user_name={review.reviewer.name} isLarge={false}/>
-                  </div>
-
-                  <div className={`
-                    flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border
-                    ${review.is_positive 
-                      ? 'bg-green-50 text-green-700 border-green-200' 
-                      : 'bg-red-50 text-red-700 border-red-200'}
-                  `}>
-                    {review.is_positive 
-                      ? <ThumbsUp className="w-3.5 h-3.5" fill="currentColor" stroke="none"/> 
-                      : <ThumbsDown className="w-3.5 h-3.5" fill="currentColor" stroke="none"/>
-                    }
-                    <span>{review.is_positive ? 'Recommended' : 'Not Recommended'}</span>
-                  </div>
-                </div>
-
-                {review.comment && (
-                  <div className="mt-2 p-3 bg-gray-50 rounded border border-gray-100 text-sm text-gray-700 italic relative">
-                    <span className="absolute top-2 left-2 text-gray-300 text-4xl leading-none select-none" aria-hidden="true">&ldquo;</span>
-                    <p className="pl-4 relative z-10 whitespace-pre-wrap">{review.comment}</p>
-                  </div>
-                )}
-                
               </div>
             </div>
           );
-        })}
+        })()}
+        {reviews.length > 0 && <div className="
+          border rounded-md
+          flex flex-col gap-4 max-h-[80vh] overflow-y-auto p-2
+          scrollbar-custom
+        ">
+          {reviews.map((review, index) => {
+            return (
+              <div
+                key={index}
+                className="
+                  relative flex flex-col sm:flex-row p-4 gap-4 bg-white
+                  rounded-md border border-gray-200 shadow-sm transition-all duration-200
+                  shrink-0
+                  hover:shadow-md hover:border-black
+                "
+              >
+                <div className="flex sm:hidden justify-between items-center pb-2 border-b border-gray-100 mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400">From:</span>
+                    <UserContainer user_id={review.reviewer.user_id} user_name={review.reviewer.name} isLarge={false}/>
+                  </div>
+                  <span className="text-xs text-gray-400">{formatDate(review.created_at)}</span>
+                </div>
+
+                <div className="shrink-0 w-full sm:w-24 md:w-32 aspect-square bg-gray-50 rounded overflow-hidden border border-gray-100 self-center sm:self-start">
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ImageContainer
+                      product_id={review.product.product_id}
+                      product_name={review.product.product_name}
+                      url={review.product.thumbnail_url}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex-grow flex flex-col min-w-0 gap-2">
+                  
+                  <div className="flex flex-col justify-between items-start gap-1">
+                    <div className="flex justify-between w-full">
+                      <ProductContainer 
+                        product_id={review.product.product_id}
+                        product_name={review.product.product_name}
+                        category={review.product.category}
+                      />
+                      <span className="hidden sm:block text-xs text-gray-400 shrink-0 mt-1">
+                        {formatDate(review.created_at)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* C.2 Reviewer & Rating Badge */}
+                  <div className="flex items-center gap-4 mt-1">
+                    <div className="hidden sm:flex items-center gap-2 text-sm">
+                      <span className="text-gray-500">From:</span>
+                      <UserContainer user_id={review.reviewer.user_id} user_name={review.reviewer.name} isLarge={false}/>
+                    </div>
+
+                    <div className={`
+                      flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border
+                      ${review.is_positive 
+                        ? 'bg-green-50 text-green-700 border-green-200' 
+                        : 'bg-red-50 text-red-700 border-red-200'}
+                    `}>
+                      {review.is_positive 
+                        ? <ThumbsUp className="w-3.5 h-3.5" fill="currentColor" stroke="none"/> 
+                        : <ThumbsDown className="w-3.5 h-3.5" fill="currentColor" stroke="none"/>
+                      }
+                    </div>
+                  </div>
+
+                  {review.comment && (
+                    <div className="mt-2 p-3 bg-gray-50 rounded border border-gray-100 text-sm text-gray-700 italic relative">
+                      <span className="absolute top-2 left-2 text-gray-300 text-4xl leading-none select-none" aria-hidden="true">&ldquo;</span>
+                      <p className="pl-4 relative z-10 whitespace-pre-wrap">{review.comment}</p>
+                    </div>
+                  )}
+                  
+                </div>
+              </div>
+            );
+          })}
+        </div>}
       </div>
-    </div>
-);
+  );
 }
 
 function SellingsTab() {
@@ -1110,7 +1182,7 @@ export default function UserTab( { profile }: { profile: Profile } ) {
 
   return (
     <div>
-      <div className="flex flex-row overflow-x-auto whitespace-nowrap scrollbar-custom py-3">
+      <div className="flex flex-row overflow-x-auto whitespace-nowrap scrollbar-custom py-3 mb-2">
         {filteredTabs.map((tab) => {
           const tabID = tab.toLowerCase().replace(' ', '-');
           const isActive = activeTab === tabID;

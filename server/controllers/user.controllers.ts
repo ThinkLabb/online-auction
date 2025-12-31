@@ -587,6 +587,62 @@ export const UserControllers = {
         return res.status(500).json(errorResponse('Internal server error'));
       }
     },
+    getBiddedProducts: async (req: Request, res: Response) => {
+      try {
+        const user_id = res.locals.user.id;
+        if (!user_id) return res.status(401).json(errorResponse('Unauthorized'));
+
+        const products = await UserServices.BidderServices.getBiddedProducts(user_id);
+
+        const payload: BiddingProduct[] = products.map((product) => ({
+          product_id: product.product.product_id.toString(),
+          name: product.product.name,
+          thumbnail_url: product.product.images[0].image_url,
+
+          category: {
+            category_id: product.product.category.category_id.toString(),
+            category_name_level_1: product.product.category.name_level_1,
+            category_name_level_2: product.product.category.name_level_2
+              ? product.product.category.name_level_2
+              : '',
+          },
+
+          current_price: Number(product.product.current_price), // giá cuối cùng đối với sản phẩm đã bán
+          bid_count: product.product.bid_count,
+          end_time: new Date(product.product.end_time).toLocaleDateString(),
+
+          seller: {
+            user_id: product.product.seller.user_id,
+            name: product.product.seller.name,
+          },
+
+          status: product.product.status,
+          buy_now_price: Number(product.product.buy_now_price),
+          current_highest_bidder: product.product.current_highest_bidder
+            ? {
+                user_id: product.product.current_highest_bidder.user_id,
+                name: product.product.current_highest_bidder.name,
+              }
+            : null,
+
+          reviews_count: product.product._count.reviews,
+          bid_at: new Date(product.bid_time).toLocaleDateString(),
+          bid_amount: Number(product.bid_amount),
+        }));
+
+        return res
+          .status(200)
+          .json(
+            successResponse(
+              payload,
+              payload.length ? 'Get bidding products successfullly' : 'No bidding product'
+            )
+          );
+      } catch (e) {
+        console.log(e);
+        return res.status(500).json(errorResponse('Internal server error'));
+      }
+    },
     getWonProducts: async (req: Request, res: Response) => {
       try {
         const user_id = res.locals.user.id;

@@ -74,10 +74,10 @@ export default function UserProfile() {
         
         {/* --- LEFT SIDEBAR (PROFILE CARD) --- */}
         <div className="
-            w-full lg:w-[350px] lg:shrink-0
-            bg-white rounded-md border border-gray-200 
-            shadow-sm shadow-gray-300 p-5
-            sticky top-4 self-start
+          w-full lg:w-[350px] lg:shrink-0
+          bg-white rounded-md border border-gray-200 
+          shadow-sm shadow-gray-300 p-5
+          self-start
         ">
           
           {/* 1. Header: Avatar + Name */}
@@ -189,9 +189,7 @@ export default function UserProfile() {
         </div>
 
         {/* --- RIGHT CONTENT (TABS) --- */}
-        <div className="flex-1 min-w-0 w-full">
-            <UserAction profile={profile} action={action} setAction={setAction} />
-        </div>
+        <UserAction profile={profile} action={action} setAction={setAction} />
 
       </div>
     </div>

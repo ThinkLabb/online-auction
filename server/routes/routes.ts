@@ -195,6 +195,12 @@ router.get(
 );
 
 router.get(
+  '/profile/biddeds',
+  authController.getAuthentication,
+  UserControllers.BidderControllers.getBiddedProducts
+);
+
+router.get(
   '/profile/won-products',
   authController.getAuthentication,
   UserControllers.BidderControllers.getWonProducts
