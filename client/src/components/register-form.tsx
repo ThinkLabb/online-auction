@@ -1,43 +1,33 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import { ClipLoader } from 'react-spinners';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { useRef } from 'react';
 
-// 1. Định nghĩa Schema Zod
-const strongPasswordRegex =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,30}$/;
+// Google Auth
+import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 
-const schema = z
-  .object({
-    name: z
-      .string()
-      .min(3, { message: 'Name must be 3–8 characters.' })
-      .max(8, { message: 'Name must be 3–8 characters.' }),
-    email: z.string().email({ message: 'Invalid email format' }),
-    password: z
-      .string()
-      .regex(strongPasswordRegex, {
-        message:
-          'Password must contain uppercase, lowercase, number, and special character (!@#$%^&*)',
-      }),
-    confirmpassword: z.string(),
-    otp: z.string().min(1, { message: 'OTP is required' }),
-    homenumber: z
-      .string()
-      .min(1, { message: 'House number is required' })
-      .regex(/^\d+$/, { message: 'Home number must contain only digits.' }),
-    street: z.string().min(1, { message: 'Street is required' }),
-    province: z.string().min(1, { message: 'Province is required' }),
-    ward: z.string().min(1, { message: 'Ward is required' }),
-  })
-  .refine((data) => data.password === data.confirmpassword, {
-    message: 'Confirmation password does not match',
-    path: ['confirmpassword'],
-  });
+// 1. Zod Schema Definition
+const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,30}$/;
+
+const schema = z.object({
+  name: z.string().min(3, { message: 'Name must be 3–8 characters.' }).max(8, { message: 'Name must be 3–8 characters.' }),
+  email: z.string().email({ message: 'Invalid email format' }),
+  password: z.string().regex(strongPasswordRegex, {
+    message: 'Password must contain uppercase, lowercase, number, and special character (!@#$%^&*)',
+  }),
+  confirmpassword: z.string(),
+  otp: z.string().min(1, { message: 'OTP is required' }),
+  homenumber: z.string().min(1, { message: 'House number is required' }).regex(/^\d+$/, { message: 'Home number must contain only digits.' }),
+  street: z.string().min(1, { message: 'Street is required' }),
+  province: z.string().min(1, { message: 'Province is required' }),
+  ward: z.string().min(1, { message: 'Ward is required' }),
+}).refine((data) => data.password === data.confirmpassword, {
+  message: 'Confirmation password does not match',
+  path: ['confirmpassword'],
+});
 
 type Inputs = z.infer<typeof schema>;
 
@@ -52,34 +42,25 @@ export default function Register() {
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingSendCode, setLoadingSendCode] = useState<boolean>(false);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const navigate = useNavigate();
 
-  const {
-    register,
-    watch,
-    handleSubmit,
-    formState: { errors },
-    setError,
-  } = useForm<Inputs>({
+  const { register, watch, handleSubmit, formState: { errors }, setError } = useForm<Inputs>({
     resolver: zodResolver(schema),
   });
 
-  const navigate = useNavigate();
+  // --- API HANDLERS ---
 
+  // Standard Email Registration
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     setLoading(true);
     try {
       const address = `${data.homenumber}, ${data.street}, ${data.ward}, ${data.province}`;
       const token = recaptchaRef.current?.getValue();
-      if (!token) {
-        alert('Verify reCAPTCHA');
-        return;
-      }
+      if (!token) return alert('Please verify reCAPTCHA');
 
       const res = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: data.name,
           email: data.email,
@@ -91,309 +72,179 @@ export default function Register() {
       });
 
       const result = await res.json();
-
-      if (!res.ok) {
-        if (!result.success) {
-          if (result.message?.email) {
-            setError('email', { message: result.message.email });
-          }
-          if (result.message?.password) {
-            setError('password', { message: result.message.password });
-          }
-          if (result.message?.code) {
-            setError('otp', { message: result.message.code });
-          }
-          if (result.message && typeof result.message === 'string') {
-            console.error('Server Error:', result.message);
-          }
-        }
-      } else {
+      if (res.ok) {
         navigate('/signin');
+      } else if (result.message && typeof result.message === 'object') {
+        Object.keys(result.message).forEach((key) => {
+          setError(key as any, { message: result.message[key] });
+        });
       }
     } catch (err) {
-      console.error('[v0] Registration error:', err);
+      console.error('Registration error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const sendCode = async () => {
-    setLoadingSendCode(true);
-    setError('email', { message: undefined });
-
-    const res = await fetch('/api/sendmail', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: watch('email'),
-        register: true,
-      }),
-    });
-    const result = await res.json();
-    setLoadingSendCode(false);
-    if (!res.ok) {
-      if (!result.success) {
-        setError('email', {
-          message: result.message,
-        });
+  // Google Login Success Handler
+  const onGoogleSuccess = async (googleToken: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/social-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: 'google', token: googleToken }),
+      });
+      const result = await res.json();
+      if (res.ok) {
+        navigate('/');
+      } else {
+        alert(result.message || "Google Authentication failed");
       }
+    } catch (err) {
+      console.error("Social login error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Send OTP Logic
+  const sendCode = async () => {
+    setLoadingSendCode(true);
+    try {
+      const res = await fetch('/api/sendmail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: watch('email'), register: true }),
+      });
+      const result = await res.json();
+      if (!res.ok) setError('email', { message: result.message });
+    } catch (err) { console.error(err); }
+    finally { setLoadingSendCode(false); }
+  };
+
+  // --- LOCATION LOGIC ---
   const [province, setProvince] = useState<LocationOption[]>([]);
   const [ward, setWard] = useState<LocationOption[]>([]);
   const provinceCur = watch('province');
 
-  const fetchJsonData = async (url: string) => {
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`HTTP error! Status: ${res.status}`);
-    }
-    const data = await res.json();
-    return Object.values(data) as LocationOption[];
-  };
-
-  function loadProvince() {
-    fetchJsonData('/admin_new/province.json')
-      .then((data) => {
-        setProvince(data);
-      })
-      .catch((error) => {
-        console.error('Fetch province error:', error);
-      });
-  }
-
-  function loadWard() {
-    if (!provinceCur) {
-      setWard([]);
-      return;
-    }
-
-    fetchJsonData('admin_new/ward.json')
-      .then((data) => {
-        setWard(data);
-      })
-      .catch((error) => {
-        console.error('Fetch ward error:', error);
-      });
-  }
-
   useEffect(() => {
-    loadProvince();
+    fetch('/admin_new/province.json').then(res => res.json()).then(data => setProvince(Object.values(data)));
   }, []);
 
   useEffect(() => {
-    loadWard();
+    if (provinceCur) {
+      fetch('admin_new/ward.json').then(res => res.json()).then(data => setWard(Object.values(data)));
+    }
   }, [provinceCur]);
 
   const filterWard = useMemo(() => {
-    if (!ward || ward.length === 0 || !provinceCur) return [];
+    if (!provinceCur) return [];
     return ward.filter((w) => w.path_with_type.includes(provinceCur));
   }, [provinceCur, ward]);
 
   return (
-    <div className="p-4 sm:p-8 border border-gray-200 shadow-lg rounded-lg bg-white w-full max-w-sm sm:max-w-md mx-auto">
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        {/* 1. Full Name */}
-        <div className="flex flex-col gap-2">
-          <label htmlFor="name" className="font-semibold text-gray-900">
-            Full Name
-          </label>
-          <input
-            type="text"
-            id="name"
-            placeholder="John Doe"
-            {...register('name', { required: true })}
-            className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
-          />
-          {errors.name && <span className="text-[#8D0000]">{errors.name.message}</span>}
-        </div>
+    <GoogleOAuthProvider clientId="229504266736-tsn5rk0694t0vu0lkh65s0vj2m26mf7o.apps.googleusercontent.com" locale="en">
+      <div className="p-4 sm:p-8 border border-gray-200 shadow-xl rounded-xl bg-white w-full max-w-sm sm:max-w-md mx-auto my-10">
+        <h2 className="text-2xl font-extrabold text-center mb-6 text-gray-900">Create Your Account</h2>
+        
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          
+          {/* Full Name */}
+          <div className="flex flex-col gap-1">
+            <label className="font-semibold text-sm text-gray-700">Full Name</label>
+            <input {...register('name')} className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#8D0000] outline-none" placeholder="John Doe" />
+            {errors.name && <span className="text-red-600 text-xs font-medium">{errors.name.message}</span>}
+          </div>
 
-        {/* 2. Email and Send Code */}
-        <div className="flex flex-col gap-2">
-          <label htmlFor="email" className="font-semibold text-gray-900">
-            Email
-          </label>
-          <div className="flex flex-col sm:flex-row gap-2">
-            {' '}
-            {/* Thêm flex-col trên mobile, flex-row trên sm+ */}
-            <input
-              type="text"
-              id="email"
-              placeholder="your@example.com"
-              {...register('email', { required: true })}
-              className="flex-grow px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
+          {/* Email & Send OTP */}
+          <div className="flex flex-col gap-1">
+            <label className="font-semibold text-sm text-gray-700">Email Address</label>
+            <div className="flex gap-2">
+              <input {...register('email')} className="flex-grow px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#8D0000] outline-none" placeholder="email@example.com" />
+              <button type="button" onClick={sendCode} disabled={loadingSendCode} className="bg-[#8D0000] text-white px-4 py-2 rounded-md font-bold text-xs uppercase hover:bg-red-800 transition-all">
+                {loadingSendCode ? <ClipLoader size={14} color="white" /> : 'Send Code'}
+              </button>
+            </div>
+            {errors.email && <span className="text-red-600 text-xs font-medium">{errors.email.message}</span>}
+          </div>
+
+          {/* OTP */}
+          <div className="flex flex-col gap-1">
+            <label className="font-semibold text-sm text-gray-700">Verification Code (OTP)</label>
+            <input type="number" {...register('otp')} className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#8D0000] outline-none" placeholder="123456" />
+            {errors.otp && <span className="text-red-600 text-xs font-medium">{errors.otp.message}</span>}
+          </div>
+
+          {/* Location Selectors */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-700 uppercase">Province</label>
+              <select {...register('province')} className="border rounded px-2 py-2 text-sm bg-gray-50">
+                <option value="">Select city</option>
+                {province.map(p => <option key={p.code} value={p.name}>{p.name}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-700 uppercase">Ward</label>
+              <select {...register('ward')} className="border rounded px-2 py-2 text-sm bg-gray-50">
+                <option value="">Select ward</option>
+                {filterWard.map(w => <option key={w.code} value={w.name}>{w.name}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Street & House Number */}
+          <div className="grid grid-cols-2 gap-3">
+             <input {...register('street')} placeholder="Street Name" className="border rounded px-3 py-2 text-sm" />
+             <input {...register('homenumber')} placeholder="House No." className="border rounded px-3 py-2 text-sm" />
+          </div>
+
+          {/* Passwords */}
+          <div className="flex flex-col gap-1">
+            <label className="font-semibold text-sm text-gray-700">Password</label>
+            <input type="password" {...register('password')} className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#8D0000] outline-none" placeholder="********" />
+            {errors.password && <span className="text-red-600 text-xs font-medium">{errors.password.message}</span>}
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="font-semibold text-sm text-gray-700">Confirm Password</label>
+            <input type="password" {...register('confirmpassword')} className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#8D0000] outline-none" placeholder="********" />
+            {errors.confirmpassword && <span className="text-red-600 text-xs font-medium">{errors.confirmpassword.message}</span>}
+          </div>
+
+          <div className="flex justify-center scale-90 sm:scale-100 origin-center py-2">
+            <ReCAPTCHA sitekey="6Lce-yosAAAAANX0klvmA9vGX6u_GknKTrz-0tzM" ref={recaptchaRef} />
+          </div>
+
+          <button type="submit" disabled={loading} className="w-full bg-[#8D0000] text-white py-3 rounded-md font-bold hover:bg-red-800 shadow-md transition-all flex justify-center items-center">
+            {loading ? <ClipLoader size={20} color="white" /> : 'Register Now'}
+          </button>
+
+          {/* --- GOOGLE SIGN IN ONLY --- */}
+          <div className="relative flex py-3 items-center">
+            <div className="flex-grow border-t border-gray-300"></div>
+            <span className="mx-4 text-gray-400 text-xs font-bold">OR SIGN UP WITH</span>
+            <div className="flex-grow border-t border-gray-300"></div>
+          </div>
+
+          <div className="flex justify-center">
+            <GoogleLogin 
+              onSuccess={(res) => onGoogleSuccess(res.credential!)}
+              onError={() => console.log('Google Authentication Failed')}
+              theme="filled_black"
+              shape="pill"
+              text="signup_with"
+              width="100%"
             />
-            <button
-              type="button"
-              onClick={sendCode}
-              disabled={loadingSendCode}
-              className={`flex-shrink-0 w-full sm:w-fit bg-[#8D0000] font-bold text-white py-2 px-4 rounded-md transition-colors ${loadingSendCode ? 'opacity-70 cursor-not-allowed' : 'hover:bg-red-800'}`} // Nút chiếm toàn bộ chiều rộng trên mobile
-            >
-              {loadingSendCode ? (
-                <ClipLoader loading={loadingSendCode} size={20} color="white" />
-              ) : (
-                'Send Code'
-              )}
-            </button>
           </div>
-          {errors.email && <span className="text-[#8D0000]">{errors.email.message}</span>}
-        </div>
 
-        {/* 3. OTP */}
-        <div className="flex flex-col gap-2">
-          <label htmlFor="otp" className="font-semibold text-gray-900">
-            OTP
-          </label>
-          <input
-            type="number"
-            id="otp"
-            placeholder="123456"
-            {...register('otp', { required: true })}
-            className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
-          />
-          {errors.otp && <span className="text-[#8D0000]">{errors.otp.message}</span>}
-        </div>
-
-        {/* 4. Address Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {' '}
-          {/* Grid 1 cột trên mobile, 2 cột trên sm+ */}
-          {/* Province/City */}
-          <div className="flex flex-col gap-2">
-            <label htmlFor="city" className="font-semibold text-gray-900">
-              Province/City
-            </label>
-            <select
-              id="city"
-              value={provinceCur}
-              {...register('province')}
-              className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
-            >
-              <option value="">Select city</option>
-              {province.map((option) => (
-                <option key={option.code} value={option.name}>
-                  {option.name}
-                </option>
-              ))}
-            </select>
-            {errors.province && <span className="text-[#8D0000]">{errors.province.message}</span>}
-          </div>
-          {/* Ward */}
-          <div className="flex flex-col gap-2">
-            <label htmlFor="ward" className="font-semibold text-gray-900">
-              Ward
-            </label>
-            <select
-              id="ward"
-              {...register('ward')}
-              className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
-            >
-              <option value="">Select ward</option>
-              {filterWard.map((option) => (
-                <option key={option.code} value={option.name}>
-                  {option.name}
-                </option>
-              ))}
-            </select>
-            {errors.ward && <span className="text-[#8D0000]">{errors.ward.message}</span>}
-          </div>
-          {/* Street */}
-          <div className="flex flex-col gap-2">
-            <label htmlFor="street" className="font-semibold text-gray-900">
-              Street
-            </label>
-            <input
-              type="text"
-              id="street"
-              className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
-              {...register('street')}
-            />
-            {errors.street && <span className="text-[#8D0000]">{errors.street.message}</span>}
-          </div>
-          {/* House Number */}
-          <div className="flex flex-col gap-2">
-            <label htmlFor="homenumber" className="font-semibold text-gray-900">
-              House Number
-            </label>
-            <input
-              type="text"
-              id="homenumber"
-              className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
-              {...register('homenumber')}
-            />
-            {errors.homenumber && (
-              <span className="text-[#8D0000]">{errors.homenumber.message}</span>
-            )}
-          </div>
-        </div>
-
-        {/* 5. Password */}
-        <div className="flex flex-col gap-2">
-          <label htmlFor="password" className="font-semibold text-gray-900">
-            Password
-          </label>
-          <input
-            type="password"
-            id="password"
-            placeholder="********"
-            {...register('password', { required: true })}
-            className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
-          />
-          {!errors.password && (
-            <p className="text-xs text-gray-500">
-              At least 8 characters with uppercase, lowercase, number, and special character
-            </p>
-          )}
-          {errors.password && <span className="text-[#8D0000]">{errors.password.message}</span>}
-        </div>
-
-        {/* 6. Confirm Password */}
-        <div className="flex flex-col gap-2">
-          <label htmlFor="confirmpassword" className="font-semibold text-gray-900">
-            Confirm Password
-          </label>
-          <input
-            type="password"
-            id="confirmpassword"
-            placeholder="********"
-            {...register('confirmpassword', { required: true })}
-            className="w-full px-3 py-2 border rounded-md focus:outline-2 focus:outline-[#8D0000]"
-          />
-          {errors.confirmpassword && (
-            <span className="text-[#8D0000]">{errors.confirmpassword.message}</span>
-          )}
-        </div>
-
-        <ReCAPTCHA sitekey="6Lce-yosAAAAANX0klvmA9vGX6u_GknKTrz-0tzM" ref={recaptchaRef} />
-
-        {/* Submit Button */}
-        <button
-          type="submit"
-          data-sitekey="6LfB-SosAAAAABEI2CZiXH1ps_FpGyEqE-vpjZOm"
-          disabled={loading}
-          className={`w-full bg-[#8D0000] font-bold text-white py-2.5 rounded-md transition-colors mt-2 flex justify-center items-center ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-red-800'}`}
-        >
-          {loading ? (
-            <ClipLoader loading={loading} size={20} color="white" />
-          ) : (
-            <p>Create Account</p>
-          )}
-        </button>
-
-        {/* Sign-in link */}
-        <p className="text-center text-gray-600">
-          Already have an account?{' '}
-          <Link
-            to="/signin"
-            className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-          >
-            Sign in
-          </Link>
-        </p>
-      </form>
-    </div>
+          <p className="text-center text-sm mt-4 text-gray-600">
+            Already have an account?{' '}
+            <Link to="/signin" className="text-blue-700 font-bold hover:underline">Sign In</Link>
+          </p>
+        </form>
+      </div>
+    </GoogleOAuthProvider>
   );
 }

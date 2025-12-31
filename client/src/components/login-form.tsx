@@ -6,6 +6,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../UserContext';
 
+
+// Google Auth
+import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
+
 const strongPasswordRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,30}$/;
 
@@ -50,21 +54,17 @@ export default function LogIn() {
 
       if (!res.ok) {
         if (!result.isSuccess) {
-          // Xử lý lỗi từ server (Email không tồn tại hoặc sai Password)
           if (result.message?.email) {
             setError('email', { message: result.message.email });
           }
           if (result.message?.password) {
             setError('password', { message: result.message.password });
           }
-          // Thêm kiểm tra lỗi chung nếu server trả về lỗi không cụ thể
           if (typeof result.message === 'string') {
-            // Ví dụ: setError('root.serverError', { message: result.message });
             console.error('Server Error:', result.message);
           }
         }
       } else {
-        // Đăng nhập thành công
         setUser({
           name: result.data.name,
           email: result.data.email,
@@ -78,7 +78,30 @@ export default function LogIn() {
     }
   };
 
+  // Google Login Success Handler
+  const onGoogleSuccess = async (googleToken: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/social-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: 'google', token: googleToken }),
+      });
+      const result = await res.json();
+      if (res.ok) {
+        navigate('/');
+      } else {
+        alert(result.message || "Google Authentication failed");
+      }
+    } catch (err) {
+      console.error("Social login error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
+    <GoogleOAuthProvider clientId="229504266736-tsn5rk0694t0vu0lkh65s0vj2m26mf7o.apps.googleusercontent.com" locale="en">
     <div className="p-4 sm:p-8 border border-gray-200 shadow-lg rounded-lg bg-white w-full max-w-sm mx-auto">
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         {/* 1. Email */}
@@ -130,6 +153,24 @@ export default function LogIn() {
           {loading ? <ClipLoader loading={loading} size={20} color="white" /> : <p>Sign In</p>}
         </button>
 
+      {/* --- GOOGLE SIGN IN ONLY --- */}
+        <div className="relative flex py-3 items-center">
+          <div className="flex-grow border-t border-gray-300"></div>
+          <span className="mx-4 text-gray-400 text-xs font-bold">OR SIGN IN WITH</span>
+          <div className="flex-grow border-t border-gray-300"></div>
+        </div>
+
+        <div className="flex justify-center">
+          <GoogleLogin 
+            onSuccess={(res) => onGoogleSuccess(res.credential!)}
+            onError={() => console.log('Google Authentication Failed')}
+            theme="filled_black"
+            shape="pill"
+            text="signin_with"
+            width="100%"
+          />
+        </div>
+
         {/* Register Link */}
         <p className="text-center text-gray-600">
           Don't have an account?{' '}
@@ -142,5 +183,6 @@ export default function LogIn() {
         </p>
       </form>
     </div>
+    </GoogleOAuthProvider>
   );
 }

@@ -293,6 +293,8 @@ const CategoryManagement: React.FC = () => {
   }, []);
 
   const handleDeleteCategory = async (category: Category) => {
+    const isConfirmed = window.confirm("Are you sure you want to delete the category?");
+    if (!isConfirmed) return;
     if (category.product_count > 0) return;
     try {
       setLoading(true);
@@ -631,6 +633,8 @@ const ProductManagement: React.FC = () => {
   }, []);
 
   const handleDeleteProduct = async (product: Product) => {
+    const isConfirmed = window.confirm("Are you sure you want to delete the product?");
+    if (!isConfirmed) return;
     try {
       setLoading(true);
       const res = await fetch(API_ENDPOINTS.products, {
@@ -754,6 +758,8 @@ const UserManagement: React.FC<{
   }, []);
 
   const handleDeleteUser = async (user: User) => {
+    const isConfirmed = window.confirm("Are you sure you want to delete the user?");
+    if (!isConfirmed) return;
     try {
       setLoading(true);
       const res = await fetch(API_ENDPOINTS.users, {

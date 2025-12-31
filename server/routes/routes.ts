@@ -66,6 +66,8 @@ const userLogin = {
 
 router.post('/auth/register', celebrate(createUserSchema), authController.register);
 
+router.post('/auth/social-login', authController.socialLogin);
+
 router.post('/auth/signin', celebrate(userLogin), authController.login);
 
 router.post('/auth/me', authController.getAuthentication, authController.getAccount);

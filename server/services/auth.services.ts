@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import db from "./database.ts";
 import * as mailService from "../services/mail.service.ts";
 import bcrypt from "bcryptjs"
+import { OAuth2Client } from 'google-auth-library';
 
 type Data = {
   email: string;
@@ -85,3 +86,37 @@ export const changePassword = async (data: UserLogin) => {
   return { success: true, updateUser, message: "Change password successfully" };
 
 }
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+export const verifyGoogleToken = async (token: string) => {
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+  if (!payload || !payload.email) {
+    throw new Error("Invalid Google Token");
+  }
+  return {
+    email: payload.email,
+    name: payload.name || "Social User",
+  };
+};
+
+export const findOrCreateSocialUser = async (email: string, name: string) => {
+  let user = await db.prisma.user.findUnique({ where: { email } });
+
+  if (!user) {
+    user = await db.prisma.user.create({
+      data: {
+        email,
+        name,
+        password: "", // Social login không cần password
+        role: 'bidder',
+        // address có thể cập nhật sau ở trang profile
+      },
+    });
+  }
+  return user;
+};

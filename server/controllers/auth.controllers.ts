@@ -298,3 +298,46 @@ export const checkAdmin = function (req: Request, res: Response, next: NextFunct
     return res.status(500).json(errorResponse(String(e)));
   }
 };
+
+export const socialLogin = async (req: Request, res: Response) => {
+  try {
+    const { provider, token: socialToken } = req.body;
+
+    if (provider !== 'google') {
+      return res.status(400).json(errorResponse("Provider not supported yet"));
+    }
+
+    // 1. Xác thực token qua service
+    const socialData = await authService.verifyGoogleToken(socialToken);
+
+    // 2. Tìm hoặc tạo user qua service
+    const user = await authService.findOrCreateSocialUser(socialData.email, socialData.name);
+
+    // 3. Tạo JWT Token
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error('JWT_SECRET is not set');
+
+    const jwtToken = jwt.sign(
+      { id: user.user_id, name: user.name, email: user.email, role: user.role },
+      secret,
+      { expiresIn: '1h' }
+    );
+
+    // 4. Thiết lập Cookie
+    res.cookie('token', jwtToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1000 * 60 * 60,
+      sameSite: 'strict'
+    });
+
+    return res.status(200).json(successResponse(
+      { id: String(user.user_id), name: user.name, email: user.email },
+      "Social login successful"
+    ));
+
+  } catch (e) {
+    console.error("Social Login Error:", e);
+    return res.status(500).json(errorResponse(String(e)));
+  }
+};
