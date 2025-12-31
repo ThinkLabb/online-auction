@@ -9,15 +9,15 @@ export interface Profile {
   created_at: string;
   plus_review: number;
   minus_review: number;
-};
+}
 
 export interface VerifyInputs {
   password: string;
   confirmpassword: string;
-};
+}
 
 export interface ProductCard {
-  product_id: string; 
+  product_id: string;
   name: string;
   thumbnail_url: string;
 
@@ -27,7 +27,7 @@ export interface ProductCard {
     category_name_level_2: string;
   };
 
-  current_price: number; // giá cuối cùng đối với sản phẩm đã bán
+  current_price: number;
   bid_count: number;
   end_time: string;
 }
@@ -36,7 +36,7 @@ export interface UserProduct extends ProductCard {
   seller: {
     user_id: string;
     name: string;
-  }
+  };
 }
 
 export interface FollowingProduct extends UserProduct {
@@ -91,9 +91,9 @@ export interface SellingProduct extends ProductCard {
     name: string;
   } | null;
 
-  created_at: string,
+  created_at: string;
   auto_extend: boolean;
-  editable: boolean; // True nếu chưa có ai bid
+  editable: boolean;
   reviews_count: number;
 }
 
@@ -133,8 +133,8 @@ export interface Review {
   reviewer: {
     user_id: string;
     name: string;
-  }
-  
+  };
+
   product: {
     product_id: string;
     product_name: string;
@@ -144,7 +144,7 @@ export interface Review {
       category_name_level_2: string;
     };
     thumbnail_url: string;
-  }
+  };
 
   is_positive: boolean;
   comment: string | null;

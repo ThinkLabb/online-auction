@@ -129,11 +129,11 @@ export const sendNewBidEmail = async (
   emailPromises.push(
     sendCustomEmail({
       to: sellerEmail,
-      subject: `🎉 New Bid Received: "${productName}"`,
+      subject: `New Bid Received: "${productName}"`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
           <div style="background: linear-gradient(135deg, #8D0000 0%, #b30000 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-            <h2 style="margin: 0; font-size: 24px;">🎉 Good News!</h2>
+            <h2 style="margin: 0; font-size: 24px;">Good News!</h2>
           </div>
           <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
             <p style="font-size: 16px; color: #333; line-height: 1.6;">
@@ -162,24 +162,22 @@ export const sendNewBidEmail = async (
   emailPromises.push(
     sendCustomEmail({
       to: bidderEmail,
-      subject: `✅ Bid Successful: "${productName}"`,
+      subject: `Bid Successful: "${productName}"`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
           <div style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-            <h2 style="margin: 0; font-size: 24px;">✅ Bid Successful!</h2>
+            <h2 style="margin: 0; font-size: 24px;">Bid Successful!</h2>
           </div>
           <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
             <p style="font-size: 16px; color: #333; line-height: 1.6;">
-              Congratulations! You are currently the <strong style="color: #4CAF50;">highest bidder</strong> for:
+              Your bid has been placed successfully for:
             </p>
             <div style="background: #f0f8ff; padding: 20px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #4CAF50;">
-              <h3 style="margin: 0 0 10px 0; color: #333;">${productName}</h3>
-              <p style="margin: 0; font-size: 14px; color: #666;">Your Bid:</p>
-              <h3 style="margin: 5px 0 0 0; color: #4CAF50; font-size: 28px;">${price} VND</h3>
+              <h3 style="margin: 0; color: #333;">${productName}</h3>
             </div>
             <div style="background: #fffbea; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #ffa500;">
               <p style="margin: 0; font-size: 14px; color: #856404;">
-                ⚠️ <strong>Note:</strong> If someone places a higher bid, we'll notify you via email.
+                <strong>Note:</strong> If someone places a higher bid, we'll notify you via email.
               </p>
             </div>
             <div style="text-align: center; margin-top: 30px;">
@@ -199,11 +197,11 @@ export const sendNewBidEmail = async (
     emailPromises.push(
       sendCustomEmail({
         to: oldBidderEmail,
-        subject: `⚠️ You've Been Outbid: "${productName}"`,
+        subject: `You've Been Outbid: "${productName}"`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
             <div style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-              <h2 style="margin: 0; font-size: 24px;">⚠️ Action Required!</h2>
+              <h2 style="margin: 0; font-size: 24px;">Action Required!</h2>
             </div>
             <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
               <p style="font-size: 16px; color: #333; line-height: 1.6;">
@@ -216,7 +214,7 @@ export const sendNewBidEmail = async (
               </div>
               <div style="background: #e8f5e9; padding: 15px; margin: 20px 0; border-radius: 5px;">
                 <p style="margin: 0; font-size: 14px; color: #2e7d32;">
-                  💡 <strong>Don't miss out!</strong> Place a new bid now to reclaim your leading position!
+                  <strong>Don't miss out!</strong> Place a new bid now to reclaim your leading position!
                 </p>
               </div>
               <div style="text-align: center; margin-top: 30px;">
@@ -250,11 +248,11 @@ export const sendBidRejectedEmail = async (
 ) => {
   await sendCustomEmail({
     to: email,
-    subject: `🚫 You've Been Denied Bidding Access: "${productName}"`,
+    subject: `You've Been Denied Bidding Access: "${productName}"`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
         <div style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-          <h2 style="margin: 0; font-size: 24px;">🚫 Important Notice</h2>
+          <h2 style="margin: 0; font-size: 24px;">Important Notice</h2>
         </div>
         <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <p style="font-size: 16px; color: #333; line-height: 1.6;">
@@ -265,7 +263,7 @@ export const sendBidRejectedEmail = async (
           </div>
           <div style="background: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #ffc107;">
             <p style="margin: 0; font-size: 14px; color: #856404;">
-              ⚠️ <strong>Notice:</strong> You can no longer place bids on this product. All your previous bids have been removed.
+              <strong>Notice:</strong> You can no longer place bids on this product. All your previous bids have been removed.
             </p>
           </div>
           <p style="font-size: 14px; color: #666; line-height: 1.6;">
@@ -291,11 +289,11 @@ export const sendAuctionEndedNoWinnerEmail = async (
 ) => {
   await sendCustomEmail({
     to: email,
-    subject: `📢 Auction Ended with No Bids: "${productName}"`,
+    subject: `Auction Ended with No Bids: "${productName}"`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
         <div style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-          <h2 style="margin: 0; font-size: 24px;">📢 Auction Ended</h2>
+          <h2 style="margin: 0; font-size: 24px;">Auction Ended</h2>
         </div>
         <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <p style="font-size: 16px; color: #333; line-height: 1.6;">
@@ -307,7 +305,7 @@ export const sendAuctionEndedNoWinnerEmail = async (
           </div>
           <div style="background: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #ffc107;">
             <p style="margin: 0; font-size: 14px; color: #856404;">
-              💡 <strong>Information:</strong> Your product did not receive any bids.
+              <strong>Information:</strong> Your product did not receive any bids.
             </p>
           </div>
           <p style="font-size: 14px; color: #666; line-height: 1.6;">
@@ -339,11 +337,11 @@ export const sendAuctionSuccessEmail = async (
   promises.push(
     sendCustomEmail({
       to: sellerEmail,
-      subject: `🎉 Congratulations! Product Sold: "${productName}"`,
+      subject: `Congratulations! Product Sold: "${productName}"`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
           <div style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #333; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-            <h2 style="margin: 0; font-size: 28px;">🎉 Congratulations!</h2>
+            <h2 style="margin: 0; font-size: 28px;">Congratulations!</h2>
             <p style="margin: 10px 0 0 0; font-size: 16px;">Your product has been sold successfully</p>
           </div>
           <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -357,7 +355,7 @@ export const sendAuctionSuccessEmail = async (
             </div>
             <div style="background: #e8f5e9; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #4CAF50;">
               <p style="margin: 0; font-size: 14px; color: #2e7d32;">
-                ✅ <strong>Next Step:</strong> Please contact the buyer to arrange delivery and complete the transaction.
+                <strong>Next Step:</strong> Please contact the buyer to arrange delivery and complete the transaction.
               </p>
             </div>
             <p style="font-size: 14px; color: #666; line-height: 1.6;">
@@ -379,11 +377,11 @@ export const sendAuctionSuccessEmail = async (
   promises.push(
     sendCustomEmail({
       to: winnerEmail,
-      subject: `🏆 Congratulations! You Won: "${productName}"`,
+      subject: `Congratulations! You Won: "${productName}"`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
           <div style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-            <h2 style="margin: 0; font-size: 28px;">🏆 Congratulations!</h2>
+            <h2 style="margin: 0; font-size: 28px;">Congratulations!</h2>
             <p style="margin: 10px 0 0 0; font-size: 16px;">You won the auction</p>
           </div>
           <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -397,7 +395,7 @@ export const sendAuctionSuccessEmail = async (
             </div>
             <div style="background: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #ffc107;">
               <p style="margin: 0; font-size: 14px; color: #856404;">
-                ⚠️ <strong>Important:</strong> Please make payment and contact the seller within 48 hours to complete the transaction.
+                <strong>Important:</strong> Please make payment and contact the seller within 48 hours to complete the transaction.
               </p>
             </div>
             <p style="font-size: 14px; color: #666; line-height: 1.6;">
@@ -426,11 +424,11 @@ export const sendNewQuestionEmail = async (
 ) => {
   await sendCustomEmail({
     to: sellerEmail,
-    subject: `💬 New Question on Your Product: "${productName}"`,
+    subject: `New Question on Your Product: "${productName}"`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
         <div style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-          <h2 style="margin: 0; font-size: 24px;">💬 New Question Received</h2>
+          <h2 style="margin: 0; font-size: 24px;">New Question Received</h2>
         </div>
         <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <p style="font-size: 16px; color: #333; line-height: 1.6;">
@@ -445,7 +443,7 @@ export const sendNewQuestionEmail = async (
           </div>
           <div style="background: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #ffc107;">
             <p style="margin: 0; font-size: 14px; color: #856404;">
-              💡 <strong>Tip:</strong> Quick responses help build trust with potential buyers!
+              <strong>Tip:</strong> Quick responses help build trust with potential buyers!
             </p>
           </div>
           <div style="text-align: center; margin-top: 30px;">
@@ -472,11 +470,11 @@ export const sendNewAnswerEmail = async (
   await sendCustomEmail({
     to: process.env.MAIL as string,
     bcc: emails,
-    subject: `💬 Seller Replied to Your Question: "${productName}"`,
+    subject: `Seller Replied to Your Question: "${productName}"`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
         <div style="background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-          <h2 style="margin: 0; font-size: 24px;">💬 New Answer Available</h2>
+          <h2 style="margin: 0; font-size: 24px;">New Answer Available</h2>
         </div>
         <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <p style="font-size: 16px; color: #333; line-height: 1.6;">
@@ -497,7 +495,7 @@ export const sendNewAnswerEmail = async (
           </div>
           <div style="background: #e8f5e9; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #28a745;">
             <p style="margin: 0; font-size: 14px; color: #2e7d32;">
-              💡 <strong>Interested?</strong> Check out the full discussion and place your bid!
+              <strong>Interested?</strong> Check out the full discussion and place your bid!
             </p>
           </div>
           <div style="text-align: center; margin-top: 30px;">

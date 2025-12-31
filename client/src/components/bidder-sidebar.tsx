@@ -14,11 +14,9 @@ export const BidderSidebar = ({
   const [bidAmount, setBidAmount] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 1. Initialize state based on whether the user is already watching the item
   const [inWatchList, setInWatchList] = useState(!!product.isWatchlisted);
   const [isWatchLoading, setIsWatchLoading] = useState(false);
 
-  // 2. Sync state if the product prop changes (e.g., navigation)
   useEffect(() => {
     setInWatchList(!!product.isWatchlisted);
   }, [product.isWatchlisted]);
@@ -48,7 +46,6 @@ export const BidderSidebar = ({
 
         const data = await response.json();
 
-        // Refresh product data to get updated current price
         await onBidSuccess();
 
         alert('Bid placed successfully!');
@@ -80,15 +77,11 @@ export const BidderSidebar = ({
     }
   };
 
-  // 3. Toggle Handler: Checks state to decide between Add or Remove
   const handleToggleWatchList = async () => {
     if (isWatchLoading) return;
     setIsWatchLoading(true);
 
-    // Determine logic based on current state
-    const endpoint = inWatchList
-      ? `/api/watch-list/${product.id}` // If currently watching, endpoint to remove
-      : '/api/watch-list/add'; // If not watching, endpoint to add
+    const endpoint = inWatchList ? `/api/watch-list/${product.id}` : '/api/watch-list/add';
 
     const method = inWatchList ? 'DELETE' : 'POST';
 
@@ -101,7 +94,6 @@ export const BidderSidebar = ({
 
       if (!response.ok) throw new Error('Failed to update watch list');
 
-      // Flip the state immediately upon success
       setInWatchList(!inWatchList);
     } catch (error: any) {
       console.error(error);
@@ -224,7 +216,7 @@ export const BidderSidebar = ({
       </div>
 
       {/* Bid history table */}
-      <GeneralBidHistory id={product.id}/>
+      <GeneralBidHistory id={product.id} />
     </div>
   );
 };
