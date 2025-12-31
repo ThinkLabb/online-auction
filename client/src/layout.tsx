@@ -45,7 +45,7 @@ function Layout() {
     } catch (e) {
       console.error(e);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
       navigate('/');
     }
   };
@@ -149,8 +149,6 @@ function Layout() {
             </button>
 
             <ul className="flex flex-row gap-2 sm:gap-4 items-center flex-wrap justify-end">
-              <li className="hidden sm:block cursor-pointer hover:text-[#8D0000]">About us</li>
-
               {user === null ? (
                 <>
                   <li className="bg-[#8D0000] text-white px-3 py-1 rounded cursor-pointer text-sm">
@@ -198,46 +196,39 @@ function Layout() {
                   </li>
 
                   <li className="relative" ref={userRef}>
-                    <div 
-                      className='bg-[#FAE5E5] rounded-full p-1 hover:cursor-pointer'
+                    <div
+                      className="bg-[#FAE5E5] rounded-full p-1 hover:cursor-pointer"
                       onClick={() => setShowUser((prev) => !prev)}
                     >
-                      <User2 className='fill-[#8D0000] stroke-none w-6 h-6'/>
+                      <User2 className="fill-[#8D0000] stroke-none w-6 h-6" />
                     </div>
-                    
+
                     {showUser && (
                       <ul className="absolute right-0 mt-2 w-max bg-white border border-gray-200 shadow-lg rounded-lg z-50">
                         <li className="px-4 py-2 flex gap-2 items-center text-sm text-gray-700 border-b border-gray-200">
-                          <div 
-                            className='bg-[#FAE5E5] rounded-full p-1 hover:cursor-pointer'
-                          >
-                            <User2 className='fill-[#8D0000] stroke-none w-6 h-6'/>
+                          <div className="bg-[#FAE5E5] rounded-full p-1 hover:cursor-pointer">
+                            <User2 className="fill-[#8D0000] stroke-none w-6 h-6" />
                           </div>
-                          <div className='font-bold text-[#8D0000]'>{user.name}</div>
+                          <div className="font-bold text-[#8D0000]">{user.name}</div>
                         </li>
                         <Link
-                          to={"/profile"} onClick={() => setShowUser((prev) => !prev)}
-                          className='px-4 py-2 flex gap-2 items-center text-sm text-gray-700 hover:bg-gray-100 hover:text-black cursor-pointer'
+                          to={'/profile'}
+                          onClick={() => setShowUser((prev) => !prev)}
+                          className="px-4 py-2 flex gap-2 items-center text-sm text-gray-700 hover:bg-gray-100 hover:text-black cursor-pointer"
                         >
-                          <div 
-                            className='bg-gray-200 rounded-full p-1'
-                          >
-                            <Eye className='w-5 h-5'/>
+                          <div className="bg-gray-200 rounded-full p-1">
+                            <Eye className="w-5 h-5" />
                           </div>
                           <div>View Profile</div>
                         </Link>
                         <li
                           onClick={handleLogout}
-                          className='px-4 py-2 flex gap-2 items-center text-sm text-gray-700 hover:bg-gray-100 hover:text-black cursor-pointer'
+                          className="px-4 py-2 flex gap-2 items-center text-sm text-gray-700 hover:bg-gray-100 hover:text-black cursor-pointer"
                         >
-                          <div 
-                            className='bg-gray-200 rounded-full p-1'
-                          >
-                            <LogOut className=' w-5 h-5'/>
+                          <div className="bg-gray-200 rounded-full p-1">
+                            <LogOut className=" w-5 h-5" />
                           </div>
-                          <div>
-                            {isLoading ? "Signing out..." : "Sign out"}
-                          </div>
+                          <div>{isLoading ? 'Signing out...' : 'Sign out'}</div>
                         </li>
                       </ul>
                     )}
