@@ -439,7 +439,6 @@ function WonTab({profile} : {profile: Profile}) {
                         order_id={product.order.order_id} 
                         review={product.review} 
                         role={profile.role} 
-                        autoComment={false} 
                         orderStatus={product.order.status}
                       />
                     </div>
@@ -1141,7 +1140,6 @@ function ProductsWithWinnerTab({profile} : {profile: Profile}) {
                         order_id={product.order?.order_id || ""}
                         review={product.order?.my_review || null}
                         role={profile.role} 
-                        autoComment={true} 
                         orderStatus={product.order?.order_status || 'completed'} 
                         onCancelSuccess={() => handleOrderCancelled(product.product_id)}
                       />

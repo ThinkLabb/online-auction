@@ -8,7 +8,6 @@ export default function ReviewBox(
     order_id,
     review,
     role,
-    autoComment,
     orderStatus,
     onCancelSuccess
   } : {
@@ -20,7 +19,6 @@ export default function ReviewBox(
       created_at: string;
     } | null,
     role: UserRole,
-    autoComment: boolean,
     orderStatus: OrderStatus,
     onCancelSuccess?: () => void
   }
@@ -130,7 +128,10 @@ export default function ReviewBox(
     }
   }
 
-  if (orderStatus === 'completed')
+  if (
+    role ==='bidder' && (orderStatus === 'completed' || orderStatus === 'cancelled')
+    || role ==='seller' && orderStatus !== 'pending_payment'
+  )
     return (
       <div className="mt-2">
         {isReviewing 
@@ -209,7 +210,7 @@ export default function ReviewBox(
 
     );
 
-  if (orderStatus === 'pending_payment' && autoComment)
+  if (orderStatus === 'pending_payment' && role === 'seller')
     return(
       <button
         onClick={cancelOrder}
