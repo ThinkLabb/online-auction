@@ -64,11 +64,13 @@ export default function LogIn() {
           }
         }
       } else {
+        console.log(result)
         setUser({
           name: result.data.name,
           email: result.data.email,
         });
-        navigate('/');
+        if (result.data.role === 'admin') navigate('/admin')
+        else navigate('/');
       }
     } catch (err) {
       console.error('[v0] Login error:', err);

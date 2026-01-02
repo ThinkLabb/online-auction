@@ -90,7 +90,7 @@ export const login = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .json(successResponse({ id: String(user.user_id), name: user.name, email: user.email }, data.message));
+      .json(successResponse({ id: String(user.user_id), name: user.name, email: user.email, role: user.role }, data.message));
   } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
   }
