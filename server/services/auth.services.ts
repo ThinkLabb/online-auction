@@ -107,14 +107,15 @@ export const verifyGoogleToken = async (token: string) => {
 export const findOrCreateSocialUser = async (email: string, name: string) => {
   let user = await db.prisma.user.findUnique({ where: { email } });
 
+  const hashPassword = await bcrypt.hash(String(process.env.DEFAULT_PASSWORD), 12);
+
   if (!user) {
     user = await db.prisma.user.create({
       data: {
         email,
         name,
-        password: "", // Social login không cần password
+        password: hashPassword, 
         role: 'bidder',
-        // address có thể cập nhật sau ở trang profile
       },
     });
   }

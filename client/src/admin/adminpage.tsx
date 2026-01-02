@@ -509,8 +509,8 @@ const CategoryManagement: React.FC = () => {
               <option value="">None (Level 1)</option>
               {categories
                 .filter((cat) => cat.parent_id === null)
-                .map((cat, index) => (
-                  <option key={index} value={cat.id}>
+                .map((cat) => (
+                  <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>
                 ))}
