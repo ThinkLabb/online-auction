@@ -367,7 +367,12 @@ async function main() {
         },
       },
       images: {
-        create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }],
+        create: [
+                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421906666_0.png' },
+                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421906666_1.png' },
+                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421906666_2.png' },
+                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421906666_3.png' },
+                ],
       },
     },
   });
@@ -393,7 +398,12 @@ async function main() {
         },
       },
       images: {
-        create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }],
+        create: [
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424499201_1.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424499200_0.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424499201_2.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424499201_3.png' },
+        ],
       },
     },
   });
@@ -419,7 +429,12 @@ async function main() {
         },
       },
       images: {
-        create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }],
+        create: [
+                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424633717_0.png' },
+                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424633717_1.png' },
+                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424633717_2.png' },
+                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424633718_3.png' },
+                ],
       },
     },
   });
@@ -445,7 +460,12 @@ async function main() {
         },
       },
       images: {
-        create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }],
+        create: [
+                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767425057770_0.png' },
+                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767425057771_1.png' },
+                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767425057771_2.png' },
+                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767425057771_3.png' },
+                ],
       },
     },
   });
@@ -471,7 +491,12 @@ async function main() {
         },
       },
       images: {
-        create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }],
+        create: [
+                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421958073_0.png' },
+                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421958073_1.png' },
+                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421958073_2.png' },
+                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421958073_3.png' },
+                ],
       },
     },
   });
@@ -491,7 +516,12 @@ async function main() {
       review_needed: true,
       allow_unrated_bidder: true,
       description_history: { create: { description: 'Titanium Grey, 512GB, New.' } },
-      images: { create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }] },
+      images: { create: [
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424780257_0.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424780257_1.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424780257_2.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424780257_3.png' },
+                        ] },
     },
   });
 
@@ -511,7 +541,12 @@ async function main() {
       review_needed: false,
       allow_unrated_bidder: true,
       description_history: { create: { description: 'OLED Display, i9 Processor, 32GB RAM.' } },
-      images: { create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }] },
+      images: { create: [
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424032210_0.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424032211_1.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424032211_2.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424032211_3.png' },
+                        ] },
     },
   });
 
@@ -531,7 +566,12 @@ async function main() {
       review_needed: true,
       allow_unrated_bidder: false,
       description_history: { create: { description: 'Water resistant, S-Pen included.' } },
-      images: { create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }] },
+      images: { create: [
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424847122_0.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424847122_1.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424847123_2.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424847123_3.png' },
+                        ] },
     },
   });
 
@@ -553,7 +593,12 @@ async function main() {
       description_history: {
         create: { description: 'Authentic, Box and Papers included. Mint condition.' },
       },
-      images: { create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }] },
+      images: { create: [
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424720145_0.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424720145_1.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424720146_2.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424720146_3.png' },
+                        ] },
     },
   });
 
@@ -573,7 +618,12 @@ async function main() {
       review_needed: false,
       allow_unrated_bidder: true,
       description_history: { create: { description: 'Running shoes, Cloud White, Size 9.' } },
-      images: { create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }] },
+      images: { create: [
+                { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767423947218_0.png' },
+                { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767423947227_1.png' },
+                { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767423947228_2.png' },
+                { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767423947229_3.png' },
+              ] },
     },
   });
 
@@ -593,7 +643,12 @@ async function main() {
       review_needed: false,
       allow_unrated_bidder: true,
       description_history: { create: { description: 'Classic straight leg, blue denim.' } },
-      images: { create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }] },
+      images: { create: [
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424252580_0.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424252581_1.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424252581_2.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424252581_3.png' },
+                        ] },
     },
   });
 
@@ -613,7 +668,12 @@ async function main() {
       review_needed: false,
       allow_unrated_bidder: true,
       description_history: { create: { description: 'Rare 90s concert tee, slight wear.' } },
-      images: { create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }] },
+      images: { create: [
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424970619_0.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424970620_1.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424970620_2.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424970621_3.png' },
+                        ] },
     },
   });
 
@@ -633,7 +693,12 @@ async function main() {
       review_needed: false,
       allow_unrated_bidder: true,
       description_history: { create: { description: 'Mesh back, adjustable lumbar support.' } },
-      images: { create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }] },
+      images: { create: [
+                          { image_url: 'productsImg/ac8a2c97-e56a-46a9-adf4-ba7126a5b2c2_1767425338864_0.png' },
+                          { image_url: 'productsImg/ac8a2c97-e56a-46a9-adf4-ba7126a5b2c2_1767425338865_1.png' },
+                          { image_url: 'productsImg/ac8a2c97-e56a-46a9-adf4-ba7126a5b2c2_1767425338866_2.png' },
+                          { image_url: 'productsImg/ac8a2c97-e56a-46a9-adf4-ba7126a5b2c2_1767425338866_3.png' },
+                        ] },
     },
   });
 
@@ -653,7 +718,12 @@ async function main() {
       review_needed: true,
       allow_unrated_bidder: false,
       description_history: { create: { description: 'Minimalist design, comfortable seating.' } },
-      images: { create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }] },
+      images: { create: [
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424568914_0.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424568914_1.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424568915_2.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424568915_3.png' },
+                        ] },
     },
   });
 
@@ -675,7 +745,12 @@ async function main() {
       description_history: {
         create: { description: 'Original artwork, signed by artist. 24x36 inches.' },
       },
-      images: { create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }] },
+      images: { create: [
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424906054_0.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424906054_1.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424906055_2.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424906055_3.png' },
+                        ] },
     },
   });
 
@@ -697,7 +772,12 @@ async function main() {
       description_history: {
         create: { description: 'High quality print on archival paper. Number 5/50.' },
       },
-      images: { create: [{ image_url: 'PLACEHOLDER_IMAGE_URL' }] },
+      images: { create: [
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424374539_0.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424374540_1.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424374540_2.png' },
+                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424374540_3.png' },
+                        ] },
     },
   });
 
