@@ -141,7 +141,7 @@ export const sendNewBidEmail = async (
             </p>
             <div style="background: #f0f8ff; border-left: 4px solid #8D0000; padding: 20px; margin: 20px 0; border-radius: 5px;">
               <p style="margin: 0; font-size: 14px; color: #666;">Current Price:</p>
-              <h3 style="margin: 10px 0 0 0; color: #8D0000; font-size: 28px;">${price} VND</h3>
+              <h3 style="margin: 10px 0 0 0; color: #8D0000; font-size: 28px;">${price} USD</h3>
             </div>
             <p style="font-size: 14px; color: #666; line-height: 1.6;">
               The auction is heating up! Continue to monitor your product.
@@ -175,7 +175,7 @@ export const sendNewBidEmail = async (
             <div style="background: #f0f8ff; padding: 20px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #4CAF50;">
               <h3 style="margin: 0 0 10px 0; color: #333;">${productName}</h3>
               <p style="margin: 0; font-size: 14px; color: #666;">Your Bid:</p>
-              <h3 style="margin: 5px 0 0 0; color: #4CAF50; font-size: 28px;">${price} VND</h3>
+              <h3 style="margin: 5px 0 0 0; color: #4CAF50; font-size: 28px;">${price} USD</h3>
             </div>
             <div style="background: #fffbea; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #ffa500;">
               <p style="margin: 0; font-size: 14px; color: #856404;">
@@ -212,7 +212,7 @@ export const sendNewBidEmail = async (
               <div style="background: #fff5f5; padding: 20px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #ff6b6b;">
                 <h3 style="margin: 0 0 10px 0; color: #333;">${productName}</h3>
                 <p style="margin: 0; font-size: 14px; color: #666;">Current Price:</p>
-                <h3 style="margin: 5px 0 0 0; color: #ff6b6b; font-size: 28px;">${price} VND</h3>
+                <h3 style="margin: 5px 0 0 0; color: #ff6b6b; font-size: 28px;">${price} USD</h3>
               </div>
               <div style="background: #e8f5e9; padding: 15px; margin: 20px 0; border-radius: 5px;">
                 <p style="margin: 0; font-size: 14px; color: #2e7d32;">
@@ -353,7 +353,7 @@ export const sendAuctionSuccessEmail = async (
             <div style="background: #f0f8ff; padding: 20px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #FFD700;">
               <h3 style="margin: 0 0 10px 0; color: #333;">${productName}</h3>
               <p style="margin: 0; font-size: 14px; color: #666;">Final Price:</p>
-              <h3 style="margin: 5px 0 0 0; color: #FFA500; font-size: 28px;">${price} VND</h3>
+              <h3 style="margin: 5px 0 0 0; color: #FFA500; font-size: 28px;">${price} USD</h3>
             </div>
             <div style="background: #e8f5e9; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #4CAF50;">
               <p style="margin: 0; font-size: 14px; color: #2e7d32;">
@@ -393,7 +393,7 @@ export const sendAuctionSuccessEmail = async (
             <div style="background: #f0f8ff; padding: 20px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #4CAF50;">
               <h3 style="margin: 0 0 10px 0; color: #333;">${productName}</h3>
               <p style="margin: 0; font-size: 14px; color: #666;">Winning Bid:</p>
-              <h3 style="margin: 5px 0 0 0; color: #4CAF50; font-size: 28px;">${price} VND</h3>
+              <h3 style="margin: 5px 0 0 0; color: #4CAF50; font-size: 28px;">${price} USD</h3>
             </div>
             <div style="background: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #ffc107;">
               <p style="margin: 0; font-size: 14px; color: #856404;">

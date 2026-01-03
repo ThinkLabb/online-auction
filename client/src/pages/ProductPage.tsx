@@ -5,21 +5,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import ReactQuill from 'react-quill-new'; // Import Quill
 import 'react-quill-new/dist/quill.snow.css'; // Import Styles
 import { MemoProductCard } from '../components/product';
-
 import { SellerSidebar } from '../components/seller-sidebar';
 import { BidderSidebar } from '../components/bidder-sidebar';
 import { ProductQA } from '../components/productQA';
 import { Product } from '../lib/type';
-import { calculateTimeRemaining } from '../components/product';
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-  })
-    .format(amount)
-    .replace('₫', '');
-};
 
 const quillModules = {
   toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['clean']],

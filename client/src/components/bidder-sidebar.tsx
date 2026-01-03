@@ -42,7 +42,10 @@ export const BidderSidebar = ({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ amount: bidValue }),
         });
-        if (!response.ok) throw new Error('Failed to place bid');
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.message);
+        }
 
         const data = await response.json();
 
@@ -122,7 +125,7 @@ export const BidderSidebar = ({
                 onChange={(e) => setBidAmount(e.target.value)}
               />
               <div className="bg-gray-100 text-gray-600 px-3 py-2 rounded text-sm flex items-center">
-                VND
+                USD
               </div>
             </div>
           </div>
