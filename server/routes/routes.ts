@@ -29,7 +29,12 @@ import {
   searchProducts,
   appendProductDescription,
 } from '../controllers/product.controllers.ts';
-import { banBidder, getBidHistory, placeBid, getBidderProductBidHistory } from '../controllers/bid.controller.ts';
+import {
+  banBidder,
+  getBidHistory,
+  placeBid,
+  getBidderProductBidHistory,
+} from '../controllers/bid.controller.ts';
 import {
   addChat,
   addReview,
@@ -75,8 +80,16 @@ router.post('/auth/me', authController.getAuthentication, authController.getAcco
 router.post('/auth/logout', authController.logout);
 
 router.get('/home/products/endest', authController.getPublicAuthentication, getProductsEndest);
-router.get('/home/products/highestprice', authController.getPublicAuthentication, productController.getHighPriceProducts);
-router.get('/home/products/topbid', authController.getPublicAuthentication, productController.getTopBiddedProducts);
+router.get(
+  '/home/products/highestprice',
+  authController.getPublicAuthentication,
+  productController.getHighPriceProducts
+);
+router.get(
+  '/home/products/topbid',
+  authController.getPublicAuthentication,
+  productController.getTopBiddedProducts
+);
 
 router.get('/product/:id', authController.getPublicAuthentication, getProduct);
 
@@ -90,7 +103,11 @@ router.post(
   authController.getAuthentication,
   productController.handleBuyNow
 );
-router.get('/productsLV/:level1/:level2', authController.getPublicAuthentication, productController.getProductsLV);
+router.get(
+  '/productsLV/:level1/:level2',
+  authController.getPublicAuthentication,
+  productController.getProductsLV
+);
 
 router.post('/upload', authController.getSellerAuthentication, uploadProducts);
 
@@ -182,11 +199,7 @@ router.put(
 );
 
 // ===== PROFILE PAGE'S API =====
-router.get(
-  '/profile',
-  authController.getAuthentication,
-  userControllers.getMyProfile
-);
+router.get('/profile', authController.getAuthentication, userControllers.getMyProfile);
 
 router.get(
   '/profile/biddings',
@@ -205,7 +218,6 @@ router.get(
   authController.getAuthentication,
   UserControllers.BidderControllers.getWonProducts
 );
-
 
 router.get(
   '/profile/watchlist',
@@ -241,24 +253,13 @@ router.get(
   '/profile/solds',
   authController.getSellerAuthentication,
   UserControllers.SellerControllers.getProductsWithWinner
-)
-
-router.patch(
-  '/profile',
-  authController.getAuthentication,
-  userControllers.editUserProfile
 );
 
-router.use(
-  '/profile/verifyuser',
-  authController.verifyUser
-);
+router.patch('/profile', authController.getAuthentication, userControllers.editUserProfile);
 
-router.post(
-  '/watch-list/add',
-  authController.getAuthentication,
-  productController.addToWatchList
-);
+router.use('/profile/verifyuser', authController.verifyUser);
+
+router.post('/watch-list/add', authController.getAuthentication, productController.addToWatchList);
 
 router.delete(
   '/watch-list/:product_id',
@@ -272,34 +273,16 @@ router.delete(
 //   userControllers.deleteSellerlistProduct
 // );
 
-router.post(
-  '/profile/role',
-  authController.getAuthentication,
-  userControllers.requestRole
-);
+router.post('/profile/role', authController.getAuthentication, userControllers.requestRole);
 router.get(
   '/profile/seller-status',
   authController.getAuthentication,
   userControllers.getSellerStatus
 );
 
-router.post(
-  '/review/create',
-  authController.getAuthentication,
-  ReviewController.create
-),
-
-router.put(
-  '/review/update',
-  authController.getAuthentication,
-  ReviewController.update
-),
-
-router.post(
-  '/order/cancel/:id',
-  authController.getSellerAuthentication,
-  OrderController.cancel
-)
+(router.post('/review/create', authController.getAuthentication, ReviewController.create),
+  router.put('/review/update', authController.getAuthentication, ReviewController.update),
+  router.post('/order/cancel/:id', authController.getSellerAuthentication, OrderController.cancel));
 
 // =========================
 
@@ -320,11 +303,7 @@ router.post(
 );
 
 // Get bids of a product
-router.get(
-  '/products/:id/bids',
-  authController.getAuthentication,
-  getBidderProductBidHistory
-)
+router.get('/products/:id/bids', authController.getAuthentication, getBidderProductBidHistory);
 
 //============================
 // Payment

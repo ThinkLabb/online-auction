@@ -1,8 +1,6 @@
 import db from './database.ts';
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { BUCKET_NAME, s3Client } from '../config/s3.ts';
-import { Readable } from 'stream';
-import { Console } from 'console';
 
 /* ================= GET ORDER ================= */
 export const getOrderService = async (orderid: string, curUser: any) => {
@@ -24,17 +22,14 @@ export const getOrderService = async (orderid: string, curUser: any) => {
       buyer: { select: { name: true } },
       seller_review_id: true,
       buyer_review_id: true,
-      product_id: true
+      product_id: true,
     },
-    where: { order_id: BigInt(orderid) }
+    where: { order_id: BigInt(orderid) },
   });
 
   if (!orderFromDB) return null;
 
-  if (
-    String(orderFromDB.seller_id) !== curUserId &&
-    String(orderFromDB.buyer_id) !== curUserId
-  ) {
+  if (String(orderFromDB.seller_id) !== curUserId && String(orderFromDB.buyer_id) !== curUserId) {
     throw new Error('FORBIDDEN');
   }
 
@@ -44,8 +39,8 @@ export const getOrderService = async (orderid: string, curUser: any) => {
   let partner_id;
   let partner_name;
   let isReviewed;
-  let review =  null
-  let likestatus = null
+  let review = null;
+  let likestatus = null;
   if (isSeller) {
     isReviewed = orderFromDB.seller_review_id !== null;
     if (orderFromDB.seller_review_id !== null) {
@@ -57,11 +52,10 @@ export const getOrderService = async (orderid: string, curUser: any) => {
           review_id: true,
           comment: true,
           is_positive: true,
-        }
-      })
+        },
+      });
       if (reviewdata) {
-        review = reviewdata.comment,
-        likestatus = reviewdata.is_positive
+        ((review = reviewdata.comment), (likestatus = reviewdata.is_positive));
       }
     }
     partner_id = String(orderFromDB.buyer_id);
@@ -77,11 +71,10 @@ export const getOrderService = async (orderid: string, curUser: any) => {
           review_id: true,
           comment: true,
           is_positive: true,
-        }
-      })
+        },
+      });
       if (reviewdata) {
-        review = reviewdata.comment,
-        likestatus = reviewdata.is_positive
+        ((review = reviewdata.comment), (likestatus = reviewdata.is_positive));
       }
     }
     partner_id = String(orderFromDB.seller_id);
@@ -104,7 +97,7 @@ export const getOrderService = async (orderid: string, curUser: any) => {
     is_reviewed: isReviewed,
     cur_name,
     review,
-    likestatus
+    likestatus,
   };
 };
 
@@ -121,7 +114,7 @@ export const changeOrderService = async (orderid: string, body: any) => {
         Bucket: BUCKET_NAME,
         Key: filename,
         Body: buffer,
-        ContentType: 'image/png'
+        ContentType: 'image/png',
       })
     );
 
@@ -145,8 +138,8 @@ export const changeOrderService = async (orderid: string, body: any) => {
       status: body.status,
       ...(body.shipping_address && { shipping_address: body.shipping_address }),
       ...(paymentInvoiceKey && { payment_proof_url: paymentInvoiceKey }),
-      ...(shippingInvoiceKey && { shipping_proof_url: shippingInvoiceKey })
-    }
+      ...(shippingInvoiceKey && { shipping_proof_url: shippingInvoiceKey }),
+    },
   });
 };
 
@@ -159,7 +152,7 @@ export const addReviewService = async (body: any) => {
       product_id: BigInt(body.product_id),
     },
   });
-  
+
   if (!review) {
     return db.prisma.reviews.create({
       data: {
@@ -167,14 +160,13 @@ export const addReviewService = async (body: any) => {
         reviewee_id: body.reviewee_id,
         product_id: BigInt(body.product_id),
         is_positive: body.is_positive,
-        comment: body.comment
-      }
+        comment: body.comment,
+      },
     });
-  }
-  else {
+  } else {
     const updatedReview = await db.prisma.reviews.update({
       where: {
-        review_id: review.review_id
+        review_id: review.review_id,
       },
       data: {
         is_positive: body.is_positive,
@@ -190,7 +182,7 @@ export const addReviewService = async (body: any) => {
     });
     return updatedReview;
   }
-}
+};
 
 /* ================= CHAT ================= */
 export const addChatService = async (body: any) => {
@@ -199,8 +191,8 @@ export const addChatService = async (body: any) => {
       order_id: body.order_id,
       sender_id: body.sender_id,
       message_text: body.message_text,
-      sent_at: new Date(body.sent_at)
-    }
+      sent_at: new Date(body.sent_at),
+    },
   });
 };
 
@@ -211,9 +203,9 @@ export const getChatService = async (orderid: string) => {
       chat_message_id: true,
       sender_id: true,
       message_text: true,
-      sent_at: true
+      sent_at: true,
     },
-    orderBy: { chat_message_id: 'asc' }
+    orderBy: { chat_message_id: 'asc' },
   });
 };
 
@@ -222,7 +214,7 @@ export const getOrderImageService = async (key: string) => {
   return s3Client.send(
     new GetObjectCommand({
       Bucket: BUCKET_NAME,
-      Key: `orders/${key}`
+      Key: `orders/${key}`,
     })
   );
 };
@@ -235,17 +227,17 @@ export const getOrderByUserID = async (userId: BigInt) => {
         status: { notIn: ['cancelled', 'completed'] },
         OR: [
           { seller_id: String(userId), seller_review_id: null },
-          { buyer_id: String(userId), seller_review_id: null }
-        ]
+          { buyer_id: String(userId), seller_review_id: null },
+        ],
       },
-      select: { order_id: true, status: true }
+      select: { order_id: true, status: true },
     });
 
     if (!ordersFromDB) return null;
 
-    return ordersFromDB.map(o => ({
+    return ordersFromDB.map((o) => ({
       order_id: String(o.order_id),
-      status: o.status
+      status: o.status,
     }));
   } catch {
     return null;
@@ -256,7 +248,7 @@ export const getOrderByProductID = async (productId: number) => {
   try {
     const ordersFromDB = await db.prisma.order.findUnique({
       where: { product_id: productId },
-      select: { order_id: true }
+      select: { order_id: true },
     });
 
     if (!ordersFromDB) return null;

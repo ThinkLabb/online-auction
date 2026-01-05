@@ -1,6 +1,6 @@
-import { count } from "console";
-import db from "./database.ts";
-import { ProductStatus, OrderStatus } from "@prisma/client";
+import { count } from 'console';
+import db from './database.ts';
+import { ProductStatus, OrderStatus } from '@prisma/client';
 
 export const UserServices = {
   getUser: async (user_id: string) => {
@@ -10,9 +10,9 @@ export const UserServices = {
   BidderServices: {
     getBiddingProducts: async (user_id: string) => {
       return db.prisma.bidHistory.findMany({
-        where: { 
+        where: {
           bidder_id: user_id,
-          product: { status: "open" },
+          product: { status: 'open' },
         },
         select: {
           bid_amount: true,
@@ -29,11 +29,11 @@ export const UserServices = {
               bid_count: true,
               end_time: true,
 
-              seller: { 
+              seller: {
                 select: {
                   user_id: true,
                   name: true,
-                }
+                },
               },
               category: {
                 select: {
@@ -43,26 +43,26 @@ export const UserServices = {
                 },
               },
               current_highest_bidder: {
-                select: { 
+                select: {
                   user_id: true,
-                  name: true
+                  name: true,
                 },
               },
-              images: { take: 1, select: { image_url: true },},
-              _count: { select: {reviews: true } }
+              images: { take: 1, select: { image_url: true } },
+              _count: { select: { reviews: true } },
             },
-          }
+          },
         },
-        distinct: ["product_id"],
-        orderBy: { bid_time: "desc" },
+        distinct: ['product_id'],
+        orderBy: { bid_time: 'desc' },
       });
     },
 
     getBiddedProducts: async (user_id: string) => {
       return db.prisma.bidHistory.findMany({
-        where: { 
+        where: {
           bidder_id: user_id,
-          product: { status: "sold" },
+          product: { status: 'sold' },
         },
         select: {
           bid_amount: true,
@@ -79,11 +79,11 @@ export const UserServices = {
               bid_count: true,
               end_time: true,
 
-              seller: { 
+              seller: {
                 select: {
                   user_id: true,
                   name: true,
-                }
+                },
               },
               category: {
                 select: {
@@ -93,21 +93,21 @@ export const UserServices = {
                 },
               },
               current_highest_bidder: {
-                select: { 
+                select: {
                   user_id: true,
-                  name: true
+                  name: true,
                 },
               },
-              images: { take: 1, select: { image_url: true },},
-              _count: { select: {reviews: true } }
+              images: { take: 1, select: { image_url: true } },
+              _count: { select: { reviews: true } },
             },
-          }
+          },
         },
-        distinct: ["product_id"],
-        orderBy: { bid_time: "desc" },
+        distinct: ['product_id'],
+        orderBy: { bid_time: 'desc' },
       });
     },
-    
+
     getWonProducts: async (user_id: string) => {
       return db.prisma.order.findMany({
         where: { buyer_id: user_id },
@@ -125,14 +125,14 @@ export const UserServices = {
               is_positive: true,
               comment: true,
               created_at: true,
-            }
+            },
           },
 
           product: {
             select: {
               product_id: true,
               name: true,
-              
+
               current_price: true,
               bid_count: true,
               end_time: true,
@@ -142,26 +142,26 @@ export const UserServices = {
               seller: {
                 select: {
                   user_id: true,
-                  name: true
-                }
+                  name: true,
+                },
               },
 
               category: {
                 select: {
                   category_id: true,
                   name_level_1: true,
-                  name_level_2: true
-                }
+                  name_level_2: true,
+                },
               },
 
               images: { take: 1, select: { image_url: true } },
-              _count: { select: { reviews: true} }
-            }
-          }
+              _count: { select: { reviews: true } },
+            },
+          },
         },
-        distinct: ["product_id"],
-        orderBy: { created_at: 'desc'}
-      })
+        distinct: ['product_id'],
+        orderBy: { created_at: 'desc' },
+      });
     },
 
     getWatchlistProducts: async (user_id: string) => {
@@ -174,44 +174,44 @@ export const UserServices = {
               name: true,
               images: { take: 1, select: { image_url: true } },
               category: {
-                  select: {
-                    category_id: true,
-                    name_level_1: true,
-                    name_level_2: true,
-                  },
+                select: {
+                  category_id: true,
+                  name_level_1: true,
+                  name_level_2: true,
                 },
+              },
 
               current_price: true,
               bid_count: true,
               end_time: true,
-              seller: { 
+              seller: {
                 select: {
                   user_id: true,
                   name: true,
-                }
+                },
               },
 
               status: true,
               buy_now_price: true,
- 
+
               current_highest_bidder: {
-                select: { 
+                select: {
                   user_id: true,
-                  name: true
+                  name: true,
                 },
               },
-              _count: { select: { reviews: true } }
+              _count: { select: { reviews: true } },
             },
-          }
+          },
         },
         distinct: ['product_id'],
-        orderBy: { product: { end_time: 'asc'} }
-      })
+        orderBy: { product: { end_time: 'asc' } },
+      });
     },
 
     getReviews: async (user_id: string) => {
       return db.prisma.reviews.findMany({
-        where: { 
+        where: {
           reviewee_id: user_id,
         },
         select: {
@@ -220,8 +220,8 @@ export const UserServices = {
             select: {
               user_id: true,
               name: true,
-            }
-          },          
+            },
+          },
           product: {
             select: {
               product_id: true,
@@ -231,26 +231,26 @@ export const UserServices = {
                 select: {
                   category_id: true,
                   name_level_1: true,
-                  name_level_2: true
-                }
+                  name_level_2: true,
+                },
               },
 
-              images: { take: 1, select: {image_url: true} },
-            }
+              images: { take: 1, select: { image_url: true } },
+            },
           },
 
           is_positive: true,
           comment: true,
           created_at: true,
-        }
-      })
+        },
+      });
     },
 
     getReviewsFromBuyers: async (user_id: string) => {
       return db.prisma.reviews.findMany({
-        where: { 
+        where: {
           reviewee_id: user_id,
-          order_as_buyer_review: { isNot: null }
+          order_as_buyer_review: { isNot: null },
         },
         select: {
           review_id: true,
@@ -258,8 +258,8 @@ export const UserServices = {
             select: {
               user_id: true,
               name: true,
-            }
-          },          
+            },
+          },
           product: {
             select: {
               product_id: true,
@@ -269,26 +269,26 @@ export const UserServices = {
                 select: {
                   category_id: true,
                   name_level_1: true,
-                  name_level_2: true
-                }
+                  name_level_2: true,
+                },
               },
 
-              images: { take: 1, select: {image_url: true} },
-            }
+              images: { take: 1, select: { image_url: true } },
+            },
           },
 
           is_positive: true,
           comment: true,
           created_at: true,
-        }
-      })
+        },
+      });
     },
 
     getReviewsFromSellers: async (user_id: string) => {
       return db.prisma.reviews.findMany({
-        where: { 
+        where: {
           reviewee_id: user_id,
-          order_as_seller_review: { isNot: null }
+          order_as_seller_review: { isNot: null },
         },
         select: {
           review_id: true,
@@ -296,8 +296,8 @@ export const UserServices = {
             select: {
               user_id: true,
               name: true,
-            }
-          },          
+            },
+          },
           product: {
             select: {
               product_id: true,
@@ -307,25 +307,25 @@ export const UserServices = {
                 select: {
                   category_id: true,
                   name_level_1: true,
-                  name_level_2: true
-                }
+                  name_level_2: true,
+                },
               },
 
-              images: { take: 1, select: {image_url: true} },
-            }
+              images: { take: 1, select: { image_url: true } },
+            },
           },
 
           is_positive: true,
           comment: true,
           created_at: true,
-        }
-      })
-    }
+        },
+      });
+    },
   },
 
   SellerServices: {
     getAllProducts: async (seller_id: string) => {
-      return db.prisma.product.findMany({where: { seller_id: seller_id }});
+      return db.prisma.product.findMany({ where: { seller_id: seller_id } });
     },
 
     getSellingProducts: async (seller_id: string) => {
@@ -333,12 +333,12 @@ export const UserServices = {
         where: {
           seller_id: seller_id,
           status: ProductStatus.open,
-          end_time: { gt: new Date() }
+          end_time: { gt: new Date() },
         },
         select: {
           product_id: true,
           name: true,
-          images: { take: 1, select: { image_url: true },},
+          images: { take: 1, select: { image_url: true } },
           category: {
             select: {
               category_id: true,
@@ -355,24 +355,24 @@ export const UserServices = {
           buy_now_price: true,
 
           current_highest_bidder: {
-            select: { 
+            select: {
               user_id: true,
-              name: true
+              name: true,
             },
           },
 
           auto_extend: true,
           bids: true,
-          _count: { select: { reviews: true } }
+          _count: { select: { reviews: true } },
         },
-      })
+      });
     },
 
     getProductsWithWinner: async (seller_id: string) => {
       return db.prisma.product.findMany({
         where: {
           seller_id: seller_id,
-          order: { isNot: null }
+          order: { isNot: null },
         },
         select: {
           product_id: true,
@@ -380,7 +380,7 @@ export const UserServices = {
 
           images: {
             take: 1,
-            select: { image_url: true }
+            select: { image_url: true },
           },
 
           category: {
@@ -388,7 +388,7 @@ export const UserServices = {
               category_id: true,
               name_level_1: true,
               name_level_2: true,
-            }
+            },
           },
 
           current_price: true,
@@ -405,10 +405,10 @@ export const UserServices = {
               updated_at: true,
 
               buyer: {
-                select: { 
+                select: {
                   user_id: true,
-                  name: true 
-                }
+                  name: true,
+                },
               },
 
               seller_review: {
@@ -417,16 +417,16 @@ export const UserServices = {
 
                   is_positive: true,
                   comment: true,
-                  created_at: true
-                }
-              }
-            }
-          }
+                  created_at: true,
+                },
+              },
+            },
+          },
         },
         orderBy: {
-          end_time: 'desc'
-        }
-      })
-    }
-  }
-}
+          end_time: 'desc',
+        },
+      });
+    },
+  },
+};

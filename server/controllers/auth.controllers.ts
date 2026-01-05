@@ -2,26 +2,23 @@ import type { NextFunction, Request, Response } from 'express';
 import * as authService from '../services/auth.services.ts';
 import { errorResponse, successResponse } from '../utils/response.ts';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import db from "../services/database.ts"
+import db from '../services/database.ts';
 import { getOrderByUserID } from '../services/payment.services.ts';
 
 export const register = async (req: Request, res: Response) => {
   try {
     const recaptchaToken = req.body.recaptchaToken;
 
-    const response = await fetch(
-      "https://www.google.com/recaptcha/api/siteverify",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `secret=${process.env.RECAPTCHA_SECRET}&response=${recaptchaToken}`,
-      }
-    );
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `secret=${process.env.RECAPTCHA_SECRET}&response=${recaptchaToken}`,
+    });
 
     const data = await response.json();
 
     if (!data.success) {
-      return res.status(400).json(errorResponse("reCAPTCHA failed"));
+      return res.status(400).json(errorResponse('reCAPTCHA failed'));
     }
 
     const userdata = {
@@ -29,10 +26,10 @@ export const register = async (req: Request, res: Response) => {
       email: req.body.email,
       address: req.body.address,
       password: req.body.password,
-      code: req.body.code
-    }
+      code: req.body.code,
+    };
     const result = await authService.create(userdata);
-   
+
     if (!result.success || !result.user) {
       return res.status(400).json(errorResponse(result.message));
     }
@@ -55,7 +52,12 @@ export const register = async (req: Request, res: Response) => {
 
     return res
       .status(201)
-      .json(successResponse({ id: String(user.user_id), name: user.name, email: user.email }, result.message));
+      .json(
+        successResponse(
+          { id: String(user.user_id), name: user.name, email: user.email },
+          result.message
+        )
+      );
   } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
   }
@@ -90,7 +92,12 @@ export const login = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .json(successResponse({ id: String(user.user_id), name: user.name, email: user.email, role: user.role }, data.message));
+      .json(
+        successResponse(
+          { id: String(user.user_id), name: user.name, email: user.email, role: user.role },
+          data.message
+        )
+      );
   } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
   }
@@ -110,7 +117,7 @@ export const getAuthentication = function (req: Request, res: Response, next: Ne
     }
     const payload: UserPayload = jwt.verify(req.cookies.token, secret) as UserPayload;
     res.locals.user = payload;
-    console.log(res.locals.user.id)
+    console.log(res.locals.user.id);
     res.locals.authenticated = true;
 
     next();
@@ -128,17 +135,17 @@ export const getSellerAuthentication = async (req: Request, res: Response, next:
 
     const token = req.cookies.token;
     if (!token) {
-      return res.status(401).json({ message: "No token provided" });
+      return res.status(401).json({ message: 'No token provided' });
     }
 
     const decoded = jwt.verify(token, secret) as JwtPayload;
-    
+
     const user = await db.prisma.user.findUnique({
       where: { email: decoded.email },
     });
 
     if (!user) {
-      return res.status(401).json({ message: "User not found" });
+      return res.status(401).json({ message: 'User not found' });
     }
 
     if (user.role !== 'seller') {
@@ -147,9 +154,9 @@ export const getSellerAuthentication = async (req: Request, res: Response, next:
 
     const newPayload = {
       id: user.user_id,
-      name: user.name, 
+      name: user.name,
       email: user.email,
-      role: user.role, 
+      role: user.role,
     };
 
     const newToken = jwt.sign(
@@ -166,11 +173,10 @@ export const getSellerAuthentication = async (req: Request, res: Response, next:
 
     res.locals.user = newPayload;
     res.locals.authenticated = true;
-    
-    next();
 
+    next();
   } catch (e) {
-    console.error("Auth Middleware Error:", e);
+    console.error('Auth Middleware Error:', e);
     return res.status(403).json({ success: false, message: 'Session expired or invalid' });
   }
 };
@@ -230,40 +236,37 @@ export const verifyUser = async (req: Request, res: Response) => {
     }
 
     const secret = process.env.JWT_SECRET!;
-    if (!secret) throw new Error("JWT_SECRET is not set");
+    if (!secret) throw new Error('JWT_SECRET is not set');
 
-    const token = jwt.sign(
-        { info: req.body, message: data.message },
-        secret,
-        { expiresIn: "5m" }
-    );
+    const token = jwt.sign({ info: req.body, message: data.message }, secret, { expiresIn: '5m' });
 
-    res.cookie("reset_token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 1000 * 60 * 5,
-        sameSite: "strict"
+    res.cookie('reset_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1000 * 60 * 5,
+      sameSite: 'strict',
     });
 
-    return res
-      .status(200)
-      .json(successResponse(null, "Correct password"));
-;
-
-  } catch(e) {
+    return res.status(200).json(successResponse(null, 'Correct password'));
+  } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
   }
-}
+};
 
 export const getAccount = async (req: Request, res: Response) => {
   try {
     const user = res.locals.user;
-    console.log("id:", user.id)
+    console.log('id:', user.id);
     const orders = await getOrderByUserID(user.id);
-    console.log("orders", orders)
+    console.log('orders', orders);
     return res
       .status(200)
-      .json(successResponse({ name: user.name, email: user.email, role: user.role, orders: orders}, 'Get account successfully!'));
+      .json(
+        successResponse(
+          { name: user.name, email: user.email, role: user.role, orders: orders },
+          'Get account successfully!'
+        )
+      );
   } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
   }
@@ -286,14 +289,13 @@ export const logout = async (req: Request, res: Response) => {
   }
 };
 
-
 export const checkAdmin = function (req: Request, res: Response, next: NextFunction) {
   try {
     const user = res.locals.user;
     if (user.role !== 'admin') {
-      return res.status(500).json(errorResponse("Your are not admin"));
+      return res.status(500).json(errorResponse('Your are not admin'));
     }
-    next()
+    next();
   } catch (e) {
     return res.status(500).json(errorResponse(String(e)));
   }
@@ -304,7 +306,7 @@ export const socialLogin = async (req: Request, res: Response) => {
     const { provider, token: socialToken } = req.body;
 
     if (provider !== 'google') {
-      return res.status(400).json(errorResponse("Provider not supported yet"));
+      return res.status(400).json(errorResponse('Provider not supported yet'));
     }
 
     // 1. Xác thực token qua service
@@ -328,16 +330,19 @@ export const socialLogin = async (req: Request, res: Response) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 1000 * 60 * 60,
-      sameSite: 'strict'
+      sameSite: 'strict',
     });
 
-    return res.status(200).json(successResponse(
-      { id: String(user.user_id), name: user.name, email: user.email },
-      "Social login successful"
-    ));
-
+    return res
+      .status(200)
+      .json(
+        successResponse(
+          { id: String(user.user_id), name: user.name, email: user.email },
+          'Social login successful'
+        )
+      );
   } catch (e) {
-    console.error("Social Login Error:", e);
+    console.error('Social Login Error:', e);
     return res.status(500).json(errorResponse(String(e)));
   }
 };

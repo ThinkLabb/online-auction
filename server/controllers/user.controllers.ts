@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { ProductStatus, OrderStatus, UserRole } from '@prisma/client';
 import { errorResponse, successResponse } from '../utils/response';
@@ -162,7 +162,7 @@ export const getMyProfile = async (req: Request, res: Response) => {
     if (!user_id) return res.status(401).json(errorResponse('Unauthorized'));
 
     const user = await UserServices.getUser(user_id);
-    if (!user) return res.status(404).json(errorResponse("User not found in db"));
+    if (!user) return res.status(404).json(errorResponse('User not found in db'));
 
     const payload: Profile = {
       role: user.role,
@@ -176,7 +176,7 @@ export const getMyProfile = async (req: Request, res: Response) => {
     };
 
     res.status(200).json(successResponse(user, 'Get profile successfully'));
-  } catch (err:any) {
+  } catch (err: any) {
     console.error(err.message);
     res.status(500).json(errorResponse(err.message));
   }
