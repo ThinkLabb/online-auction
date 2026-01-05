@@ -193,7 +193,7 @@ export default function Register() {
   }, []);
 
   useEffect(() => {
-    setProvince(wards);
+    setWard(wards);
   }, [provinceCur]);
 
   const filterWard = useMemo(() => {
