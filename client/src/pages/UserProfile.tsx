@@ -180,7 +180,12 @@ export default function UserProfile() {
           </div>
         </div>
 
-        <UserAction profile={profile} action={action} setAction={setAction} />
+        <UserAction
+          profile={profile}
+          action={action}
+          setAction={setAction}
+          setProfile={setProfile}
+        />
 
       </div>
     </div>

@@ -3,10 +3,12 @@ import { PrismaClient } from '@prisma/client';
 import { ProductStatus, OrderStatus, UserRole } from '@prisma/client';
 import { errorResponse, successResponse } from '../utils/response';
 import { UserServices } from '../services/user.services';
+import db from '../services/database';
 
 const prisma = new PrismaClient();
 
 export interface Profile {
+  user_id: string;
   role: UserRole;
   email: string;
   name: string;
@@ -165,6 +167,7 @@ export const getMyProfile = async (req: Request, res: Response) => {
     if (!user) return res.status(404).json(errorResponse("User not found in db"));
 
     const payload: Profile = {
+      user_id: user.user_id,
       role: user.role,
       email: user.email,
       name: user.name,
@@ -175,20 +178,19 @@ export const getMyProfile = async (req: Request, res: Response) => {
       minus_review: user.minus_review,
     };
 
-    res.status(200).json(successResponse(user, 'Get profile successfully'));
+    res.status(200).json(successResponse(payload, 'Get profile successfully'));
   } catch (err:any) {
     console.error(err.message);
     res.status(500).json(errorResponse(err.message));
   }
 };
 
-// API: PATCH /api/users/profile
 export const editUserProfile = async (req: Request, res: Response) => {
   try {
     const userId = res.locals.user.id;
 
     if (!userId) {
-      return res.status(401).json({ message: "Unauthorized: Can't find user" });
+      return res.status(401).json(errorResponse("Unauthorized: Can't find user"));
     }
 
     const { name, email, birthdate, address } = req.body as {
@@ -203,6 +205,10 @@ export const editUserProfile = async (req: Request, res: Response) => {
     }
 
     const updateData: any = {};
+
+    if (name) {
+      updateData.name = name.trim();
+    }
 
     if (email) {
       updateData.email = email.trim().toLowerCase();
@@ -233,20 +239,24 @@ export const editUserProfile = async (req: Request, res: Response) => {
       },
     });
 
-    return res.status(200).json({
-      message: 'Cập nhật hồ sơ thành công!',
-      user: {
+    return res.status(201).json(successResponse(
+      {
         ...updatedUser,
         birthdate: updatedUser.birthdate ? updatedUser.birthdate.toISOString().split('T')[0] : null,
       },
-    });
+      'Updated profile successfully!'
+    ));
   } catch (e: any) {
     if (e.code === 'P2025') {
       return res.status(404).json(errorResponse('User not found'));
     }
 
     if (e.code === 'P2002' && e.meta?.target?.includes('email')) {
-      return res.status(409).json(errorResponse('Email already exists'));
+      return res.status(409).json({
+          isSuccess: false,
+          message: 'Email already exists', 
+          errorField: 'email'
+      });
     }
 
     return res.status(500).json(errorResponse(e.message));
@@ -288,45 +298,6 @@ export const deleteWatchlistProduct = async (req: Request, res: Response) => {
     return res.status(500).json(errorResponse(String(error)));
   }
 };
-
-// export const deleteSellerlistProduct = async (req: Request, res: Response) => {
-//   try {
-//     const user_id = res.locals.user.id;
-//     if (!user_id) {
-//       return res.status(401).json(errorResponse("Unauthorized: Can't find user"));
-//     }
-
-//     const { product_id } = req.params;
-//     if (!product_id) {
-//       return res.status(400).json(errorResponse('Product ID is required'));
-//     }
-
-//     const result = await prisma.product.updateMany({
-//       where: {
-//         seller_id: user_id,
-//         product_id: BigInt(product_id),
-//       },
-//       data: {
-//         status: ProductStatus.removed,
-//       },
-//     });
-
-//     if (result.count === 0) {
-//       return res.status(404).json({ message: 'Product not found in your watchlist' });
-//     }
-
-//     return res.status(200).json({ message: 'Removed product from watchlist successfully' });
-//   } catch (error) {
-//     console.error('Delete seller list error:', error);
-
-//     // Xử lý lỗi convert BigInt nếu user gửi id linh tinh (vd: "abc")
-//     if (error instanceof SyntaxError || (error as any).code === 'P2002') {
-//       return res.status(400).json({ message: 'Invalid Product ID format' });
-//     }
-
-//     return res.status(500).json(errorResponse(String(error)));
-//   }
-// };
 
 export const requestRole = async (req: Request, res: Response) => {
   try {
@@ -548,52 +519,14 @@ export const UserControllers = {
         const user_id = res.locals.user.id;
         if (!user_id) return res.status(401).json(errorResponse('Unauthorized'));
 
-        const products = await UserServices.BidderServices.getBiddedProducts(user_id);
+        const count = await UserServices.BidderServices.countBiddedProducts(user_id);
 
-        const payload: BiddingProduct[] = products.map((product) => ({
-          product_id: product.product.product_id.toString(),
-          name: product.product.name,
-          thumbnail_url: product.product.images[0].image_url,
-
-          category: {
-            category_id: product.product.category.category_id.toString(),
-            category_name_level_1: product.product.category.name_level_1,
-            category_name_level_2: product.product.category.name_level_2
-              ? product.product.category.name_level_2
-              : '',
-          },
-
-          current_price: Number(product.product.current_price), // giá cuối cùng đối với sản phẩm đã bán
-          bid_count: product.product.bid_count,
-          end_time: new Date(product.product.end_time).toLocaleDateString(),
-
-          seller: {
-            user_id: product.product.seller.user_id,
-            name: product.product.seller.name,
-          },
-
-          status: product.product.status,
-          buy_now_price: Number(product.product.buy_now_price),
-          current_highest_bidder: product.product.current_highest_bidder
-            ? {
-                user_id: product.product.current_highest_bidder.user_id,
-                name: product.product.current_highest_bidder.name,
-              }
-            : null,
-
-          reviews_count: product.product._count.reviews,
-          bid_at: new Date(product.bid_time).toLocaleDateString(),
-          bid_amount: Number(product.bid_amount),
-        }));
-
-        return res
-          .status(200)
-          .json(
-            successResponse(
-              payload,
-              payload.length ? 'Get bidding products successfullly' : 'No bidding product'
-            )
-          );
+        return res.status(200).json(
+          successResponse(
+            { count },
+            'Get bidded products count successfully'
+          )
+    );
       } catch (e) {
         console.log(e);
         return res.status(500).json(errorResponse('Internal server error'));

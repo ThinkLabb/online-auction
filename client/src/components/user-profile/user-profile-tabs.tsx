@@ -149,7 +149,7 @@ function BiddingTab({ profile }: { profile: Profile }) {
             <div className="flex items-end gap-2">
               <span className="text-2xl font-bold text-green-700">{leadingCount}</span>
               <span className="text-sm text-green-600 mb-1">
-                ({(leadingCount / products.length).toFixed(2)}%)
+                ({((leadingCount / products.length) * 100).toFixed(2)}%)
               </span>
             </div>
           </div>
@@ -182,7 +182,7 @@ function BiddingTab({ profile }: { profile: Profile }) {
         "
         >
           {products.map((product, index) => {
-            const isHighestBidder = product.current_highest_bidder?.name === profile.name;
+            const isHighestBidder = product.current_highest_bidder?.user_id === profile.user_id;
             return (
               <div
                 key={index}
@@ -309,11 +309,10 @@ function BiddingTab({ profile }: { profile: Profile }) {
 
 function WonTab({ profile }: { profile: Profile }) {
   const [products, setProducts] = useState<WonProduct[]>([]);
-  const [biddeds, setBiddes] = useState<BiddingProduct[]>([]);
+  const [biddedCount, setBiddedCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const fetchWonProducts = async () => {
     try {
-      setLoading(true);
       const res = await fetch('/api/profile/won-products', {
         method: 'GET',
         credentials: 'include',
@@ -326,14 +325,11 @@ function WonTab({ profile }: { profile: Profile }) {
       if (res.ok) setProducts(result.data);
     } catch (e) {
       console.log(e);
-    } finally {
-      setLoading(false);
     }
   };
 
   const fetchBiddedProducts = async () => {
     try {
-      setLoading(true);
       const res = await fetch('/api/profile/biddeds', {
         method: 'GET',
         credentials: 'include',
@@ -343,17 +339,29 @@ function WonTab({ profile }: { profile: Profile }) {
       });
 
       const result = await res.json();
-      if (res.ok) setBiddes(result.data);
+      if (res.ok) setBiddedCount(result.data.count);
     } catch (e) {
       console.log(e);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchBiddedProducts();
-    fetchWonProducts();
+    const fetchAllData = async () => {
+      setLoading(true);
+      
+      try {
+        await Promise.all([
+          fetchBiddedProducts(),
+          fetchWonProducts()
+        ]);
+      } catch (error) {
+        console.error("Lỗi khi tải dữ liệu:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllData();
   }, []);
 
   return loading ? (
@@ -366,11 +374,11 @@ function WonTab({ profile }: { profile: Profile }) {
         Won {products.length} product{products.length > 1 ? 's' : ''}
       </p>
 
-      {biddeds.length > 0 && products.length > 0 && (
+      {biddedCount > 0 && products.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
           <div className="bg-white p-3 rounded border border-gray-200 shadow-sm flex flex-col">
-            <span className="text-xs text-gray-500 uppercase font-semibold">Bidded</span>
-            <span className="text-2xl font-bold text-gray-800">{biddeds.length}</span>
+            <span className="text-xs text-gray-500 uppercase font-semibold">Total</span>
+            <span className="text-2xl font-bold text-gray-800">{biddedCount}</span>
           </div>
 
           <div className="bg-green-50 p-3 rounded border border-green-200 shadow-sm flex flex-col">
@@ -378,7 +386,7 @@ function WonTab({ profile }: { profile: Profile }) {
             <div className="flex items-end gap-2">
               <span className="text-2xl font-bold text-green-700">{products.length}</span>
               <span className="text-sm text-green-600 mb-1">
-                ({((products.length / biddeds.length) * 100).toFixed(2)}%)
+                ({((products.length / biddedCount) * 100).toFixed(2)}%)
               </span>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { ProductStatus, OrderStatus, UserRole } from '@prisma/client';
 
 export interface Profile {
+  user_id: string;
   role: UserRole;
   email: string;
   name: string;

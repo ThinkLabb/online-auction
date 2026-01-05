@@ -13,8 +13,19 @@ const schema = z.object({
     .string()
     .min(3, { message: 'Name must be 3–50 characters.' })
     .max(50, { message: 'Name must be 3–50 characters.' }),
-  email: z.string().email({ message: 'Invalid email format' }),
-  birthdate: z.string().nullable().optional(),
+  email: z.string().trim().email({ message: 'Invalid email format' }),
+  birthdate: z.string().nullable().optional().refine((dateString) => {
+    if (!dateString) return true;
+
+    const date = new Date(dateString);
+    
+    if (isNaN(date.getTime())) return false;
+
+    const now = new Date();
+    return date <= now;
+  }, { 
+    message: "Birthdate must be in the past." 
+  }),
   homenumber: z
     .string()
     .min(1, { message: 'House number is required' })
@@ -40,29 +51,22 @@ export const getAddressParts = (fullAddress?: string | null) => {
   };
 };
 
-function EditProfile({ profile, setAction }: { profile: Profile; setAction: SetAction }) {
+function EditProfile(
+  { 
+    profile, 
+    setAction,
+    setProfile
+  } : {
+    profile: Profile; 
+    setAction: SetAction;
+    setProfile: React.Dispatch<React.SetStateAction<Profile | null>>;
+  }) 
+{
   const formatDateForInput = (dateInput?: string | Date | null) => {
     if (!dateInput) return '';
-
-    if (typeof dateInput === 'string' && dateInput.includes('/')) {
-      const parts = dateInput.split('/');
-      if (parts.length === 3) {
-        let d = parts[1].padStart(2, '0');
-        let m = parts[0].padStart(2, '0');
-        let y = parts[2];
-
-        return `${y}-${m}-${d}`;
-      }
-    }
-
     const date = new Date(dateInput);
     if (isNaN(date.getTime())) return '';
-
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
-
-    return `${yyyy}-${mm}-${dd}`;
+    return date.toISOString().split('T')[0];
   };
 
   const addressDefaults = getAddressParts(profile.address);
@@ -71,6 +75,7 @@ function EditProfile({ profile, setAction }: { profile: Profile; setAction: SetA
     register,
     watch,
     handleSubmit,
+    reset,
     formState: { errors },
     setError,
   } = useForm<Inputs>({
@@ -151,9 +156,7 @@ function EditProfile({ profile, setAction }: { profile: Profile; setAction: SetA
 
       const res = await fetch('/api/profile', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
           name: data.name,
           email: data.email,
@@ -164,26 +167,52 @@ function EditProfile({ profile, setAction }: { profile: Profile; setAction: SetA
 
       const result = await res.json();
 
-      if (!res.ok) {
-        if (!result.isSuccess) {
-          if (result.message?.name) setError('name', { message: result.message.name });
-          if (result.message?.email) setError('email', { message: result.message.email });
-          if (result.message?.birthdate)
-            setError('birthdate', { message: result.message.birthdate });
-        }
+      if (!res.ok || result.isSuccess === false) {
+        alert('Edited profile failed! Resetting to default...');
+        if (result.errorField === 'email') 
+          setError('email', { message: result.message });
+
+        const originalAddress = getAddressParts(profile.address)
+
+        reset({
+          name: profile.name,
+          email: profile.email,
+          birthdate: formatDateForInput(profile.birthdate),
+          homenumber: originalAddress.homenumber,
+          street: originalAddress.street,
+          ward: originalAddress.ward,
+          province: originalAddress.province,
+        });
       } else {
-        profile.name = data.name;
-        profile.email = data.email;
-        profile.address = address;
-        profile.birthdate = data.birthdate ? data.birthdate : '';
         alert('Edited profile successfully!');
+
+        const updatedProfile: Profile = {
+          ...profile,
+          name: result.data.name,
+          email: result.data.email,
+          address: result.data.address,
+          birthdate: result.data.birthdate,
+        };
+        setProfile(updatedProfile);
         setPendingData(null);
+        setIsDisable(true);
       }
+
     } catch (err) {
       console.error('[v0] Update error:', err);
+      alert('An unexpected error occurred');
+
+      reset({
+        name: profile.name,
+        email: profile.email,
+        birthdate: formatDateForInput(profile.birthdate),
+        homenumber: addressDefaults.homenumber,
+        street: addressDefaults.street,
+        ward: addressDefaults.ward,
+        province: addressDefaults.province,
+      });
     } finally {
       setLoading(false);
-      setIsDisable(true);
     }
   };
 
@@ -682,15 +711,17 @@ export default function UserAction({
   profile,
   action,
   setAction,
+  setProfile,
 }: {
   profile: Profile;
   action: string;
   setAction: SetAction;
+  setProfile: React.Dispatch<React.SetStateAction<Profile | null>>;
 }) {
   const renderAction = () => {
     switch (action) {
       case 'edit-profile':
-        return <EditProfile profile={profile} setAction={setAction} />;
+        return <EditProfile profile={profile} setAction={setAction} setProfile={ setProfile }/>;
       case 'change-password':
         return <ChangePassword profile={profile} setAction={setAction} />;
       case 'request-role':
