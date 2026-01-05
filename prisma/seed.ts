@@ -1,7 +1,12 @@
 import { PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { randomInt } from 'crypto';
 
 const prisma = new PrismaClient();
+
+const addMinutes = (date: Date, minutes: number) => {
+  return new Date(date.getTime() + minutes * 60000);
+};
 
 async function main() {
   console.log('🗑️  CLEANING DATABASE (Deleting old data)...');
@@ -336,9 +341,9 @@ async function main() {
       images: {
         create: [
           { image_url: 'productsImg/a83a957a-913b-4ce0-87dc-f9b3e3f02ff2_1767352855371_0.png' },
-          { image_url: 'productsImg/a83a957a-913b-4ce0-87dc-f9b3e3f02ff2_1767352855371_1.png' },
-          { image_url: 'productsImg/a83a957a-913b-4ce0-87dc-f9b3e3f02ff2_1767352855371_2.png' },
-          { image_url: 'productsImg/a83a957a-913b-4ce0-87dc-f9b3e3f02ff2_1767352855371_3.png' },
+          { image_url: 'productsImg/a83a957a-913b-4ce0-87dc-f9b3e3f02ff2_1767352855372_1.png' },
+          { image_url: 'productsImg/a83a957a-913b-4ce0-87dc-f9b3e3f02ff2_1767352855373_2.png' },
+          { image_url: 'productsImg/a83a957a-913b-4ce0-87dc-f9b3e3f02ff2_1767352855373_3.png' },
         ],
       },
     },
@@ -368,11 +373,11 @@ async function main() {
       },
       images: {
         create: [
-                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421906666_0.png' },
-                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421906666_1.png' },
-                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421906666_2.png' },
-                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421906666_3.png' },
-                ],
+          { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421906666_0.png' },
+          { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421906666_1.png' },
+          { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421906666_2.png' },
+          { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421906666_3.png' },
+        ],
       },
     },
   });
@@ -430,11 +435,11 @@ async function main() {
       },
       images: {
         create: [
-                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424633717_0.png' },
-                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424633717_1.png' },
-                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424633717_2.png' },
-                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424633718_3.png' },
-                ],
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424633717_0.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424633717_1.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424633717_2.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424633718_3.png' },
+        ],
       },
     },
   });
@@ -461,11 +466,11 @@ async function main() {
       },
       images: {
         create: [
-                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767425057770_0.png' },
-                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767425057771_1.png' },
-                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767425057771_2.png' },
-                  { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767425057771_3.png' },
-                ],
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767425057770_0.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767425057771_1.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767425057771_2.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767425057771_3.png' },
+        ],
       },
     },
   });
@@ -492,11 +497,11 @@ async function main() {
       },
       images: {
         create: [
-                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421958073_0.png' },
-                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421958073_1.png' },
-                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421958073_2.png' },
-                  { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421958073_3.png' },
-                ],
+          { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421958073_0.png' },
+          { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421958074_1.png' },
+          { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421958074_2.png' },
+          { image_url: 'productsImg/a2461e73-85ba-49da-ac50-e231ef0352e5_1767421958075_3.png' },
+        ],
       },
     },
   });
@@ -516,12 +521,14 @@ async function main() {
       review_needed: true,
       allow_unrated_bidder: true,
       description_history: { create: { description: 'Titanium Grey, 512GB, New.' } },
-      images: { create: [
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424780257_0.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424780257_1.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424780257_2.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424780257_3.png' },
-                        ] },
+      images: {
+        create: [
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424780257_0.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424780257_1.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424780257_2.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424780257_3.png' },
+        ],
+      },
     },
   });
 
@@ -541,12 +548,14 @@ async function main() {
       review_needed: false,
       allow_unrated_bidder: true,
       description_history: { create: { description: 'OLED Display, i9 Processor, 32GB RAM.' } },
-      images: { create: [
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424032210_0.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424032211_1.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424032211_2.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424032211_3.png' },
-                        ] },
+      images: {
+        create: [
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424032210_0.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424032211_1.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424032211_2.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424032211_3.png' },
+        ],
+      },
     },
   });
 
@@ -566,12 +575,14 @@ async function main() {
       review_needed: true,
       allow_unrated_bidder: false,
       description_history: { create: { description: 'Water resistant, S-Pen included.' } },
-      images: { create: [
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424847122_0.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424847122_1.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424847123_2.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424847123_3.png' },
-                        ] },
+      images: {
+        create: [
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424847122_0.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424847122_1.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424847123_2.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424847123_3.png' },
+        ],
+      },
     },
   });
 
@@ -593,12 +604,14 @@ async function main() {
       description_history: {
         create: { description: 'Authentic, Box and Papers included. Mint condition.' },
       },
-      images: { create: [
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424720145_0.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424720145_1.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424720146_2.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424720146_3.png' },
-                        ] },
+      images: {
+        create: [
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424720145_0.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424720145_1.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424720146_2.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424720146_3.png' },
+        ],
+      },
     },
   });
 
@@ -618,12 +631,14 @@ async function main() {
       review_needed: false,
       allow_unrated_bidder: true,
       description_history: { create: { description: 'Running shoes, Cloud White, Size 9.' } },
-      images: { create: [
-                { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767423947218_0.png' },
-                { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767423947227_1.png' },
-                { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767423947228_2.png' },
-                { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767423947229_3.png' },
-              ] },
+      images: {
+        create: [
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767423947218_0.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767423947227_1.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767423947228_2.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767423947229_3.png' },
+        ],
+      },
     },
   });
 
@@ -643,12 +658,14 @@ async function main() {
       review_needed: false,
       allow_unrated_bidder: true,
       description_history: { create: { description: 'Classic straight leg, blue denim.' } },
-      images: { create: [
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424252580_0.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424252581_1.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424252581_2.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424252581_3.png' },
-                        ] },
+      images: {
+        create: [
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424252580_0.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424252581_1.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424252581_2.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424252581_3.png' },
+        ],
+      },
     },
   });
 
@@ -668,12 +685,14 @@ async function main() {
       review_needed: false,
       allow_unrated_bidder: true,
       description_history: { create: { description: 'Rare 90s concert tee, slight wear.' } },
-      images: { create: [
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424970619_0.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424970620_1.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424970620_2.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424970621_3.png' },
-                        ] },
+      images: {
+        create: [
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424970619_0.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424970620_1.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424970620_2.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424970621_3.png' },
+        ],
+      },
     },
   });
 
@@ -693,12 +712,14 @@ async function main() {
       review_needed: false,
       allow_unrated_bidder: true,
       description_history: { create: { description: 'Mesh back, adjustable lumbar support.' } },
-      images: { create: [
-                          { image_url: 'productsImg/ac8a2c97-e56a-46a9-adf4-ba7126a5b2c2_1767425338864_0.png' },
-                          { image_url: 'productsImg/ac8a2c97-e56a-46a9-adf4-ba7126a5b2c2_1767425338865_1.png' },
-                          { image_url: 'productsImg/ac8a2c97-e56a-46a9-adf4-ba7126a5b2c2_1767425338866_2.png' },
-                          { image_url: 'productsImg/ac8a2c97-e56a-46a9-adf4-ba7126a5b2c2_1767425338866_3.png' },
-                        ] },
+      images: {
+        create: [
+          { image_url: 'productsImg/ac8a2c97-e56a-46a9-adf4-ba7126a5b2c2_1767425338864_0.png' },
+          { image_url: 'productsImg/ac8a2c97-e56a-46a9-adf4-ba7126a5b2c2_1767425338865_1.png' },
+          { image_url: 'productsImg/ac8a2c97-e56a-46a9-adf4-ba7126a5b2c2_1767425338866_2.png' },
+          { image_url: 'productsImg/ac8a2c97-e56a-46a9-adf4-ba7126a5b2c2_1767425338866_3.png' },
+        ],
+      },
     },
   });
 
@@ -718,12 +739,14 @@ async function main() {
       review_needed: true,
       allow_unrated_bidder: false,
       description_history: { create: { description: 'Minimalist design, comfortable seating.' } },
-      images: { create: [
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424568914_0.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424568914_1.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424568915_2.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424568915_3.png' },
-                        ] },
+      images: {
+        create: [
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424568914_0.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424568914_1.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424568915_2.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424568915_3.png' },
+        ],
+      },
     },
   });
 
@@ -745,12 +768,14 @@ async function main() {
       description_history: {
         create: { description: 'Original artwork, signed by artist. 24x36 inches.' },
       },
-      images: { create: [
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424906054_0.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424906054_1.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424906055_2.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424906055_3.png' },
-                        ] },
+      images: {
+        create: [
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424906054_0.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424906054_1.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424906055_2.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424906055_3.png' },
+        ],
+      },
     },
   });
 
@@ -772,17 +797,206 @@ async function main() {
       description_history: {
         create: { description: 'High quality print on archival paper. Number 5/50.' },
       },
-      images: { create: [
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424374539_0.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424374540_1.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424374540_2.png' },
-                          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424374540_3.png' },
-                        ] },
+      images: {
+        create: [
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424374539_0.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424374540_1.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424374540_2.png' },
+          { image_url: 'productsImg/38584fc5-b02e-4479-a83d-c4dc19f9351b_1767424374540_3.png' },
+        ],
+      },
     },
   });
 
-  console.log('✅  Created All Products (Covering all categories)');
   console.log(`✅  Created ${createdCategories.length} Categories`);
+
+  // 6. SEEDING BIDS (MỚI THÊM VÀO)
+  console.log('🔨  SEEDING BIDS (5-10 bids per product)...');
+
+  const allProducts = await prisma.product.findMany();
+  const allBidders = [_bidder1, _bidder2, _bidder3];
+
+  for (const product of allProducts) {
+    // Lọc bidder hợp lệ
+    // Bidder 1 bị minus_review => Không được bid nếu product.review_needed = true
+    const eligibleBidders = allBidders.filter((b) => {
+      if (product.review_needed && b.email === 'bidder1@demo.com') return false;
+      return true;
+    });
+
+    if (eligibleBidders.length === 0) continue;
+
+    // Số lượng bid ngẫu nhiên từ 5 đến 10
+    const bidCount = randomInt(5, 10);
+    let currentMaxBidAmount = Number(product.start_price);
+    let currentWinnerId = eligibleBidders[0].user_id; // Default temporary
+    let currentDisplayPrice = Number(product.start_price);
+    let bidTimeCursor = new Date(product.created_at.getTime() + 10 * 60000); // Start 10 mins after create
+
+    // Giả lập từng lượt bid
+    for (let i = 0; i < bidCount; i++) {
+      // Chọn người bid (xoay vòng để tránh người cũ tự bid lại)
+      const bidder = eligibleBidders[i % eligibleBidders.length];
+
+      // Logic tiền bid:
+      // Để tạo lịch sử "thực tế", mỗi bid sau sẽ cao hơn Max Bid trước đó
+      // Bid Amount = OldMax + Step + Random(1..5 * Step)
+      const step = Number(product.step_price);
+      // Lần đầu tiên thì chỉ cần lớn hơn start_price
+      const basePrice = i === 0 ? Number(product.start_price) : currentMaxBidAmount;
+      const bidAmount = basePrice + step + randomInt(0, 3) * step;
+
+      // --- LOGIC CẬP NHẬT GIÁ (MÔ PHỎNG HÀM placeBid) ---
+      let newCurrentPrice = 0;
+      let newHighestBidderId = bidder.user_id;
+
+      if (i === 0) {
+        // Bid đầu tiên
+        newCurrentPrice = Number(product.start_price);
+        newHighestBidderId = bidder.user_id;
+      } else {
+        // Các bid sau, người mới trả giá cao hơn người cũ
+        // Trường hợp Scenario B: User mới bid cao hơn Max cũ
+        // Giá hiện tại = Max cũ + Step
+        newCurrentPrice = currentMaxBidAmount + step;
+        if (newCurrentPrice > bidAmount) newCurrentPrice = bidAmount; // Cap lại
+        newHighestBidderId = bidder.user_id;
+      }
+
+      // Update con trỏ Max Bid cho vòng lặp sau
+      currentMaxBidAmount = bidAmount;
+      currentDisplayPrice = newCurrentPrice;
+      currentWinnerId = newHighestBidderId;
+
+      bidTimeCursor = addMinutes(bidTimeCursor, randomInt(30, 120));
+
+      if (bidTimeCursor > product.end_time)
+        bidTimeCursor = new Date(product.end_time.getTime() - 60000); // 1 min before end
+      const now = new Date();
+      if (bidTimeCursor > now) bidTimeCursor = now; // Không bid ở tương lai
+
+      // Lưu Bid History
+      await prisma.bidHistory.create({
+        data: {
+          product_id: product.product_id,
+          bidder_id: bidder.user_id,
+          bid_amount: bidAmount, // Lưu ý: Bid History lưu Max Bid của user
+          bid_time: bidTimeCursor,
+        },
+      });
+
+      // Update Product
+      await prisma.product.update({
+        where: { product_id: product.product_id },
+        data: {
+          current_price: currentDisplayPrice,
+          current_highest_bidder_id: currentWinnerId,
+          bid_count: i + 1,
+        },
+      });
+    }
+  }
+
+  console.log('✅  Bids Seeding Completed!');
+
+  console.log('👀  SEEDING WATCHLIST...');
+
+  // Tìm các sản phẩm cụ thể để add cho có ý nghĩa
+  const pIpad = allProducts.find((p) => p.name === 'iPad Pro');
+  const pRolex = allProducts.find((p) => p.name.includes('Rolex'));
+  const pIphone = allProducts.find((p) => p.name.includes('iPhone'));
+  const pSofa = allProducts.find((p) => p.name.includes('Sofa'));
+  const pHoodie = allProducts.find((p) => p.name.includes('Hoodie'));
+  const pMacbook = allProducts.find((p) => p.name.includes('MacBook'));
+
+  const watchlistData = [
+    // Bidder 1 (Adam): Thích iPad và Hoodie
+    { user_id: _bidder1.user_id, product_id: pIpad?.product_id },
+    { user_id: _bidder1.user_id, product_id: pHoodie?.product_id },
+
+    // Bidder 2 (Eva): Thích Sofa và Rolex
+    { user_id: _bidder2.user_id, product_id: pSofa?.product_id },
+    { user_id: _bidder2.user_id, product_id: pRolex?.product_id },
+
+    // Bidder 3 (Hạo Nam): Thích iPhone, MacBook và cũng đang canh Rolex (Cạnh tranh với Eva)
+    { user_id: _bidder3.user_id, product_id: pIphone?.product_id },
+    { user_id: _bidder3.user_id, product_id: pMacbook?.product_id },
+    { user_id: _bidder3.user_id, product_id: pRolex?.product_id },
+  ];
+
+  // Thực hiện insert (Dùng vòng lặp để check null an toàn)
+  let watchlistCount = 0;
+  for (const item of watchlistData) {
+    if (item.product_id) {
+      // Dùng upsert hoặc create đều được vì đã clean DB, ở đây dùng create cho nhanh
+      await prisma.watchlist.create({
+        data: {
+          user_id: item.user_id,
+          product_id: item.product_id,
+        },
+      });
+      watchlistCount++;
+    }
+  }
+
+  console.log(`✅  Added ${watchlistCount} items to Watchlist`);
+
+  // 8. Create Orders (Pending Payment)
+  console.log('🧾 SEEDING ORDERS...');
+
+  const productNames = ['Hoodie black', 'Color', 'Samsung watch', 'iPad Pro', 'MacBook Pro M3'];
+
+  const buyers = await prisma.user.findMany({
+    where: { role: UserRole.bidder },
+  });
+
+  const products = await prisma.product.findMany({
+    where: {
+      name: { in: productNames },
+      order: null,
+    },
+    take: 5,
+  });
+
+  let buyerIndex = 0;
+
+  const endedTime = new Date(Date.now() - 5 * 60 * 1000);
+
+  for (const product of products) {
+    const buyer = buyers[buyerIndex % buyers.length];
+    buyerIndex++;
+
+    // 1️⃣ GÁN highest bidder
+    await prisma.product.update({
+      where: { product_id: product.product_id },
+      data: {
+        current_highest_bidder_id: buyer.user_id,
+        status: 'sold',
+        end_time: endedTime,
+      },
+    });
+
+    // 2️⃣ TẠO order pending_payment
+    await prisma.order.upsert({
+      where: {
+        product_id: product.product_id,
+      },
+      update: {
+        buyer_id: buyer.user_id,
+        seller_id: product.seller_id,
+        final_price: product.current_price,
+        status: 'pending_payment',
+      },
+      create: {
+        product_id: product.product_id,
+        buyer_id: buyer.user_id,
+        seller_id: product.seller_id,
+        final_price: product.current_price,
+        status: 'pending_payment',
+      },
+    });
+  }
+
   console.log('🏁  SEEDING COMPLETED!');
 }
 

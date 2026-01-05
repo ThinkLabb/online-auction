@@ -13,6 +13,8 @@ type Product = {
   created_at: string;
   highest_bidder_name: string | null;
   image_url: string | null;
+  isWatchlisted: boolean;
+  isSeller: boolean;
 };
 
 type ProductCardProps = { product: Product };

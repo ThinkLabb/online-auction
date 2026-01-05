@@ -8,7 +8,7 @@ import { Readable } from 'stream';
 import { Prisma } from '@prisma/client';
 
 import * as mailService from '../services/mail.service.ts';
-import { getOrderByProductID } from '../services/payment.services.ts'
+import { getOrderByProductID } from '../services/payment.services.ts';
 
 export const uploadProducts = async (req: Request, res: Response) => {
   try {
@@ -306,19 +306,18 @@ export const getProduct = async (req: Request, res: Response) => {
       },
     });
 
-
     if (!productData) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    let orderId = null
-    const isSeller = user ? user.id === productData.seller.user_id : false
-    const isWinner = user ? user.id === productData.current_highest_bidder_id : false
+    let orderId = null;
+    const isSeller = user ? user.id === productData.seller.user_id : false;
+    const isWinner = user ? user.id === productData.current_highest_bidder_id : false;
     if (productData.end_time < new Date() && (isSeller || isWinner)) {
-      orderId = await getOrderByProductID(Number(productData.product_id))
-      console.log("order id", orderId)
+      orderId = await getOrderByProductID(Number(productData.product_id));
+      console.log('order id', orderId);
     }
-    
+
     if (orderId) {
       const response = {
         id: productData.product_id,
@@ -330,21 +329,20 @@ export const getProduct = async (req: Request, res: Response) => {
         bidsPlaced: null,
         buyNowPrice: null,
         minBidStep: null,
-        images:
-        null,
+        images: null,
         details: null,
         description: null,
         conditionText: null,
         seller: null,
-        topBidder:null,
+        topBidder: null,
         qa: null,
-        
+
         isSeller: isSeller,
         isWatchlisted: null,
 
         relatedProducts: null,
       };
-        return res.send(JSON.stringify(response, bigIntReplacer));
+      return res.send(JSON.stringify(response, bigIntReplacer));
     }
 
     let isWatchlisted = false;
@@ -428,7 +426,7 @@ export const getProduct = async (req: Request, res: Response) => {
         day: 'numeric',
         year: 'numeric',
       }),
-      endsIn: productData.end_time, 
+      endsIn: productData.end_time,
       orderId: orderId,
       currentBid: Number(productData.current_price),
       bidsPlaced: productData.bid_count,
@@ -829,8 +827,18 @@ export const searchProducts = async (req: Request, res: Response) => {
     const searchQuery = keyword ? String(keyword).trim().split(/\s+/).join(' & ') : undefined;
 
     const whereClause: any = {
-      status: 'open',
-      end_time: { gt: new Date() },
+      OR: [
+        {
+          status: 'open',
+          end_time: { gt: new Date() },
+        },
+        {
+          status: 'sold',
+          Order: {
+            status: 'pending_payment',
+          },
+        },
+      ],
     };
 
     if (searchQuery) {

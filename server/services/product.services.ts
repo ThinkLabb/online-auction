@@ -1,24 +1,23 @@
-import db from "./database.ts";
+import db from './database.ts';
 
-export const getCategories = async() => {
-    try {
-        const categories = await db.prisma.category.findMany({
-            orderBy: {
-                name_level_1: 'asc',
-            },
-            select: {
-                category_id: true,
-                name_level_1: true,
-                name_level_2: true
-            }
-        });
+export const getCategories = async () => {
+  try {
+    const categories = await db.prisma.category.findMany({
+      orderBy: {
+        name_level_1: 'asc',
+      },
+      select: {
+        category_id: true,
+        name_level_1: true,
+        name_level_2: true,
+      },
+    });
 
-        return { success: true, categories, message: "Get Categories successfully" };
-    } catch(e) {
-        return { success: false, message: String(e)};
-    }
-}
-
+    return { success: true, categories, message: 'Get Categories successfully' };
+  } catch (e) {
+    return { success: false, message: String(e) };
+  }
+};
 
 interface OutputCategory {
   id: number;
@@ -42,7 +41,7 @@ export const getAdminCategories = async () => {
         },
       },
       orderBy: {
-        category_id: 'asc', 
+        category_id: 'asc',
       },
     });
 
@@ -66,7 +65,7 @@ export const getAdminCategories = async () => {
 
       if (!level1Info) {
         level1Info = {
-          id: item.category_id, 
+          id: item.category_id,
           name: level1Name,
           total_products: 0,
         };
@@ -74,7 +73,7 @@ export const getAdminCategories = async () => {
         level1Map.set(level1Name, level1Info);
 
         result.push({
-          id: item.category_id, 
+          id: item.category_id,
           name: level1Name,
           parent_id: null,
           parent_name: null,
@@ -86,9 +85,9 @@ export const getAdminCategories = async () => {
 
       if (level2Name !== null) {
         result.push({
-          id: item.category_id, 
+          id: item.category_id,
           name: String(level2Name),
-          parent_id: level1Info.id, 
+          parent_id: level1Info.id,
           parent_name: level1Name,
           product_count: productCount,
         });
@@ -106,7 +105,7 @@ export const getAdminCategories = async () => {
       return item;
     });
 
-    console.log(categories)
+    console.log(categories);
     return {
       success: true,
       categories,
@@ -122,22 +121,22 @@ export const getAdminCategories = async () => {
 
 export const getProductBids = async (product_id: number) => {
   return await db.prisma.product.findUnique({
-    where: {product_id: product_id},
-    select: { 
+    where: { product_id: product_id },
+    select: {
       bids: {
-        orderBy: { bid_time: 'desc'},
+        orderBy: { bid_time: 'desc' },
         select: {
           bidder: {
             select: {
               user_id: true,
               name: true,
-            }
+            },
           },
           bid_amount: true,
           bid_time: true,
-          bid_id: true
-        }
-      }
-    }
-  })
-}
+          bid_id: true,
+        },
+      },
+    },
+  });
+};

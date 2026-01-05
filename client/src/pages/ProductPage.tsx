@@ -112,7 +112,7 @@ const ProductPage = () => {
           {/* CỘT TRÁI */}
           <div className="lg:col-span-8 space-y-8">
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-              <div className="aspect-[4/3] w-full bg-gray-100 rounded-lg overflow-hidden mb-4 relative group">
+              <div className="aspect-4/4 w-full bg-gray-100 rounded-lg overflow-hidden mb-4 relative group">
                 <img
                   src={getImageUrl(activeImage || product.images[0])}
                   alt="Product Main"

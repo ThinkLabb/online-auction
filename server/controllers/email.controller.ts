@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { errorResponse, successResponse } from '../utils/response';
 import * as mailService from '../services/mail.service.ts';
 import jwt from 'jsonwebtoken';
-import { Product } from '@prisma/client';
 
 export const sendMail = async (req: Request, res: Response) => {
   try {

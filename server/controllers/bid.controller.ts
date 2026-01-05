@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client';
 import db from '../services/database.ts';
 import type { Request, Response } from 'express';
 import { sendNewBidEmail, sendBidRejectedEmail } from '../services/mail.service.ts';
-import { successResponse, errorResponse} from '../utils/response.ts';
+import { successResponse, errorResponse } from '../utils/response.ts';
 import { getProductBids } from '../services/product.services.ts';
 
 interface BidHistoryItem {
@@ -16,35 +16,37 @@ interface BidHistoryItem {
 export const getBidderProductBidHistory = async (req: Request, res: Response) => {
   try {
     const user = res.locals.user;
-    if (!user.id) return res.status(401).json(errorResponse("No user found"));
+    if (!user.id) return res.status(401).json(errorResponse('No user found'));
 
-    const {id} = req.params;
+    const { id } = req.params;
     if (!id) return res.status(400).json(errorResponse("No product's id found"));
 
     const result = await getProductBids(Number(id));
 
-    if (!result) return res.status(200).json(successResponse([], "No bid yet"));
+    if (!result) return res.status(200).json(successResponse([], 'No bid yet'));
 
     const bids = result.bids;
 
     const return_data: BidHistoryItem[] = bids.map((bid) => ({
       id: bid.bid_id.toString(),
       amount: Number(bid.bid_amount),
-      time : new Date(bid.bid_time).toISOString(),
-      bidderId : bid.bidder.user_id,
-      bidderName: bid.bidder.name
-    }))
+      time: new Date(bid.bid_time).toISOString(),
+      bidderId: bid.bidder.user_id,
+      bidderName: bid.bidder.name,
+    }));
 
-    res.status(200).json(successResponse(
-      return_data, return_data.length 
-      ? "Found product's bids successfully" 
-      : "No bid yet"
-    ));
-
-  } catch(e: any) {
+    res
+      .status(200)
+      .json(
+        successResponse(
+          return_data,
+          return_data.length ? "Found product's bids successfully" : 'No bid yet'
+        )
+      );
+  } catch (e: any) {
     return res.status(500).json(errorResponse(e.message));
   }
-}
+};
 
 export const getBidHistory = async (req: Request, res: Response) => {
   try {
@@ -250,9 +252,7 @@ export const placeBid = async (req: Request, res: Response) => {
           if (product.allow_unrated_bidder === false) {
             throw new Error('UNRATED_NOT_ALLOWED');
           }
-        }
-
-        else {
+        } else {
           if (product.review_needed) {
             const ratio = plus / total;
             if (ratio < 0.8) {
