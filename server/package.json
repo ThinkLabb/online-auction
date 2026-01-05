@@ -13,7 +13,8 @@
     "db:generate": "npx prisma generate",
     "db:studio": "npx prisma studio",
     "db:reset": "npx prisma migrate reset",
-    "db:seed": "node prisma/seed.ts"
+    "db:seed": "node prisma/seed.ts",
+    "prepare": "npm run db:generate"
   },
   "keywords": [],
   "author": "",
