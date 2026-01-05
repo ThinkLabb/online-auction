@@ -5,9 +5,10 @@
   "main": "server/dist/server.js",
   "type": "module",
   "scripts": {
-    "build:server": "tsc --project server/tsconfig.json",
-    "build": "vite build",
-    "start": "npm run build && node server/dist/server.js",
+    "build:server": "tsc --project tsconfig.build.json",
+    "build:client": "vite build",
+    "build": "npm run build:client && npm run build:server",
+    "start": "npm run build && node dist/server/server.js",
     "server": "tsx watch server/server.ts",
     "client": "vite",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
