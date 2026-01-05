@@ -172,10 +172,6 @@ export default function Register() {
       locale="en"
     >
       <div className="p-4 sm:p-8 border border-gray-200 shadow-xl rounded-xl bg-white w-full max-w-sm sm:max-w-md mx-auto my-10">
-        <h2 className="text-2xl font-extrabold text-center mb-6 text-gray-900">
-          Create Your Account
-        </h2>
-
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           {/* Full Name */}
           <div className="flex flex-col gap-1">
