@@ -23,7 +23,7 @@ const API_ENDPOINTS: Record<TabId, string> = {
 
 const Tabs = React.memo(({ activeTab, setActiveTab }: TabsProps) => {
   return (
-    <nav className="flex space-x-4">
+    <nav className="flex space-x-4 flex space-x-4 overflow-x-auto pb-2 scrollbar-hide snap-x items-center">
       {TABS_DATA.map((tab) => (
         <div
           key={tab.id}

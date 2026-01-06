@@ -148,15 +148,6 @@ function EditProfile({
     path_with_type: item.path_with_type,
   }));
 
-  const fetchJsonData = async (url: string) => {
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`HTTP error! Status: ${res.status}`);
-    }
-    const data = await res.json();
-    return Object.values(data) as LocationOption[];
-  };
-
   function loadProvince() {
     setProvince(provinces);
   }
@@ -167,7 +158,7 @@ function EditProfile({
       return;
     }
 
-    setWard(ward);
+    setWard(wards);
   }
 
   watch('province');
