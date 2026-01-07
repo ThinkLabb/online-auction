@@ -66,7 +66,7 @@ git checkout main   # or your desired branch
 ### 2. Install Dependencies
 
 ```bash
-npm i
+npm 
 ```
 
 ### 3. Copy Environment Template and Configure
@@ -107,13 +107,11 @@ DEFAULT_PASSWORD=your_default_password
 
 ---
 
-### 4. Database Setup
+### 4. Database Sample Data Setup
 
 ```bash
-npm run db:setup
+cd server && npm run db:seed
 ```
-
-This command typically runs `prisma generate`, `prisma migrate dev`, and optionally `prisma db seed`.
 
 ---
 
