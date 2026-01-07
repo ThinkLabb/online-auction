@@ -87,9 +87,9 @@ async function main() {
   // 2 Default Bidders
   const bidder1Promise = prisma.user.create({
     data: {
-      email: 'bidder1@demo.com',
+      email: 'letrungkienthd@gmail.com',
       password,
-      name: 'Adam bidder',
+      name: 'Lê Trung Kiên',
       role: UserRole.bidder,
       is_email_verified: true,
       address: '123, Đường Nguyễn Trãi, Phường 2, TP. Hồ Chí Minh',
@@ -112,9 +112,9 @@ async function main() {
   // New Bidder: Hạo Nam
   const bidder3Promise = prisma.user.create({
     data: {
-      email: 'namhaohuynh@gmail.com',
+      email: 'takarboom@gmail.com',
       password,
-      name: 'Hạo Nam',
+      name: 'Lê Thanh Hải',
       role: UserRole.bidder,
       is_email_verified: true,
       plus_review: 1,
@@ -124,9 +124,9 @@ async function main() {
 
   const seller1Promise = prisma.user.create({
     data: {
-      email: 'seller1@demo.com',
+      email: 'namhaohuynh@gmail.com',
       password,
-      name: 'Ltp seller',
+      name: 'Huỳnh Hạo Nam',
       role: UserRole.seller,
       is_email_verified: true,
       plus_review: 1,
@@ -146,12 +146,11 @@ async function main() {
     },
   });
 
-  // New Seller: KDDDD
   const seller3Promise = prisma.user.create({
     data: {
-      email: 'ntcong@gmail.com',
+      email: 'ntcong120@gmail.com',
       password,
-      name: 'KDDDD',
+      name: 'Mai Thị Kim Duyên',
       role: UserRole.seller,
       is_email_verified: true,
       address: '88, Đường Láng, Phường Láng Thượng, Quận Đống Đa, TP. Hà Nội',
