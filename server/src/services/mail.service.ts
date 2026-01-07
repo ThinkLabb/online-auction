@@ -506,3 +506,53 @@ export const sendNewAnswerEmail = async (
     `,
   });
 };
+
+// Send notification to all bidders when product description is updated
+export const sendDescriptionUpdatedEmail = async (
+  bidderEmails: string[], // List of bidders who placed bids on this product
+  productName: string,
+  newDescription: string,
+  productLink: string
+) => {
+  if (bidderEmails.length === 0) return { success: true, message: 'No bidders to notify' };
+  await sendCustomEmail({
+    to: process.env.MAIL as string,
+    bcc: bidderEmails,
+    subject: `Product Updated: "${productName}"`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background: linear-gradient(135deg, #8D0000 0%, #b30000 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+          <h2 style="margin: 0; font-size: 24px;">Product Description Updated</h2>
+        </div>
+        <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <p style="font-size: 16px; color: #333; line-height: 1.6;">
+            The seller has updated the product description for:
+          </p>
+          <div style="background: #f0f8ff; padding: 20px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #8D0000;">
+            <h3 style="margin: 0 0 10px 0; color: #333;">${productName}</h3>
+          </div>
+          <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #8D0000;">
+            <p style="margin: 0 0 5px 0; font-size: 12px; color: #6c757d; text-transform: uppercase; font-weight: bold;">Updated Description:</p>
+            <p style="margin: 10px 0 0 0; font-size: 15px; color: #333; line-height: 1.6;">${newDescription}</p>
+          </div>
+          <div style="background: #e8f5e9; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #4CAF50;">
+            <p style="margin: 0; font-size: 14px; color: #2e7d32;">
+              <strong>Tip:</strong> Check the new details before placing your next bid!
+            </p>
+          </div>
+          <p style="font-size: 14px; color: #666; line-height: 1.6;">
+            Make sure the updated information matches your requirements before bidding.
+          </p>
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${productLink}" style="display: inline-block; background: #8D0000; color: white; padding: 14px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">View Updated Product →</a>
+          </div>
+        </div>
+        <div style="text-align: center; padding: 20px; font-size: 12px; color: #999;">
+          <p>ThinkLab Auction System</p>
+        </div>
+      </div>
+    `,
+  });
+
+  return { success: true, message: 'Description update emails sent successfully' };
+};

@@ -939,6 +939,35 @@ export const appendProductDescription = async (req: Request, res: Response) => {
       },
     });
 
+    // Get all unique bidders for this product
+    const bidders = await db.prisma.bidHistory.findMany({
+      where: {
+        product_id: BigInt(id),
+      },
+      distinct: ['bidder_id'],
+      select: {
+        bidder: {
+          select: {
+            email: true,
+          },
+        },
+      },
+    });
+
+    // Extract unique bidder emails
+    const bidderEmails = [...new Set(bidders.map(b => b.bidder.email))];
+
+    // Send email to all bidders notifying them of the description update
+    if (bidderEmails.length > 0) {
+      const productLink = `${process.env.CLIENT_URL}/product/${id}`;
+      await mailService.sendDescriptionUpdatedEmail(
+        bidderEmails,
+        product.name,
+        description,
+        productLink
+      );
+    }
+
     return res.status(200).json({ message: 'Description appended successfully' });
   } catch (error) {
     console.error(error);
