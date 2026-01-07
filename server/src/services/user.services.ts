@@ -60,12 +60,9 @@ export const UserServices = {
     countBiddedProducts: async (user_id: string) => {
       return db.prisma.product.count({
         where: {
-          status: "sold",
-          OR: [
-            { bids: { some: { bidder_id: user_id } } },
-            { order: { buyer_id: user_id } }
-          ]
-        }
+          status: 'sold',
+          OR: [{ bids: { some: { bidder_id: user_id } } }, { order: { buyer_id: user_id } }],
+        },
       });
     },
 
@@ -313,5 +310,16 @@ export const UserServices = {
         },
       });
     },
+  },
+  
+  updateReputation: async (user_id: string, plusDelta: number, minusDelta: number) => {
+    console.log(1111)
+    return db.prisma.user.update({
+      where: { user_id: user_id },
+      data: {
+        plus_review: { increment: plusDelta },
+        minus_review: { increment: minusDelta },
+      },
+    });
   },
 };

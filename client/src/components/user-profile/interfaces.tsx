@@ -1,4 +1,4 @@
-import { ProductStatus, OrderStatus, UserRole } from '@prisma/client';
+import { OrderStatus, ProductStatus, UserRole } from "../../lib/type";
 
 export interface Profile {
   user_id: string;

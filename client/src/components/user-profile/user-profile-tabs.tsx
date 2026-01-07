@@ -13,7 +13,7 @@ import { calculateTimeRemaining, formatCurrency, formatDate } from '../product';
 import { Link } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import ReviewBox from './review';
-import { OrderStatus, UserRole } from '@prisma/client';
+import { OrderStatus } from '../../lib/type';
 
 function ImageContainer({
   product_id,

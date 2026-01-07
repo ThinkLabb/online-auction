@@ -62,8 +62,7 @@ export interface Product {
   isWatchlisted: boolean;
   orderId: number;
   review_needed: boolean;
-  allow_unrated_bidder: boolean,
-
+  allow_unrated_bidder: boolean;
 }
 
 export interface BidHistoryItem {
@@ -73,3 +72,14 @@ export interface BidHistoryItem {
   amount: number;
   time: string;
 }
+
+export type UserRole = 'bidder' | 'seller' | 'admin';
+
+export type OrderStatus =
+  | 'pending_payment'
+  | 'payment_confirmed'
+  | 'shipped'
+  | 'completed'
+  | 'cancelled';
+
+export type ProductStatus = 'open' | 'sold' | 'expired' | 'removed';

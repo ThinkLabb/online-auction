@@ -154,6 +154,18 @@ export const addReviewService = async (body: any) => {
   });
 
   if (!review) {
+    if (body.is_positive) {
+      await db.prisma.user.update({
+        where: { user_id: body.reviewee_id },
+        data: { plus_review: { increment: 1 } },
+      });
+    } else {
+      await db.prisma.user.update({
+        where: { user_id: body.reviewee_id },
+        data: { minus_review: { increment: 1 } },
+      });
+    }
+
     return db.prisma.reviews.create({
       data: {
         reviewer_id: body.reviewer_id,
@@ -163,7 +175,28 @@ export const addReviewService = async (body: any) => {
         comment: body.comment,
       },
     });
+
   } else {
+    if (review.is_positive !== body.is_positive) {
+      if (body.is_positive) {
+        await db.prisma.user.update({
+          where: { user_id: body.reviewee_id },
+          data: {
+            plus_review: { increment: 1 },
+            minus_review: { decrement: 1 },
+          },
+        });
+      } else {
+        await db.prisma.user.update({
+          where: { user_id: body.reviewee_id },
+          data: {
+            plus_review: { decrement: 1 },
+            minus_review: { increment: 1 },
+          },
+        });
+      }
+    }
+
     const updatedReview = await db.prisma.reviews.update({
       where: {
         review_id: review.review_id,

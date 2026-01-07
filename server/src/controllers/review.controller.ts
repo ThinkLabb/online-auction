@@ -3,6 +3,7 @@ import { errorResponse, successResponse } from '../utils/response';
 import { UserRole } from '@prisma/client';
 import { Review, ReviewServices } from '../services/review.services';
 import { OrderServices } from '../services/order.services';
+import { UserServices } from '../services/user.services';
 
 export const ReviewController = {
   create: async (req: Request, res: Response) => {
@@ -58,7 +59,26 @@ export const ReviewController = {
 
       if (is_positive === null) return res.status(400).json(errorResponse('Missed input data'));
 
-      const result = await ReviewServices.update(Number(review_id), comment, is_positive);
+      const rId = Number(review_id);
+
+      const oldReview = await ReviewServices.getById(rId);
+      if (!oldReview) {
+        return res.status(404).json(errorResponse('Review not found'));
+      }
+      console.log(2);
+      const result = await ReviewServices.update(rId, comment, is_positive);
+
+      if (oldReview.is_positive !== is_positive) {
+        console.log(3);
+        const { reviewee_id } = oldReview;
+
+        if (is_positive) {
+          console.log(4);
+          await UserServices.updateReputation(reviewee_id, 1, -1);
+        } else {
+          await UserServices.updateReputation(reviewee_id, -1, 1);
+        }
+      }
       return res.status(201).json(
         successResponse(
           {

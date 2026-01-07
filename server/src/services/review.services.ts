@@ -19,4 +19,10 @@ export const ReviewServices = {
       where: { review_id: review_id },
     });
   },
+
+  getById: async (review_id: number) => {
+    return db.prisma.reviews.findUnique({
+      where: { review_id: review_id },
+    });
+  },
 };

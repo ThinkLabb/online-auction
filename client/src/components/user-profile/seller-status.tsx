@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import { formatDateTime } from '../product';
 
 interface SellerStatusData {
   role: string;

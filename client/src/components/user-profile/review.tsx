@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ThumbsUp, ThumbsDown, Trash, UndoIcon } from "lucide-react";
-import { OrderStatus, UserRole } from "@prisma/client";
 import { formatDate } from "../product";
+import { OrderStatus, UserRole } from "../../lib/type";
 
 export default function ReviewBox(
   {
