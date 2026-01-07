@@ -29,6 +29,12 @@ export const ReviewController = {
         comment: comment,
       };
 
+      if (is_positive) {
+        await UserServices.updateReputation(review.reviewee_id, 1, 0);
+      } else {
+        await UserServices.updateReputation(review.reviewee_id, 0, 1);
+      }
+
       const result = await ReviewServices.create(review);
       return res.status(201).json(
         successResponse(
@@ -65,15 +71,12 @@ export const ReviewController = {
       if (!oldReview) {
         return res.status(404).json(errorResponse('Review not found'));
       }
-      console.log(2);
       const result = await ReviewServices.update(rId, comment, is_positive);
 
       if (oldReview.is_positive !== is_positive) {
-        console.log(3);
         const { reviewee_id } = oldReview;
 
         if (is_positive) {
-          console.log(4);
           await UserServices.updateReputation(reviewee_id, 1, -1);
         } else {
           await UserServices.updateReputation(reviewee_id, -1, 1);

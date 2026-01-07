@@ -313,7 +313,6 @@ export const UserServices = {
   },
   
   updateReputation: async (user_id: string, plusDelta: number, minusDelta: number) => {
-    console.log(1111)
     return db.prisma.user.update({
       where: { user_id: user_id },
       data: {
